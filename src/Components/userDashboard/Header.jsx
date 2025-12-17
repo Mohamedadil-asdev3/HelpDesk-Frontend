@@ -3,11 +3,11 @@ import { Box, Button, FormControl, IconButton, MenuItem, Select, TextField, Typo
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import FilterAltOffIcon from "@mui/icons-material/FilterAltOff";
 
-const UserHeader = () => {
+const UserHeader = ({ fetchData }) => {
 
     const [showFilters, setShowFilters] = useState(false);
-    const [startDate, setStartDate] = useState("2025-01-07");
-    const [endDate, setEndDate] = useState("2025-11-12");
+    const [startDate, setStartDate] = useState("");
+    const [endDate, setEndDate] = useState("");
     const [priority, setPriority] = useState("");
 
     const theme = useTheme();
@@ -23,97 +23,92 @@ const UserHeader = () => {
                 width: "100%",
                 display: "flex",
                 flexWrap: "wrap",
-
                 flexDirection: {
                     xs: "column",
                     sm: "row",
                     md: "row",
                 },
-
                 gap: 2,
                 p: 2,
                 borderRadius: 2,
                 mt: 2,
             }}
         >
-            <TextField
-                label="Start Date"
-                type="date"
-                size="small"
-                InputLabelProps={{ shrink: true }}
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                inputProps={{ max: endDate || "" }}
-                sx={{
-                    width: {
-                        xs: "100%",
-                        sm: "30%",
-                        md: "auto",
-                    },
-                    "& .MuiInputBase-root": {
-                        height: 35,
-                        borderRadius: "15px",
-                        backgroundColor: "#fff",
-                        color: "#000",
-                    },
-                }}
-            />
-            <TextField
-                label="End Date"
-                type="date"
-                size="small"
-                InputLabelProps={{ shrink: true }}
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                inputProps={{ min: startDate || "" }}
-                sx={{
-                    width: {
-                        xs: "100%",
-                        sm: "30%",
-                        md: "auto",
-                    },
-                    "& .MuiInputBase-root": {
-                        height: 35,
-                        borderRadius: "15px",
-                        backgroundColor: "#fff",
-                        color: "#000",
-                    },
-                }}
-            />
-            <FormControl
-                sx={{
-                    width: {
-                        xs: "100%",
-                        sm: "30%",
-                        md: "auto",
-                    },
-                    "& .MuiInputBase-root": {
-                        height: 35,
-                        borderRadius: "15px",
-                        backgroundColor: "#fff",
-                        color: "#000",
-                    },
-                }}
-            >
-                <Select
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value)}
+            <Box sx={{ width: { xs: "100%", sm: "30%", md: "auto" } }}>
+                <Typography fontSize={13} fontWeight={600}>
+                    Start Date
+                </Typography>
+                <TextField
+                    type="date"
                     size="small"
-                    displayEmpty
-                    renderValue={(selected) =>
-                        selected === "" ? "Select priority" : selected
-                    }
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    inputProps={{ max: endDate ? endDate : undefined }}
+                    sx={{
+                        width: "100%",
+                        "& .MuiInputBase-root": {
+                            height: 35,
+                            borderRadius: "15px",
+                            backgroundColor: "#fff",
+                            color: "#000",
+                        },
+                    }}
+                />
+            </Box>
+            <Box sx={{ width: { xs: "100%", sm: "30%", md: "auto" } }}>
+                <Typography fontSize={13} fontWeight={600}>
+                    End Date
+                </Typography>
+                <TextField
+                    type="date"
+                    size="small"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    inputProps={{ min: startDate ? startDate : undefined }}
+                    sx={{
+                        width: "100%",
+                        "& .MuiInputBase-root": {
+                            height: 35,
+                            borderRadius: "15px",
+                            backgroundColor: "#fff",
+                            color: "#000",
+                        },
+                    }}
+                />
+            </Box>
+            <Box sx={{ width: { xs: "100%", sm: "30%", md: "auto" } }}>
+                <Typography fontSize={13} fontWeight={600}>
+                    Priority
+                </Typography>
+                <FormControl
+                    fullWidth
+                    size="small"
+                    sx={{
+                        "& .MuiInputBase-root": {
+                            height: 35,
+                            borderRadius: "15px",
+                            backgroundColor: "#fff",
+                            color: "#000",
+                        },
+                    }}
                 >
-                    <MenuItem disabled value="">
-                        Select priority
-                    </MenuItem>
-                    <MenuItem value="Very Low">Very Low</MenuItem>
-                    <MenuItem value="Low">Low</MenuItem>
-                    <MenuItem value="Medium">Medium</MenuItem>
-                    <MenuItem value="High">High</MenuItem>
-                    <MenuItem value="Very High">Very High</MenuItem>
-                </Select>
-            </FormControl>
+                    <Select
+                        value={priority}
+                        onChange={(e) => setPriority(e.target.value)}
+                        displayEmpty
+                        renderValue={(selected) =>
+                            selected === "" ? "Select priority" : selected
+                        }
+                    >
+                        <MenuItem disabled value="">Select priority</MenuItem>
+                        <MenuItem value="Very Low">Very Low</MenuItem>
+                        <MenuItem value="Low">Low</MenuItem>
+                        <MenuItem value="Medium">Medium</MenuItem>
+                        <MenuItem value="High">High</MenuItem>
+                        <MenuItem value="Very High">Very High</MenuItem>
+                    </Select>
+                </FormControl>
+            </Box>
             <Button
                 variant="contained"
                 onClick={() =>
@@ -124,8 +119,10 @@ const UserHeader = () => {
                     })
                 }
                 sx={{
-                    width: { xs: "100%", sm: "20%", md: "auto" },
-                    ml: isTablet ? 20 : 0,
+                    width: { xs: "100%", sm: "30%", md: "auto" },
+                    height: "40px",
+                    mt: 2,
+                    ml: isTablet ? 16 : 0,
                     borderRadius: 5,
                 }}
             >
@@ -139,10 +136,12 @@ const UserHeader = () => {
                     setEndDate("");
                     setPriority("");
                     setSearchTerm("");
-                    fetchData();
+                    fetchData && fetchData();
                 }}
                 sx={{
-                    width: { xs: "100%", sm: "20%", md: "auto" },
+                    width: { xs: "100%", sm: "30%", md: "auto" },
+                    height: "40px",
+                    mt: 2,
                     borderRadius: 5,
                 }}
             >
@@ -173,13 +172,13 @@ const UserHeader = () => {
                     }}
                 >
                     <Typography
-                        fontSize={18}
+                        fontSize={26}
                         fontWeight={600}
                         sx={{
                             mt: { xs: 2, sm: 2, md: 0 },
                         }}
                     >
-                        Technician Dashboard
+                        Dashboard
                     </Typography>
 
                     {(isLarge || isLaptop) && showFilters && (

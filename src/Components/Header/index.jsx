@@ -942,7 +942,9 @@ import { Media_URL, fetchEntitiesAPI } from "../../Api";
 import { logoutAPI } from "../../Api";
 import stemzLogo from "../../assets/download.png";
 import ndLogo from "../../assets/ndLogo.jpeg";
+
 const Header = () => {
+
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [profileOpen, setProfileOpen] = useState(false);
     const [entityDialogOpen, setEntityDialogOpen] = useState(false);
@@ -955,10 +957,13 @@ const Header = () => {
     const [loadingMappings, setLoadingMappings] = useState(false);
     const [loadingEntities, setLoadingEntities] = useState(false);
     const [shouldNavigateAfterSelect, setShouldNavigateAfterSelect] = useState(false);
+
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
     const navigate = useNavigate();
     const media_url = Media_URL;
+
     const getSelectedMapping = () => {
         const mappingStr = localStorage.getItem('selected_role_mapping');
         if (!mappingStr) return null;
@@ -966,14 +971,17 @@ const Header = () => {
         if (parsed.role_mappings?.length > 0) return parsed.role_mappings[0];
         return parsed;
     };
+
     const getUserEntityFallback = () => {
         const entityStr = localStorage.getItem('userEntity');
         if (!entityStr) return null;
         return JSON.parse(entityStr);
     };
+
     const getUserData = () => {
         return JSON.parse(localStorage.getItem("user_data") || "{}");
     };
+
     const getUserRole = () => {
         const selectedMapping = getSelectedMapping();
         if (selectedMapping?.role_name) {
@@ -984,6 +992,7 @@ const Header = () => {
         const primaryRole = userData.roles?.[0]?.name || 'user';
         return primaryRole.toLowerCase();
     };
+
     const hasValidMapping = () => {
         const selectedMapping = getSelectedMapping();
         const currentRoleLocal = getUserRole();
@@ -995,6 +1004,7 @@ const Header = () => {
         const hasFallbackEntity = !!userEntity?.id;
         return hasMappingEntity || hasFallbackEntity;
     };
+
     const currentRole = getUserRole();
     const isAuthenticated = !!localStorage.getItem('access_token') && !!currentRole;
     const canCreateTicket = ['user', 'technician', 'superadmin'].includes(currentRole);
@@ -1004,6 +1014,7 @@ const Header = () => {
     const canAccessTechnician = ['technician'].includes(currentRole);
     const selectedMapping = getSelectedMapping();
     const userEntity = getUserEntityFallback();
+
     const computedEntity = useMemo(() => {
         let entityName = "Ticket System";
         let logoSrc = null;
@@ -1017,6 +1028,7 @@ const Header = () => {
         else if (lowerName.includes("nddiagnostics")) logoSrc = ndLogo;
         return { display_name: entityName, logo: logoSrc };
     }, [selectedMapping, userEntity]);
+
     const canSwitchRole = useMemo(() => {
         if (currentRole === 'superadmin') {
             return entities.length > 1;
@@ -1024,6 +1036,7 @@ const Header = () => {
             return availableMappings.length > 1;
         }
     }, [currentRole, entities.length, availableMappings.length]);
+
     const handleLogout = async () => {
         try {
             await logoutAPI();
@@ -1031,6 +1044,7 @@ const Header = () => {
         localStorage.clear();
         navigate("/");
     };
+
     const fetchEntities = async () => {
         setLoadingEntities(true);
         try {
@@ -1045,6 +1059,7 @@ const Header = () => {
             setLoadingEntities(false);
         }
     };
+
     const handleEntitySelect = (entity) => {
         const userData = getUserData();
         let defaultRoleName = getUserRole();
@@ -1062,17 +1077,18 @@ const Header = () => {
         };
         localStorage.setItem("selected_role_mapping", JSON.stringify(defaultMapping));
         localStorage.setItem("userEntity", JSON.stringify({
-        id: entity.id,
-        name: entity.name,
-        display_name: entity.display_name || entity.name,
-        logo: entity.logo
-    }));
+            id: entity.id,
+            name: entity.name,
+            display_name: entity.display_name || entity.name,
+            logo: entity.logo
+        }));
         setEntityDialogOpen(false);
         if (shouldNavigateAfterSelect) {
             navigate("/CreateTicket");
         }
         setShouldNavigateAfterSelect(false);
     };
+
     const loadAvailableMappings = async () => {
         setLoadingMappings(true);
         try {
@@ -1089,6 +1105,7 @@ const Header = () => {
             setLoadingMappings(false);
         }
     };
+
     const handleCreateTicketClick = async () => {
         if (hasValidMapping()) {
             const selected = getSelectedMapping();
@@ -1103,6 +1120,7 @@ const Header = () => {
         await loadAvailableMappings();
         setEntityDialogOpen(true);
     };
+
     const handleConfirmSelection = () => {
         const selected = availableMappings.find(
             (r) => r.entity_id === selectedEntity && r.role_id === selectedRole
@@ -1115,6 +1133,7 @@ const Header = () => {
         // Navigate to CreateTicket
         navigate("/CreateTicket");
     };
+
     const handleSwitchRoleClick = async () => {
         if (!canSwitchRole) return;
         await loadAvailableMappings();
@@ -1123,6 +1142,7 @@ const Header = () => {
         setSelectedRole("");
         setRoleSwitchDialogOpen(true);
     };
+
     const handleSwitchConfirm = () => {
         let newMapping;
         if (currentRole === 'superadmin') {
@@ -1155,16 +1175,20 @@ const Header = () => {
         setSelectedEntity("");
         setSelectedRole("");
     };
+
     // filter roles based on selected entity
     const rolesForSelectedEntity = availableMappings.filter(
         (r) => r.entity_id.toString() === selectedEntity
     );
+
     const handleProfileClick = () => {
         navigate("/profile");
     };
+
     useEffect(() => {
         loadAvailableMappings();
     }, []);
+
     const userData = getUserData();
     const profileImage = userData?.profile_image
         ? `${media_url}${userData.profile_image}`
@@ -1173,6 +1197,7 @@ const Header = () => {
         "https://ui-avatars.com/api/?rounded=false&name=" +
         (userData?.name || "User");
     if (!isAuthenticated) return null;
+
     return (
         <AppBar position="static" color="transparent" elevation={1}
             sx={{
@@ -1181,8 +1206,7 @@ const Header = () => {
             }}
         >
             <Toolbar sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                {/* Left Header */}
-                <Box sx={{ display: "flex", gap: 2, alignItems: "center", cursor: "pointer" }}
+                <Box sx={{ display: "flex", gap: isMobile ? 1 : 2, alignItems: "center", cursor: "pointer" }}
                     onClick={() => navigate("/UserDashboard")}
                 >
                     {computedEntity.logo && (
@@ -1190,8 +1214,8 @@ const Header = () => {
                             src={computedEntity.logo}
                             alt="Entity Logo"
                             style={{
-                                width: 60,
-                                height: 60,
+                                width: isMobile ? 40 : 60,
+                                height: isMobile ? 40 : 60,
                                 borderRadius: "50%",
                                 objectFit: "contain",
                                 border: "2px solid #e0e0e0",
@@ -1203,32 +1227,29 @@ const Header = () => {
                             {computedEntity.display_name}
                         </Typography>
                         <Typography variant="caption" sx={{ color: "#667eea" }}>
-                            Helpdesk 
+                            Helpdesk
                         </Typography>
                     </Box>
                 </Box>
-                {/* Right Side */}
-                {!isMobile ? (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                        {/* Create Ticket BTN */}
-                        {canCreateTicket && (
-                            <Tooltip title={!hasValidMapping() ? "First select entity" : ""} arrow placement="bottom">
-                                <span>
-                                    <IconButton
-                                        sx={{
-                                            background: "linear-gradient(135deg,#667eea,#764ba2)",
-                                            color: "white",
-                                            "&:hover": { opacity: 0.8 },
-                                            ...((!hasValidMapping() && currentRole !== 'superadmin') && { opacity: 0.6, cursor: "not-allowed" })
-                                        }}
-                                        onClick={handleCreateTicketClick}
-                                    >
-                                        <LuTicketPlus />
-                                    </IconButton>
-                                </span>
-                            </Tooltip>
-                        )}
-                        {/* Rectangle Profile Icon */}
+                <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                    {canCreateTicket && (
+                        <Tooltip title={!hasValidMapping() ? "First select entity" : ""} arrow placement="bottom">
+                            <span>
+                                <IconButton
+                                    sx={{
+                                        background: "linear-gradient(135deg,#667eea,#764ba2)",
+                                        color: "white",
+                                        "&:hover": { opacity: 0.8 },
+                                        ...((!hasValidMapping() && currentRole !== 'superadmin') && { opacity: 0.6, cursor: "not-allowed" })
+                                    }}
+                                    onClick={handleCreateTicketClick}
+                                >
+                                    <LuTicketPlus />
+                                </IconButton>
+                            </span>
+                        </Tooltip>
+                    )}
+                    {!isMobile ? (
                         <Box
                             sx={{
                                 display: "flex",
@@ -1267,84 +1288,86 @@ const Header = () => {
                                 </Typography>
                             </Box>
                         </Box>
-                        {/* Custom Profile Panel */}
-                        {profileOpen && (
-                            <Paper
-                                elevation={5}
+                    ) : (
+                        <Box onClick={() => setDrawerOpen(true)}>
+                            <Avatar
+                                src={profileImage ? `${profileImage}` : null}
+                                alt="Profile"
+                                variant="square"
                                 sx={{
-                                    position: "absolute",
-                                    top: 70,
-                                    right: 20,
-                                    width: 150,
-                                    borderRadius: 3,
-                                    p: 1.5,
-                                    animation: "fadeIn 0.2s ease"
+                                    width: 55,
+                                    height: 55,
+                                    borderRadius: "10px",
+                                    backgroundColor: "#e0e0e0",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    fontSize: 30,
+                                    color: "#555"
                                 }}
-                            >
-                                {/* Profile Button */}
-                                <ListItemButton onClick={() => navigate("/profile")}>
-                                    <PersonOutlineIcon sx={{ mr: 1 }} /> Profile
+                            />
+                        </Box>
+                    )}
+                </Box>
+
+
+                {/* Custom Profile Panel */}
+                {profileOpen && (
+                    <Paper
+                        elevation={5}
+                        sx={{
+                            position: "absolute",
+                            top: 70,
+                            right: 20,
+                            width: 150,
+                            borderRadius: 3,
+                            p: 1.5,
+                            animation: "fadeIn 0.2s ease"
+                        }}
+                    >
+                        {/* Profile Button */}
+                        <ListItemButton onClick={() => navigate("/profile")}>
+                            <PersonOutlineIcon sx={{ mr: 1 }} /> Profile
+                        </ListItemButton>
+                        <ListItemButton onClick={() => navigate("/UserDashboard")}>
+                            <ListItemText primary="User Dashboard" />
+                        </ListItemButton>
+                        {canAccessAdmin && (
+                            <>
+                                <ListItemButton onClick={() => navigate("/AdminDashboard")}>
+                                    <ListItemText primary="Admin Dashboard" />
                                 </ListItemButton>
-                                <ListItemButton onClick={() => navigate("/UserDashboard")}>
-                                    <ListItemText primary="User Dashboard" />
+                                <ListItemButton onClick={() => navigate("/admin/entity")}>
+                                    <ListItemText primary="Admin Panel" />
                                 </ListItemButton>
-                                {canAccessAdmin && (
-                                    <>
-                                        <ListItemButton onClick={() => navigate("/AdminDashboard")}>
-                                            <ListItemText primary="Admin Dashboard" />
-                                        </ListItemButton>
-                                        <ListItemButton onClick={() => navigate("/admin/entity")}>
-                                            <ListItemText primary="Admin Panel" />
-                                        </ListItemButton>
-                                    </>
-                                )}
-                                {canAccessHOD &&
-                                    <ListItemButton onClick={() => navigate("/HODdashboard")}>
-                                        <ListItemText primary="HOD Dashboard" />
-                                    </ListItemButton>
-                                }
-                                {canAccessCEO &&
-                                    <ListItemButton onClick={() => navigate("/COEdashboard")}>
-                                        <ListItemText primary="CEO Dashboard" />
-                                    </ListItemButton>
-                                }
-                                {canAccessTechnician &&
-                                    <ListItemButton onClick={() => navigate("/TechnicianDashboard")}>
-                                        <ListItemText primary="Technician Dashboard" />
-                                    </ListItemButton>
-                                }
-                                {/* Switch Role Button */}
-                                <ListItemButton onClick={handleSwitchRoleClick} disabled={!canSwitchRole}>
-                                    <SwapHorizontalCircleIcon sx={{ mr: 1 }} /> Switch Entity
-                                </ListItemButton>
-                                {/* Logout Button */}
-                                <ListItemButton onClick={handleLogout}>
-                                    <LogoutIcon sx={{ mr: 1 }} /> Logout
-                                </ListItemButton>
-                            </Paper>
+                            </>
                         )}
-                    </Box>
-                ) : (
-                    <Box onClick={() => setDrawerOpen(true)}>
-                        <Avatar
-                            src={profileImage ? `${profileImage}` : null}
-                            alt="Profile"
-                            variant="square"
-                            sx={{
-                                width: 55,
-                                height: 55,
-                                borderRadius: "10px",
-                                //border: "2px solid #667eea",
-                                backgroundColor: "#e0e0e0",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                fontSize: 30,
-                                color: "#555"
-                            }}
-                        />
-                    </Box>
+                        {canAccessHOD &&
+                            <ListItemButton onClick={() => navigate("/HODdashboard")}>
+                                <ListItemText primary="HOD Dashboard" />
+                            </ListItemButton>
+                        }
+                        {canAccessCEO &&
+                            <ListItemButton onClick={() => navigate("/COEdashboard")}>
+                                <ListItemText primary="CEO Dashboard" />
+                            </ListItemButton>
+                        }
+                        {canAccessTechnician &&
+                            <ListItemButton onClick={() => navigate("/TechnicianDashboard")}>
+                                <ListItemText primary="Technician Dashboard" />
+                            </ListItemButton>
+                        }
+                        {/* Switch Role Button */}
+                        <ListItemButton onClick={handleSwitchRoleClick} disabled={!canSwitchRole}>
+                            <SwapHorizontalCircleIcon sx={{ mr: 1 }} /> Switch Entity
+                        </ListItemButton>
+                        {/* Logout Button */}
+                        <ListItemButton onClick={handleLogout}>
+                            <LogoutIcon sx={{ mr: 1 }} /> Logout
+                        </ListItemButton>
+                    </Paper>
                 )}
+
                 {/* Drawer (Mobile Menu) */}
                 <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
                     <Box sx={{ width: 240, p: 2 }}>
@@ -1558,4 +1581,3 @@ const Header = () => {
     );
 };
 export default Header;
- 

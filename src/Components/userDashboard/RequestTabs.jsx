@@ -321,12 +321,12 @@
 // import ErrorIcon from '@mui/icons-material/Error';
 // import VisibilityIcon from '@mui/icons-material/Visibility';
 // import { useNavigate } from "react-router-dom";
- 
+
 // const RequestTabs = ({ userStatus }) => {
- 
+
 //     const theme = useTheme();
 //     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
- 
+
 //     const [selectedType, setSelectedType] = useState("pending");
 //     const [search, setSearch] = useState("");
 //     const [department, setDepartment] = useState("");
@@ -337,10 +337,10 @@
 //         rejected: [],
 //         sla: []
 //     });
- 
+
 //     const [page, setPage] = useState(0);
 //     const [rowsPerPage, setRowsPerPage] = useState(5);
- 
+
 //     useEffect(() => {
 //         if (userStatus) {
 //             setTickets({
@@ -352,7 +352,7 @@
 //             });
 //         }
 //     }, [userStatus]);
- 
+
 //     const statusCards = [
 //         { id: "pending", label: "PENDING", color: "warning.main", icon: <ErrorIcon />, count: userStatus?.pending || 0 },
 //         { id: "approved", label: "APPROVED", color: "success.main", icon: <CheckCircleIcon />, count: userStatus?.approved || 0 },
@@ -360,14 +360,14 @@
 //         { id: "rejected", label: "REJECTED", color: "error.main", icon: <CancelIcon />, count: userStatus?.rejected || 0 },
 //         { id: "sla", label: "SLA BREACHED", color: "warning.main", icon: <AccessTimeFilledIcon />, count: userStatus?.sla_breached_count || 0 },
 //     ];
- 
+
 //     const selectedTickets = tickets[selectedType] || [];
- 
+
 //     const departmentList = useMemo(
 //         () => [...new Set(selectedTickets.map((row) => row.department_detail?.field_name).filter(Boolean))],
 //         [selectedTickets]
 //     );
- 
+
 //     const headingMap = {
 //         pending: "PENDING Tickets (MY REQUEST)",
 //         approved: "APPROVED Tickets (MY REQUEST)",
@@ -375,7 +375,7 @@
 //         rejected: "REJECTED Tickets (MY REQUEST)",
 //         sla: "SLA BREACHED Tickets (MY REQUEST)",
 //     };
- 
+
 //     const RequestTabelCol = [
 //         { id: 1, title: <>Ticket ID</> },
 //         { id: 2, title: <>Title</> },
@@ -387,7 +387,7 @@
 //         { id: 8, title: <>Open Date<br />Last Update</> },
 //         { id: 9, title: <>Action</> },
 //     ];
- 
+
 //     // const RequestTabelCol = [
 //     //     { id: 1, title: "Ticket ID" },
 //     //     { id: 2, title: "Title" },
@@ -403,16 +403,16 @@
 //     //     // { id: 12, title: "Last Update" },
 //     //     { id: 9, title: "Action" },
 //     // ];
- 
+
 //     const navigate = useNavigate();
- 
+
 //     const handleTicketClick = (ticketNo) => {
 //         console.log('Storing ticket No:', ticketNo);
 //         localStorage.setItem('selectedTicketId', ticketNo);
 //         console.log('Navigating to Approval');
 //         navigate('/Approval');
 //     };
- 
+
 //     const filteredRows = useMemo(() => {
 //         return selectedTickets.filter((row) => {
 //             const matchesSearch =
@@ -420,27 +420,27 @@
 //                     .join(" ")
 //                     .toLowerCase()
 //                     .includes(search.toLowerCase());
- 
+
 //             const matchesDept = department ? row.department_detail?.field_name === department : true;
- 
+
 //             return matchesSearch && matchesDept;
 //         });
 //     }, [selectedTickets, search, department]);
- 
+
 //     const handleCardClick = (type) => {
 //         setSelectedType(type);
 //         setSearch("");
 //         setDepartment("");
 //         setPage(0);
 //     };
- 
+
 //     const clearFilters = () => {
 //         setSearch("");
 //         setDepartment("");
 //         setPage(0);
 //     };
- 
- 
+
+
 //     return (
 //         <Box sx={{ width: "100%" }}>
 //             <Card>
@@ -587,37 +587,37 @@
 //                                                                     {t.status_detail?.field_values}
 //                                                                 </Typography>
 //                                                             </Box>
- 
+
 //                                                             {/* Title */}
 //                                                             <Typography fontWeight={600} mt={1}>
 //                                                                 {t.title}
 //                                                             </Typography>
- 
+
 //                                                             {/* Priority */}
 //                                                             <Typography fontSize={13} color="text.secondary">
 //                                                                 Priority: {t.priority_detail?.field_values || "-"}
 //                                                             </Typography>
- 
+
 //                                                             {/* Category */}
 //                                                             <Typography fontSize={13} mt={1}>
 //                                                                 <strong>Category:</strong>{" "}
 //                                                                 {t.category_detail?.category_name || "-"} /{" "}
 //                                                                 {t.subcategory_detail?.subcategory_name || "-"}
 //                                                             </Typography>
- 
+
 //                                                             {/* Department & Location */}
 //                                                             <Typography fontSize={13}>
 //                                                                 <strong>Dept:</strong>{" "}
 //                                                                 {t.department_detail?.field_name || "-"} |{" "}
 //                                                                 {t.location_detail?.field_name || "-"}
 //                                                             </Typography>
- 
+
 //                                                             {/* Dates */}
 //                                                             <Typography fontSize={12} color="text.secondary" mt={1}>
 //                                                                 Open: {new Date(t.created_date).toLocaleString()} <br />
 //                                                                 Update:{new Date(t.updated_date).toLocaleString()}
 //                                                             </Typography>
- 
+
 //                                                             {/* Action */}
 //                                                             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
 //                                                                 <IconButton
@@ -736,7 +736,7 @@
 //                                         </Table>
 //                                     </TableContainer>
 //                                 )}
- 
+
 //                                 <Stack direction="row" justifyContent="end" sx={{ py: 2, px: 2 }}>
 //                                     <Pagination
 //                                         count={Math.ceil(filteredRows.length / rowsPerPage)}
@@ -765,7 +765,7 @@
 //         </Box>
 //     );
 // };
- 
+
 // export default RequestTabs;
 // import { useState, useEffect, useMemo } from "react";
 // import { useTheme } from "@mui/material/styles";
@@ -782,12 +782,12 @@
 // import LockIcon from '@mui/icons-material/Lock'; // For Closed
 
 // const RequestTabs = ({ userStatus }) => {
- 
+
 //     const theme = useTheme();
 //     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 //     const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
 //     const isDesktop = useMediaQuery(theme.breakpoints.up("md"));
- 
+
 //     const [selectedType, setSelectedType] = useState("new_assigned");
 //     const [search, setSearch] = useState("");
 //     const [department, setDepartment] = useState("");
@@ -796,10 +796,10 @@
 //         solved: [],
 //         closed: []
 //     });
- 
+
 //     const [page, setPage] = useState(0);
 //     const [rowsPerPage, setRowsPerPage] = useState(5);
- 
+
 //     useEffect(() => {
 //         if (userStatus) {
 //             setTickets({
@@ -809,7 +809,7 @@
 //             });
 //         }
 //     }, [userStatus]);
- 
+
 //     // UPDATED: Only show New Assigned, Solved, and Closed cards
 //     const statusCards = [
 //         { 
@@ -837,21 +837,21 @@
 //             description: "Tickets that are completed"
 //         },
 //     ];
- 
+
 //     const selectedTickets = tickets[selectedType] || [];
- 
+
 //     const departmentList = useMemo(
 //         () => [...new Set(selectedTickets.map((row) => row.department_detail?.field_name).filter(Boolean))],
 //         [selectedTickets]
 //     );
- 
+
 //     // UPDATED: Headings for New Assigned, Solved, Closed
 //     const headingMap = {
 //         new_assigned: "NEW ASSIGNED TICKETS (MY REQUEST)",
 //         solved: "SOLVED TICKETS (MY REQUEST)",
 //         closed: "CLOSED TICKETS (MY REQUEST)",
 //     };
- 
+
 //     const RequestTabelCol = [
 //         { id: 1, title: <>Ticket ID</> },
 //         { id: 2, title: <>Title</> },
@@ -863,16 +863,16 @@
 //         { id: 8, title: <>Open Date<br />Last Update</> },
 //         { id: 9, title: <>Action</> },
 //     ];
- 
+
 //     const navigate = useNavigate();
- 
+
 //     const handleTicketClick = (ticketNo) => {
 //         console.log('Storing ticket No:', ticketNo);
 //         localStorage.setItem('selectedTicketId', ticketNo);
 //         console.log('Navigating to Approval');
 //         navigate('/Approval');
 //     };
- 
+
 //     const filteredRows = useMemo(() => {
 //         return selectedTickets.filter((row) => {
 //             const matchesSearch =
@@ -880,26 +880,26 @@
 //                     .join(" ")
 //                     .toLowerCase()
 //                     .includes(search.toLowerCase());
- 
+
 //             const matchesDept = department ? row.department_detail?.field_name === department : true;
- 
+
 //             return matchesSearch && matchesDept;
 //         });
 //     }, [selectedTickets, search, department]);
- 
+
 //     const handleCardClick = (type) => {
 //         setSelectedType(type);
 //         setSearch("");
 //         setDepartment("");
 //         setPage(0);
 //     };
- 
+
 //     const clearFilters = () => {
 //         setSearch("");
 //         setDepartment("");
 //         setPage(0);
 //     };
- 
+
 //     return (
 //         <Box sx={{ width: "100%" }}>
 //             <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
@@ -912,7 +912,7 @@
 //                     >
 //                         MY REQUEST DASHBOARD
 //                     </Typography>
-                    
+
 //                     {/* UPDATED: Grid with only 3 cards - Full width */}
 //                     <Grid container spacing={3} sx={{ mb: 4 }}>
 //                         {statusCards.map((item) => (
@@ -960,13 +960,13 @@
 //                                     <Typography fontSize={{ xs: 20, sm: 14, md: 20 }} fontWeight={550}>
 //                                         {item.label}
 //                                     </Typography>        
-                                            
+
 //                                     </CardContent>
 //                                 </Card>
 //                             </Grid>
 //                         ))}
 //                     </Grid>
-                    
+
 //                     {selectedType && (
 //                         <Box>
 //                             <Box sx={{ 
@@ -1039,7 +1039,7 @@
 //                                     </Button>
 //                                 </Box>
 //                             </Box>
-                            
+
 //                             <Card sx={{ 
 //                                 borderRadius: 3, 
 //                                 boxShadow: 2,
@@ -1079,17 +1079,17 @@
 //                                                                     {t.status_detail?.field_values}
 //                                                                 </Typography>
 //                                                             </Box>
- 
+
 //                                                             {/* Title */}
 //                                                             <Typography fontWeight={600} mt={1} color="#2D3748">
 //                                                                 {t.title}
 //                                                             </Typography>
- 
+
 //                                                             {/* Priority */}
 //                                                             <Typography fontSize={13} color="#718096" mt={0.5}>
 //                                                                 Priority: {t.priority_detail?.field_values || "-"}
 //                                                             </Typography>
- 
+
 //                                                             {/* Category */}
 //                                                             <Typography fontSize={13} mt={1.5}>
 //                                                                 <strong style={{ color: "#4A5568" }}>Category:</strong>{" "}
@@ -1098,7 +1098,7 @@
 //                                                                     {t.subcategory_detail?.subcategory_name || "-"}
 //                                                                 </span>
 //                                                             </Typography>
- 
+
 //                                                             {/* Department & Location */}
 //                                                             <Typography fontSize={13} mt={1}>
 //                                                                 <strong style={{ color: "#4A5568" }}>Dept:</strong>{" "}
@@ -1107,13 +1107,13 @@
 //                                                                     {t.location_detail?.field_name || "-"}
 //                                                                 </span>
 //                                                             </Typography>
- 
+
 //                                                             {/* Dates */}
 //                                                             <Typography fontSize={12} color="#718096" mt={1.5}>
 //                                                                 Open: {new Date(t.created_date).toLocaleDateString()} <br />
 //                                                                 Update: {new Date(t.updated_date).toLocaleDateString()}
 //                                                             </Typography>
- 
+
 //                                                             {/* Action */}
 //                                                             <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
 //                                                                 <Button
@@ -1283,7 +1283,7 @@
 //                                         </Table>
 //                                     </TableContainer>
 //                                 )}
- 
+
 //                                 {filteredRows.length > 0 && (
 //                                     <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 2, px: 3, borderTop: "1px solid #E2E8F0" }}>
 //                                         <Typography variant="body2" color="#718096">
@@ -1328,35 +1328,37 @@
 //         </Box>
 //     );
 // };
- 
+
 // export default RequestTabs;
+
 import { useState, useEffect, useMemo } from "react";
 import { useTheme } from "@mui/material/styles";
 import { Box, Card, CardContent, Typography, Grid, TextField, Button, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, useMediaQuery, Autocomplete, Stack, Pagination, Tooltip, IconButton, Icon, Drawer, CircularProgress, Divider, Chip, Avatar, Tabs, Tab } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import NewReleasesIcon from '@mui/icons-material/NewReleases'; // For New Assigned
-import DoneAllIcon from '@mui/icons-material/DoneAll'; // For Solved
-import LockIcon from '@mui/icons-material/Lock'; // For Closed
-import {
-  Chat as ChatIcon,
-  Send as SendIcon,
-} from "@mui/icons-material";
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import NewReleasesIcon from '@mui/icons-material/NewReleases';
+import DoneAllIcon from '@mui/icons-material/DoneAll';
+import CancelIcon from '@mui/icons-material/Cancel';
+import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
+import LockIcon from '@mui/icons-material/Lock';
+import { Chat as ChatIcon, Send as SendIcon, } from "@mui/icons-material";
 import { toast } from "react-toastify";
-import {
-  fetchMessages,
-  sendMessage,
-  getTicketDetails,
-} from "../../Api"; // Assuming the API path is correct; adjust if needed
+import { fetchMessages, sendMessage, getTicketDetails, } from "../../Api";
+
 const RequestTabs = ({ userStatus }) => {
+
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+    const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+
     const [selectedType, setSelectedType] = useState("new_assigned");
     const [search, setSearch] = useState("");
     const [department, setDepartment] = useState("");
     const [tickets, setTickets] = useState({
         new_assigned: [],
         solved: [],
-        closed: []
+        closed: [],
+        cancelled: [],
     });
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -1377,15 +1379,18 @@ const RequestTabs = ({ userStatus }) => {
     const [solutionText, setSolutionText] = useState("");
     const [isResolved, setIsResolved] = useState(false);
     const [isApproved, setIsApproved] = useState(false);
+
     useEffect(() => {
         if (userStatus) {
             setTickets({
                 new_assigned: userStatus.new_assigned_tickets || [],
                 solved: userStatus.solved_tickets || [],
-                closed: userStatus.closed_tickets || []
+                closed: userStatus.closed_tickets || [],
+                cancelled: userStatus.cancelled_tickets || [],
             });
         }
     }, [userStatus]);
+
     // Get current user ID and name on component mount - Ticket Creator (Requester)
     useEffect(() => {
         const userDataString = localStorage.getItem("user");
@@ -1400,23 +1405,41 @@ const RequestTabs = ({ userStatus }) => {
             setCurrentUserName("You");
         }
     }, []);
+
     // Only show New Assigned, Solved, and Closed cards
     const statusCards = [
         {
             id: "new_assigned",
-            label: "NEW ASSIGNED",
+            label: "NEW",
             color: "warning",
             icon: <NewReleasesIcon />,
             count: userStatus?.new_assigned || 0,
             description: "Tickets recently assigned to you"
         },
         {
+            id: "pending",
+            label: "PENDING",
+            color: "warning",
+            icon: <AccessTimeFilledIcon />,
+            //count: userStatus?.new_assigned || 0,
+            count: 0,
+            description: "Tickets recently assigned to you"
+        },
+        {
             id: "solved",
-            label: "SOLVED",
+            label: "RESOLVED",
             color: "success",
             icon: <DoneAllIcon />,
             count: userStatus?.solved || 0,
             description: "Tickets you have resolved"
+        },
+        {
+            id: "cancelled",
+            label: "CANCEL",
+            color: "error",
+            icon: <CancelIcon />,
+            count: userStatus?.cancelled || 0,
+            description: "Tickets recently assigned to you"
         },
         {
             id: "closed",
@@ -1427,16 +1450,19 @@ const RequestTabs = ({ userStatus }) => {
             description: "Tickets that are completed"
         },
     ];
+
     const selectedTickets = tickets[selectedType] || [];
     const departmentList = useMemo(
         () => [...new Set(selectedTickets.map((row) => row.department_detail?.field_name).filter(Boolean))],
         [selectedTickets]
     );
+
     // Get initials for avatar
     const getInitials = (name) => {
         if (!name || name === "You") return "U";
         return name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
     };
+
     // Group chats by date
     const groupedChats = useMemo(() => {
         const groups = {};
@@ -1454,12 +1480,16 @@ const RequestTabs = ({ userStatus }) => {
             }))
             .sort((a, b) => new Date(a.date) - new Date(b.date));
     }, [followUpChats]);
+
     // Headings for New Assigned, Solved, Closed
     const headingMap = {
-        new_assigned: "NEW ASSIGNED TICKETS (MY REQUEST)",
+        new_assigned: "NEW TICKETS (MY REQUEST)",
+        pending: "PENDING TICKETS (MY REQUEST)",
         solved: "SOLVED TICKETS (MY REQUEST)",
+        cancel: "CANCEL TICKETS (MY REQUEST)",
         closed: "CLOSED TICKETS (MY REQUEST)",
     };
+
     const RequestTabelCol = [
         { id: 1, title: <>Ticket ID</> },
         { id: 2, title: <>Title</> },
@@ -1471,6 +1501,7 @@ const RequestTabs = ({ userStatus }) => {
         { id: 8, title: <>Open Date<br />Last Update</> },
         { id: 9, title: <>Action</> },
     ];
+
     const navigate = useNavigate();
     const handleTicketClick = (ticketNo) => {
         console.log('Storing ticket No:', ticketNo);
@@ -1478,6 +1509,7 @@ const RequestTabs = ({ userStatus }) => {
         console.log('Navigating to Approval');
         navigate('/Approval');
     };
+
     // Fetch all messages and filter by ticket_no and between current user (ticket creator) and receiver (assignee)
     const fetchTicketMessages = async (ticketNo, currentUserId, receiverId) => {
         try {
@@ -1487,7 +1519,7 @@ const RequestTabs = ({ userStatus }) => {
             const filteredMessages = allMessages.filter((msg) =>
                 msg.ticket_no == ticketNo &&
                 ((msg.sender === currentUserId && msg.receiver === receiverId) ||
-                 (msg.sender === receiverId && msg.receiver === currentUserId))
+                    (msg.sender === receiverId && msg.receiver === currentUserId))
             );
             return filteredMessages || [];
         } catch (err) {
@@ -1496,12 +1528,13 @@ const RequestTabs = ({ userStatus }) => {
             return [];
         }
     };
+
     const sendFollowUpMessageHandler = async (messageText) => {
         if (!messageText.trim()) {
             toast.error("Message cannot be empty");
             return;
         }
-     
+
         if (!currentChatTicket?.id) {
             toast.error("No ticket selected");
             return;
@@ -1529,12 +1562,12 @@ const RequestTabs = ({ userStatus }) => {
                 sender: currentUserId,
                 createdon: new Date().toISOString(),
             };
-         
+
             // Add to local state and sort
             const updatedChats = [...followUpChats, newMessage].sort((a, b) => new Date(a.createdon) - new Date(b.createdon));
             setFollowUpChats(updatedChats);
             setNewFollowUpMessage("");
-         
+
             toast.success("Message sent successfully!");
         } catch (err) {
             toast.error("Failed to send message");
@@ -1543,16 +1576,19 @@ const RequestTabs = ({ userStatus }) => {
             setSendingFollowUpMessage(false);
         }
     };
+
     const handleResolveSolution = () => {
         // TODO: Call API to resolve solution
         setIsResolved(true);
         toast.success("Solution resolved!");
     };
+
     const handleApproveSolution = () => {
         // TODO: Call API to approve solution
         setIsApproved(true);
         toast.success("Solution approved!");
     };
+
     const handleChatDrawerOpen = async (ticketNo) => {
         if (!ticketNo || !currentUserId) {
             toast.error("No ticket or user ID provided");
@@ -1589,6 +1625,7 @@ const RequestTabs = ({ userStatus }) => {
             setCurrentChatTicket({
                 id: ticketNo,
                 title: ticketData.title || ticket.title || "",
+                description: ticketData.description || ticket.description || "",
             });
             // Check if solved ticket and set solution data (for ticket creator view)
             if (selectedType === "solved") {
@@ -1604,12 +1641,12 @@ const RequestTabs = ({ userStatus }) => {
             const ticketMessages = await fetchTicketMessages(ticketNo, currentUserId, receiverId);
             const messagesCount = ticketMessages.length;
             console.log('Fetched messages count:', messagesCount);
-         
+
             // Sort messages by timestamp
             const sortedTicketMessages = ticketMessages.sort((a, b) =>
                 new Date(a.createdon) - new Date(b.createdon)
             );
-         
+
             setFollowUpChats(sortedTicketMessages);
         } catch (err) {
             console.error("Error fetching ticket details or chats:", err);
@@ -1619,6 +1656,7 @@ const RequestTabs = ({ userStatus }) => {
             setLoadingFollowUpChats(false);
         }
     };
+
     const handleChatDrawerClose = () => {
         setShowFollowUpChat(false);
         setCurrentChatTicket(null);
@@ -1632,133 +1670,191 @@ const RequestTabs = ({ userStatus }) => {
         setIsResolved(false);
         setIsApproved(false);
     };
+
     const filteredRows = useMemo(() => {
+        const searchLower = search.toLowerCase().trim();
+
+        if (!searchLower && !department) {
+            return selectedTickets;
+        }
+
         return selectedTickets.filter((row) => {
-            const matchesSearch =
-                Object.values(row)
-                    .join(" ")
-                    .toLowerCase()
-                    .includes(search.toLowerCase());
-            const matchesDept = department ? row.department_detail?.field_name === department : true;
-            return matchesSearch && matchesDept;
+            // Department filter (separate dropdown)
+            const matchesDept = department
+                ? row.department_detail?.field_name === department
+                : true;
+
+            if (!searchLower) return matchesDept;
+
+            // 1. Ticket Number
+            if (String(row.ticket_no || "").toLowerCase().includes(searchLower)) return true;
+
+            // 2. Title
+            if (row.title?.toLowerCase().includes(searchLower)) return true;
+
+            // 3. Description
+            if (row.description?.toLowerCase().includes(searchLower)) return true;
+
+            // 4. Status
+            if (row.status_detail?.field_values?.toLowerCase().includes(searchLower)) return true;
+
+            // 5. Priority
+            if (row.priority_detail?.field_values?.toLowerCase().includes(searchLower)) return true;
+
+            // 6. Category
+            if (row.category_detail?.category_name?.toLowerCase().includes(searchLower)) return true;
+
+            // 7. Subcategory
+            if (row.subcategory_detail?.subcategory_name?.toLowerCase().includes(searchLower)) return true;
+
+            // 8. Department
+            if (row.department_detail?.field_name?.toLowerCase().includes(searchLower)) return true;
+
+            // 9. Location
+            if (row.location_detail?.field_name?.toLowerCase().includes(searchLower)) return true;
+
+            // 10. Requested By (email or name)
+            if (row.requested_detail?.email?.toLowerCase().includes(searchLower)) return true;
+            if (row.requested_detail?.name?.toLowerCase().includes(searchLower)) return true;
+
+            // 11. Dates (Open Date / Last Update) - match formatted or raw
+            // const openDate = new Date(row.created_date).toLocaleDateString().toLowerCase();
+            // const updateDate = new Date(row.updated_date).toLocaleDateString().toLowerCase();
+            // if (openDate.includes(searchLower) || updateDate.includes(searchLower)) return true;
+
+            return false;
+        }).filter((row) => {
+            // Apply department filter at the end (in case user uses both search + department dropdown)
+            return department ? row.department_detail?.field_name === department : true;
         });
     }, [selectedTickets, search, department]);
+
     const handleCardClick = (type) => {
         setSelectedType(type);
         setSearch("");
         setDepartment("");
         setPage(0);
     };
+
     const clearFilters = () => {
         setSearch("");
         setDepartment("");
         setPage(0);
     };
+
+    const priorityColors = {
+        "Critical": "#D32F2F",
+        "Very High": "#b43d3bff",
+        "High": "#FB8C00",
+        "Medium": "#FDD835",
+        "Low": "#43A047",
+        "Very Low": "#1E88E5",
+    };
+
+    const statusColors = {
+        "Pending": "#EF6C00",
+        "Approved": "#2E7D32",
+        "On Hold": "#1565C0",
+        "Rejected": "#C62828",
+        "SLA Breached": "#F9A825",
+    };
+
     return (
-        <Box sx={{ width: "100%" }}>
-            <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
-                <CardContent>
-                    <Typography
-                        textAlign="center"
-                        variant={isMobile ? "h6" : "h5"}
-                        fontWeight={700}
-                        sx={{ mb: 4, color: "#2D3748" }}
-                    >
-                        MY REQUEST DASHBOARD
-                    </Typography>
-                 
-                    {/* Grid with only 3 cards */}
-                    <Grid container spacing={3} sx={{ mb: 4 }}>
-                        {statusCards.map((item) => (
-                            <Grid item xs={12} sm={6} md={4} key={item.id}>
-                                <Card
-                                    onClick={() => handleCardClick(item.id)}
+        <Box sx={{ width: "100%", mb: 2 }}>
+            <Grid container spacing={1} sx={{ mb: 4 }}>
+                {statusCards.map((item) => (
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} key={item.id}>
+                        <Card
+                            onClick={() => handleCardClick(item.id)}
+                            sx={{
+                                p: 1,
+                                transition: "0.3s ease",
+                                maxWidth: "600px",
+                                maxHeight: 90,
+                                borderRadius: 5,
+                                "&:hover": {
+                                    background: "linear-gradient(135deg, #667eea, #764ba2)",
+                                    color: "#fff",
+                                    transform: "scale(1.03)",
+                                }
+                            }}
+                        >
+                            <CardContent sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+                                <Box
                                     sx={{
-                                        p: 1,
-                                        m: 1,
-                                        transition: "0.3s ease",
-                                        maxWidth: "600px",
-                                        borderRadius: 5,
-                                        "&:hover": {
-                                            background: "linear-gradient(135deg, #667eea, #764ba2)",
-                                            color: "#fff",
-                                            transform: "scale(1.03)",
-                                        }
+                                        width: { xs: 50, sm: 40, md: 50 },
+                                        height: { xs: 50, sm: 40, md: 50 },
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        borderRadius: 2,
+                                        bgcolor: `${item.color}.main`,
+                                        color: "#fff",
                                     }}
                                 >
-                                    <CardContent
-                                        sx={{
-                                            height: "100%",
-                                            display: "flex",
-                                            justifyContent: "space-between",
-                                            p: 3
-                                        }}>
-                                        <Box
-                                            sx={{
-                                                width: { xs: 50, sm: 40, md: 50 },
-                                                height: { xs: 50, sm: 40, md: 50 },
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                borderRadius: 2,
-                                                bgcolor: `${item.color}.main`,
-                                                color: "#fff",
-                                            }}
-                                        >
-                                            <Icon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }}>{item.icon}</Icon>
-                                        </Box>
-                                        <Typography fontSize={{ xs: 25, sm: 20, md: 25 }} fontWeight={600}>
-                                            {item.count}
-                                        </Typography>
-                                        <Typography fontSize={{ xs: 20, sm: 14, md: 20 }} fontWeight={550}>
-                                            {item.label}
-                                        </Typography>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        ))}
+                                    <Icon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }}>{item.icon}</Icon>
+                                </Box>
+                                <Box>
+                                    <Typography fontSize={{ xs: 25, sm: 20, md: 25 }} fontWeight={600}>
+                                        {item.count}
+                                    </Typography>
+                                    <Typography fontSize={{ xs: 20, sm: 14, md: 20 }} fontWeight={550}>
+                                        {item.label}
+                                    </Typography>
+                                </Box>
+                            </CardContent>
+                        </Card>
                     </Grid>
-                 
+                ))}
+            </Grid>
+            <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
+                <CardContent>
                     {selectedType && (
                         <Box>
-                            <Box sx={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                mb: 4,
-                                flexDirection: isMobile ? "column" : "row",
-                                gap: isMobile ? 2 : 0
-                            }}>
-                                <Typography variant="h5" fontWeight={700} sx={{ color: "#2D3748" }}>
+                            <Box
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: isMobile || isTablet ? "column" : "row",
+                                    justifyContent: !isMobile || !isTablet ? "space-between" : undefined,
+                                    alignItems: isMobile ? "flex-start" : "center",
+                                    mb: 4,
+                                    gap: isMobile ? 2 : 0,
+                                }}
+                            >
+                                <Typography
+                                    variant="h5"
+                                    fontWeight={700}
+                                    sx={{
+                                        color: "#2D3748",
+                                        width: isMobile || isTablet ? "100%" : "auto",
+                                    }}
+                                >
                                     {headingMap[selectedType] || "Tickets"}
                                 </Typography>
                                 <Box
                                     sx={{
                                         display: "flex",
                                         flexDirection: isMobile ? "column" : "row",
-                                        justifyContent: "flex-end",
+                                        flexWrap: isTablet ? "wrap" : "nowrap",
                                         gap: 2,
-                                        width: isMobile ? "100%" : "auto"
+                                        width: isMobile || isTablet ? "100%" : "auto",
+                                        justifyContent: isTablet ? "flex-start" : "flex-end",
+                                        mt: isTablet ? 1.5 : 0
                                     }}
                                 >
                                     <Autocomplete
                                         options={departmentList}
                                         value={department}
                                         onChange={(e, newValue) => setDepartment(newValue)}
-                                        renderInput={(params) => (
-                                            <TextField
-                                                {...params}
-                                                label="Department"
-                                                size="small"
-                                                variant="outlined"
-                                            />
-                                        )}
                                         sx={{
-                                            width: isMobile ? "100%" : 200,
+                                            width: { xs: "100%", sm: 300, md: 200 },
                                             "& .MuiOutlinedInput-root": {
                                                 borderRadius: 2,
                                             }
                                         }}
+                                        renderInput={(params) => (
+                                            <TextField {...params} label="Department" size="small" variant="outlined" />
+                                        )}
                                     />
                                     <TextField
                                         size="small"
@@ -1767,7 +1863,7 @@ const RequestTabs = ({ userStatus }) => {
                                         onChange={(e) => setSearch(e.target.value)}
                                         variant="outlined"
                                         sx={{
-                                            width: isMobile ? "100%" : 200,
+                                            width: { xs: "100%", sm: 300, md: 200 },
                                             "& .MuiOutlinedInput-root": {
                                                 borderRadius: 2,
                                             }
@@ -1779,8 +1875,7 @@ const RequestTabs = ({ userStatus }) => {
                                         onClick={clearFilters}
                                         sx={{
                                             borderRadius: 2,
-                                            borderColor: "#CBD5E0",
-                                            color: "#4A5568",
+                                            color: "info",
                                             "&:hover": {
                                                 borderColor: "#667eea",
                                                 backgroundColor: "#667eea10"
@@ -1791,113 +1886,135 @@ const RequestTabs = ({ userStatus }) => {
                                     </Button>
                                 </Box>
                             </Box>
-                         
-                            <Card sx={{
-                                borderRadius: 3,
-                                boxShadow: 2,
-                                overflow: "hidden"
-                            }}>
-                                {isMobile ? (
-                                    <Box sx={{ p: 2 }}>
-                                        {filteredRows.length > 0 ? (
-                                            filteredRows
-                                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                                                .map((t) => (
-                                                    <Card
-                                                        sx={{
-                                                            mb: 2,
-                                                            borderRadius: 2,
-                                                            boxShadow: "0px 2px 8px rgba(0,0,0,0.05)",
-                                                        }}
-                                                        key={t.id}
-                                                    >
-                                                        <CardContent>
-                                                            {/* Header */}
-                                                            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            {isMobile ? (
+                                <Box>
+                                    {filteredRows.length > 0 ? (
+                                        filteredRows
+                                            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                            .map((t) => (
+                                                <Card
+                                                    sx={{ mb: 2, borderRadius: 2 }}
+                                                    key={t.id}
+                                                >
+                                                    <CardContent>
+                                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                                                            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                                                                 <Typography fontWeight={700} color="#667eea">
-                                                                    #{t.ticket_no}
+                                                                    #{t.ticket_no} -
                                                                 </Typography>
-                                                                <Typography
-                                                                    fontSize={12}
-                                                                    fontWeight={600}
+                                                                <Chip
+                                                                    label={t.priority_detail?.field_values || "-"}
+                                                                    size="small"
                                                                     sx={{
-                                                                        px: 1.5,
-                                                                        py: 0.5,
-                                                                        borderRadius: 2,
-                                                                        backgroundColor: "#eef2ff",
-                                                                        color: "#667eea",
+                                                                        fontWeight: 800,
+                                                                        borderRadius: 50,
+                                                                        background: priorityColors[t.priority_detail?.field_values] || "#666",
+                                                                        color: "white",
+                                                                        animation: t.priority_detail?.field_values === "Critical" ? "pulse 2s infinite" : "none",
                                                                     }}
-                                                                >
-                                                                    {t.status_detail?.field_values}
-                                                                </Typography>
+                                                                />
                                                             </Box>
-                                                            {/* Title */}
-                                                            <Typography fontWeight={600} mt={1} color="#2D3748">
+                                                            <Chip
+                                                                label={t.status_detail?.field_values}
+                                                                size="small"
+                                                                sx={{
+                                                                    fontWeight: 700,
+                                                                    background: statusColors[t.status_detail?.field_values] || "#666",
+                                                                    color: "white",
+                                                                    borderRadius: 50,
+                                                                    py: 0.5,
+                                                                    px: 1,
+                                                                }}
+                                                            />
+                                                        </Box>
+                                                        <Tooltip
+                                                            title={t.title}
+                                                            arrow
+                                                            placement="top"
+                                                        >
+                                                            <Typography
+                                                                sx={{
+                                                                    maxWidth: 200,
+                                                                    color: "text.secondary",
+                                                                    whiteSpace: "nowrap",
+                                                                    overflow: "hidden",
+                                                                    textOverflow: "ellipsis",
+                                                                    cursor: "pointer",
+                                                                    mt: 0.5
+                                                                }}
+                                                            >
                                                                 {t.title}
                                                             </Typography>
-                                                            {/* Priority */}
-                                                            <Typography fontSize={13} color="#718096" mt={0.5}>
-                                                                Priority: {t.priority_detail?.field_values || "-"}
+                                                        </Tooltip>
+                                                        <Tooltip
+                                                            title={t.description || "No description"}
+                                                            arrow
+                                                            placement="top"
+                                                        >
+                                                            <Typography
+                                                                sx={{
+                                                                    maxWidth: 200,
+                                                                    color: "text.secondary",
+                                                                    whiteSpace: "nowrap",
+                                                                    overflow: "hidden",
+                                                                    textOverflow: "ellipsis",
+                                                                    cursor: "pointer",
+                                                                    mt: 0.5
+                                                                }}
+                                                            >
+                                                                {t.description || "-"}
                                                             </Typography>
-                                                            {/* Category */}
-                                                            <Typography fontSize={13} mt={1.5}>
-                                                                <strong style={{ color: "#4A5568" }}>Category:</strong>{" "}
-                                                                <span style={{ color: "#2D3748" }}>
-                                                                    {t.category_detail?.category_name || "-"} /{" "}
-                                                                    {t.subcategory_detail?.subcategory_name || "-"}
-                                                                </span>
-                                                            </Typography>
-                                                            {/* Department & Location */}
-                                                            <Typography fontSize={13} mt={1}>
-                                                                <strong style={{ color: "#4A5568" }}>Dept:</strong>{" "}
-                                                                <span style={{ color: "#2D3748" }}>
-                                                                    {t.department_detail?.field_name || "-"} |{" "}
-                                                                    {t.location_detail?.field_name || "-"}
-                                                                </span>
-                                                            </Typography>
-                                                            {/* Dates */}
-                                                            <Typography fontSize={12} color="#718096" mt={1.5}>
-                                                                Open: {new Date(t.created_date).toLocaleDateString()} <br />
-                                                                Update: {new Date(t.updated_date).toLocaleDateString()}
-                                                            </Typography>
-                                                            {/* Action */}
-                                                            <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}>
-                                                                <Tooltip title="Follow-up Chat">
-                                                                    <IconButton
-                                                                        onClick={() => handleChatDrawerOpen(t.ticket_no)}
-                                                                        size="small"
-                                                                        sx={{ color: "#667eea" }}
-                                                                    >
-                                                                        <ChatIcon />
-                                                                    </IconButton>
-                                                                </Tooltip>
-                                                                <Button
-                                                                    variant="contained"
-                                                                    onClick={() => handleTicketClick(t.ticket_no)}
-                                                                    sx={{
-                                                                        backgroundColor: "#667eea",
-                                                                        borderRadius: 2,
-                                                                        textTransform: "none",
-                                                                        fontSize: "0.85rem",
-                                                                        px: 2,
-                                                                        "&:hover": {
-                                                                            backgroundColor: "#556cd6",
-                                                                        }
-                                                                    }}
+                                                        </Tooltip>
+                                                        <Typography fontSize={13} mt={1.5}>
+                                                            <strong style={{ color: "#4A5568" }}>Category:</strong>{" "}
+                                                            <span style={{ color: "#2D3748" }}>
+                                                                {t.category_detail?.category_name || "-"} /{" "}
+                                                                {t.subcategory_detail?.subcategory_name || "-"}
+                                                            </span>
+                                                        </Typography>
+                                                        <Typography fontSize={13} mt={1}>
+                                                            <strong style={{ color: "#4A5568" }}>Dept | Loc:</strong>{" "}
+                                                            <span style={{ color: "#2D3748" }}>
+                                                                {t.department_detail?.field_name || "-"} |{" "}
+                                                                {t.location_detail?.field_name || "-"}
+                                                            </span>
+                                                        </Typography>
+                                                        <Typography fontSize={12} color="#718096" mt={1.5}>
+                                                            Open: {new Date(t.created_date).toLocaleDateString()} <br />
+                                                            Update: {new Date(t.updated_date).toLocaleDateString()}
+                                                        </Typography>
+                                                        <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}>
+                                                            <Tooltip title="Follow-up Chat">
+                                                                <IconButton
+                                                                    onClick={() => handleChatDrawerOpen(t.ticket_no)}
+                                                                    size="small"
+                                                                    sx={{ color: "#667eea" }}
                                                                 >
-                                                                    View Details
-                                                                </Button>
-                                                            </Box>
-                                                        </CardContent>
-                                                    </Card>
-                                                ))
-                                        ) : (
-                                            <Typography align="center" py={4} color="#718096">
-                                                No tickets found.
-                                            </Typography>
-                                        )}
-                                    </Box>
-                                ) : (
+                                                                    <ChatIcon />
+                                                                </IconButton>
+                                                            </Tooltip>
+                                                            <Tooltip title="View Details">
+                                                                <IconButton
+                                                                    onClick={() => handleTicketClick(t.ticket_no)}
+                                                                    sx={{ color: "#667eea" }}
+                                                                    size="small"
+                                                                >
+                                                                    <VisibilityIcon />
+                                                                </IconButton>
+                                                            </Tooltip>
+
+                                                        </Box>
+                                                    </CardContent>
+                                                </Card>
+                                            ))
+                                    ) : (
+                                        <Typography align="center" py={4} color="#718096">
+                                            No tickets found.
+                                        </Typography>
+                                    )}
+                                </Box>
+                            ) : (
+                                <Card sx={{ borderRadius: 3, boxShadow: 2, overflow: "hidden" }}>
                                     <TableContainer>
                                         <Table stickyHeader>
                                             <TableHead>
@@ -1934,9 +2051,27 @@ const RequestTabs = ({ userStatus }) => {
                                                                 <TableCell sx={{ color: "#667eea", fontWeight: 600 }}>
                                                                     #{t.ticket_no}
                                                                 </TableCell>
-                                                                <TableCell sx={{ color: "#2D3748", fontWeight: 500 }}>
-                                                                    {t.title}
+                                                                <TableCell>
+                                                                    <Tooltip
+                                                                        title={t.title}
+                                                                        arrow
+                                                                        placement="top"
+                                                                    >
+                                                                        <Typography
+                                                                            sx={{
+                                                                                maxWidth: 150,
+                                                                                whiteSpace: "nowrap",
+                                                                                overflow: "hidden",
+                                                                                textOverflow: "ellipsis",
+                                                                                cursor: "pointer",
+                                                                                mt: 0.5
+                                                                            }}
+                                                                        >
+                                                                            {t.title}
+                                                                        </Typography>
+                                                                    </Tooltip>
                                                                 </TableCell>
+
                                                                 <TableCell>
                                                                     <Tooltip
                                                                         title={t.description || "No description"}
@@ -1945,12 +2080,12 @@ const RequestTabs = ({ userStatus }) => {
                                                                     >
                                                                         <Typography
                                                                             sx={{
-                                                                                maxWidth: 200,
+                                                                                maxWidth: 150,
                                                                                 whiteSpace: "nowrap",
                                                                                 overflow: "hidden",
                                                                                 textOverflow: "ellipsis",
                                                                                 cursor: "pointer",
-                                                                                color: "#4A5568"
+                                                                                //color: "#4A5568"
                                                                             }}
                                                                         >
                                                                             {t.description || "-"}
@@ -1958,10 +2093,10 @@ const RequestTabs = ({ userStatus }) => {
                                                                     </Tooltip>
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Typography fontWeight={500} color="#2D3748">
+                                                                    <Typography fontWeight={500} >
                                                                         {t.status_detail?.field_values}
                                                                     </Typography>
-                                                                    <Typography fontSize="0.85rem" color="#718096">
+                                                                    <Typography fontSize="0.85rem" >
                                                                         {t.priority_detail?.field_values}
                                                                     </Typography>
                                                                 </TableCell>
@@ -1977,31 +2112,31 @@ const RequestTabs = ({ userStatus }) => {
                                                                         }
                                                                     >
                                                                         <Box sx={{ cursor: "pointer" }}>
-                                                                            <Typography fontWeight={500} color="#2D3748">
+                                                                            <Typography fontWeight={500} >
                                                                                 {t.category_detail?.category_name || "-"}
                                                                             </Typography>
-                                                                            <Typography fontSize="0.85rem" color="#718096">
+                                                                            <Typography fontSize="0.85rem" >
                                                                                 {t.subcategory_detail?.subcategory_name || "-"}
                                                                             </Typography>
                                                                         </Box>
                                                                     </Tooltip>
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Typography fontWeight={500} color="#2D3748">
+                                                                    <Typography fontWeight={500}>
                                                                         {t.department_detail?.field_name}
                                                                     </Typography>
-                                                                    <Typography fontSize="0.85rem" color="#718096">
+                                                                    <Typography fontSize="0.85rem">
                                                                         {t.location_detail?.field_name}
                                                                     </Typography>
                                                                 </TableCell>
-                                                                <TableCell sx={{ color: "#4A5568" }}>
+                                                                <TableCell >
                                                                     {t.requested_detail?.email}
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Typography fontSize="0.9rem" color="#2D3748">
+                                                                    <Typography fontSize="0.9rem">
                                                                         {new Date(t.created_date).toLocaleDateString()}
                                                                     </Typography>
-                                                                    <Typography fontSize="0.8rem" color="#718096">
+                                                                    <Typography fontSize="0.8rem">
                                                                         {new Date(t.updated_date).toLocaleDateString()}
                                                                     </Typography>
                                                                 </TableCell>
@@ -2016,24 +2151,15 @@ const RequestTabs = ({ userStatus }) => {
                                                                                 <ChatIcon />
                                                                             </IconButton>
                                                                         </Tooltip>
-                                                                        <Button
-                                                                            variant="outlined"
-                                                                            onClick={() => handleTicketClick(t.ticket_no)}
-                                                                            sx={{
-                                                                                borderColor: "#667eea",
-                                                                                color: "#667eea",
-                                                                                borderRadius: 2,
-                                                                                textTransform: "none",
-                                                                                fontSize: "0.85rem",
-                                                                                px: 2,
-                                                                                "&:hover": {
-                                                                                    backgroundColor: "#667eea10",
-                                                                                    borderColor: "#556cd6",
-                                                                                }
-                                                                            }}
-                                                                        >
-                                                                            View
-                                                                        </Button>
+                                                                        <Tooltip>
+                                                                            <IconButton
+                                                                                onClick={() => handleTicketClick(t.ticket_no)}
+                                                                                size="small"
+                                                                                sx={{ color: "#667eea" }}
+                                                                            >
+                                                                                <VisibilityIcon />
+                                                                            </IconButton>
+                                                                        </Tooltip>
                                                                     </Box>
                                                                 </TableCell>
                                                             </TableRow>
@@ -2048,49 +2174,69 @@ const RequestTabs = ({ userStatus }) => {
                                             </TableBody>
                                         </Table>
                                     </TableContainer>
-                                )}
-                                {filteredRows.length > 0 && (
-                                    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 2, px: 3, borderTop: "1px solid #E2E8F0" }}>
-                                        <Typography variant="body2" color="#718096">
-                                            Showing {page * rowsPerPage + 1} to {Math.min((page + 1) * rowsPerPage, filteredRows.length)} of {filteredRows.length} tickets
-                                        </Typography>
-                                        <Pagination
-                                            count={Math.ceil(filteredRows.length / rowsPerPage)}
-                                            page={page + 1}
-                                            onChange={(e, value) => setPage(value - 1)}
-                                            variant="outlined"
-                                            shape="rounded"
-                                            showFirstButton
-                                            showLastButton
-                                            siblingCount={1}
-                                            boundaryCount={1}
-                                            sx={{
-                                                "& .MuiPaginationItem-root": {
-                                                    borderRadius: "8px",
-                                                    borderColor: "#CBD5E0",
-                                                    color: "#4A5568",
-                                                    "&.Mui-selected": {
-                                                        backgroundColor: "#667eea",
-                                                        color: "#fff",
-                                                        borderColor: "#667eea",
-                                                        "&:hover": {
-                                                            backgroundColor: "#556cd6",
-                                                        }
-                                                    },
+                                </Card>
+                            )}
+                            {filteredRows.length > 0 && (
+                                <Stack
+                                    direction={isMobile ? "column" : "row"}
+                                    justifyContent="space-between"
+                                    alignItems="center"
+                                    spacing={isMobile ? 1.5 : 0}
+                                    sx={{
+                                        py: 2,
+                                        px: { xs: 0, sm: 3 },
+                                        borderTop: "1px solid #E2E8F0",
+                                        textAlign: isMobile ? "center" : "left",
+                                    }}
+                                >
+                                    <Typography
+                                        variant="body2"
+                                        color="#718096"
+                                        sx={{ fontSize: { xs: "13px", sm: "14px" } }}
+                                    >
+                                        Showing {page * rowsPerPage + 1} to{" "}
+                                        {Math.min((page + 1) * rowsPerPage, filteredRows.length)} of{" "}
+                                        {filteredRows.length} tickets
+                                    </Typography>
+                                    <Pagination
+                                        count={Math.ceil(filteredRows.length / rowsPerPage)}
+                                        page={page + 1}
+                                        onChange={(e, value) => setPage(value - 1)}
+                                        variant="outlined"
+                                        shape="rounded"
+                                        showFirstButton
+                                        showLastButton
+                                        siblingCount={1}
+                                        boundaryCount={1}
+                                        size={isMobile ? "small" : "medium"}
+                                        sx={{
+                                            "& .MuiPaginationItem-root": {
+                                                borderRadius: "8px",
+                                                borderColor: "#CBD5E0",
+                                                color: "#4A5568",
+                                                fontSize: { xs: "12px", sm: "14px" },
+                                                minWidth: { xs: 32, sm: 36 },
+                                                "&.Mui-selected": {
+                                                    backgroundColor: "#667eea",
+                                                    color: "#fff",
+                                                    borderColor: "#667eea",
                                                     "&:hover": {
-                                                        backgroundColor: "#F7FAFC",
-                                                    }
+                                                        backgroundColor: "#556cd6",
+                                                    },
                                                 },
-                                            }}
-                                        />
-                                    </Stack>
-                                )}
-                            </Card>
+                                                "&:hover": {
+                                                    backgroundColor: "#F7FAFC",
+                                                },
+                                            },
+                                        }}
+                                    />
+                                </Stack>
+                            )}
                         </Box>
                     )}
                 </CardContent>
             </Card>
-            {/* Chat Drawer */}
+
             <Drawer
                 anchor="right"
                 open={showFollowUpChat}
@@ -2105,18 +2251,21 @@ const RequestTabs = ({ userStatus }) => {
                 }}>
                     {/* Header */}
                     <Box sx={{
+                        display: "flow",
                         p: 2,
                         borderBottom: 1,
                         borderColor: "divider",
                         bgcolor: "primary.main",
                         color: "white"
                     }}>
-                        <Typography variant="h6">
-                            <ChatIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                            Chat with {assignee?.name || "Assignee"}
+                        <Typography variant="caption" sx={{ color: "white", verticalAlign: "middle" }}>
+                            Ticket #{currentChatTicket?.id}
                         </Typography>
                         <Typography variant="caption" sx={{ color: "white" }}>
-                            Ticket #{currentChatTicket?.id}
+                            {currentChatTicket?.title}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: "white" }}>
+                            {currentChatTicket?.description}
                         </Typography>
                     </Box>
                     {/* Tab Buttons */}
@@ -2176,7 +2325,7 @@ const RequestTabs = ({ userStatus }) => {
                                                 </Divider>
                                                 {group.messages.map((msg, index) => {
                                                     const isFromCurrentUser = msg.sender === currentUserId;
-                                                 
+
                                                     return (
                                                         <Box
                                                             key={msg.id || index}
@@ -2208,7 +2357,7 @@ const RequestTabs = ({ userStatus }) => {
                                                                         <Typography variant="body1" sx={{ wordBreak: "break-word" }}>
                                                                             {msg.message}
                                                                         </Typography>
-                                                                     
+
                                                                         <Box sx={{
                                                                             display: "flex",
                                                                             justifyContent: "space-between",
@@ -2261,7 +2410,7 @@ const RequestTabs = ({ userStatus }) => {
                                                                         <Typography variant="body1" sx={{ wordBreak: "break-word" }}>
                                                                             {msg.message}
                                                                         </Typography>
-                                                                     
+
                                                                         <Box sx={{
                                                                             display: "flex",
                                                                             justifyContent: "space-between",
@@ -2393,7 +2542,7 @@ const RequestTabs = ({ userStatus }) => {
                     </Box>
                 </Box>
             </Drawer>
-        </Box>
+        </Box >
     );
 };
 export default RequestTabs;
