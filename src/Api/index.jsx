@@ -2,7 +2,10 @@
 import axios from "axios";
 export const Media_URL = "http://localhost:8000";
 
- const API_BASE_URL = "http://localhost:8000/api/";
+//  const API_BASE_URL = "http://localhost:8000/api/";
+const API_BASE_URL = "http://192.168.60.149:8000/api/";
+
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   // timeout: 10000,
@@ -1339,6 +1342,21 @@ export const fetchApproverTickets = async (params = {}) => {
   const userData = JSON.parse(localStorage.getItem("user"));
   const user = userData?.id;
   const response = await api.get(`tickets/approver/count/?user=${user}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    
+  });
+ console.log("response :",response);
+ 
+  if (response.status != 200) throw new Error("Failed to fetch approver tickets");
+  return response.data;
+};
+
+
+export const fetchAdminTickets = async (params = {}) => {
+  const token = localStorage.getItem("access_token");
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const user = userData?.id;
+  const response = await api.get(`tickets/admin/count/?user=${user}`, {
     headers: { Authorization: `Bearer ${token}` },
     
   });

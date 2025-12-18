@@ -57,16 +57,16 @@ const TabsPage = ({ DashboardData }) => {
                         }}
                     >
                         <Tab label="MY REQUEST DASHBOARD" value="1" />
-                        <Tab label="MONITORED / NOTIFIED REQUESTS" value="2" />
+                        {/* <Tab label="MONITORED / NOTIFIED REQUESTS" value="2" /> */}
                         <Tab label="APPROVER ACTION CENTER" value="3" />
                     </TabList>
                 </Box>
                 <TabPanel value="1">
                     <RequestTabs userStatus={userStatus} />
                 </TabPanel>
-                <TabPanel value="2">
+                {/* <TabPanel value="2">
                     <NotifiedTabs watcherStatus={watcherStatus} />
-                </TabPanel>
+                </TabPanel> */}
                 <TabPanel value="3">
                     <ApproverTabs approverStatus={approverStatus} />
                 </TabPanel>

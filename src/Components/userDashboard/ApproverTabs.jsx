@@ -1874,14 +1874,16 @@
 // };
 
 // export default ApproverTabs;
+
 import { useEffect, useMemo, useState } from "react";
 import { useTheme } from "@mui/material/styles";
-import { 
-  Box, Card, CardContent, Typography, Grid, TextField, Button, 
-  Table, TableHead, TableRow, TableCell, TableBody, TableContainer, 
-  useMediaQuery, Autocomplete, Stack, Pagination, Tooltip, 
+import {
+  Box, Card, CardContent, Typography, Grid, TextField, Button,
+  Table, TableHead, TableRow, TableCell, TableBody, TableContainer,
+  useMediaQuery, Autocomplete, Stack, Pagination, Tooltip,
   CircularProgress, IconButton, Drawer, Divider, Chip, Avatar,
-  Alert, AvatarGroup, Tabs, Tab
+  Alert, AvatarGroup, Tabs, Tab,
+  Icon
 } from "@mui/material";
 import NewReleasesIcon from '@mui/icons-material/NewReleases';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
@@ -1891,7 +1893,7 @@ import ChatIcon from '@mui/icons-material/Chat';
 import SendIcon from '@mui/icons-material/Send';
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { fetchApproverTickets, fetchMessages, sendMessage, getTicketDetails, updateTicket,fetchConfigurations } from "../../Api";
+import { fetchApproverTickets, fetchMessages, sendMessage, getTicketDetails, updateTicket, fetchConfigurations } from "../../Api";
 
 const ApproverTabs = ({ approverStatus: propUserStatus }) => {
   const theme = useTheme();
@@ -1949,34 +1951,34 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
       setCurrentUserName("You");
     }
   }, []);
-//   useEffect(() => {
-//     const fetchSolvedStatusConfig = async () => {
-//       try {
-//         setLoadingStatusId(true);
-//         const configData = await fetchConfigurations({ field_type: 'Status' });  // Assume API fetches statuses: GET /api/configurations/?field_type=Status
-//         if (configData && configData.success) {
-//           const solvedStatus = configData.data.find(status => status.field_name === 'Solved');
-//           if (solvedStatus && solvedStatus.id) {
-//             setSolvedStatusId(solvedStatus.id);
-//           } else {
-//             toast.error("Solved status not found in configuration");
-//             setSolvedStatusId(null);  // Or fallback to hardcoded if needed
-//           }
-//         } else {
-//           toast.error("Failed to load status configurations");
-//           setSolvedStatusId(null);
-//         }
-//       } catch (err) {
-//         console.error("Error fetching Solved status configuration:", err);
-//         toast.error("Failed to load status configurations");
-//         setSolvedStatusId(null);
-//       } finally {
-//         setLoadingStatusId(false);
-//       }
-//     };
+  //   useEffect(() => {
+  //     const fetchSolvedStatusConfig = async () => {
+  //       try {
+  //         setLoadingStatusId(true);
+  //         const configData = await fetchConfigurations({ field_type: 'Status' });  // Assume API fetches statuses: GET /api/configurations/?field_type=Status
+  //         if (configData && configData.success) {
+  //           const solvedStatus = configData.data.find(status => status.field_name === 'Solved');
+  //           if (solvedStatus && solvedStatus.id) {
+  //             setSolvedStatusId(solvedStatus.id);
+  //           } else {
+  //             toast.error("Solved status not found in configuration");
+  //             setSolvedStatusId(null);  // Or fallback to hardcoded if needed
+  //           }
+  //         } else {
+  //           toast.error("Failed to load status configurations");
+  //           setSolvedStatusId(null);
+  //         }
+  //       } catch (err) {
+  //         console.error("Error fetching Solved status configuration:", err);
+  //         toast.error("Failed to load status configurations");
+  //         setSolvedStatusId(null);
+  //       } finally {
+  //         setLoadingStatusId(false);
+  //       }
+  //     };
 
-//     fetchSolvedStatusConfig();
-//   }, []);
+  //     fetchSolvedStatusConfig();
+  //   }, []);
 
   // Helper function to get display status (map "New" to "Pending")
   const getDisplayStatus = (status) => {
@@ -1989,10 +1991,10 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
   // Helper function to format assigned users and groups for display
   const formatAssignees = (ticket) => {
     if (!ticket) return { users: [], groups: [], displayText: "" };
-    
+
     const users = ticket.assigned_users || [];
     const groups = ticket.assigned_groups || [];
-    
+
     // Format user names
     const userNames = users.map(user => {
       if (user.is_unknown || !user.id) {
@@ -2001,7 +2003,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
       }
       return user.name || user.full_name || user.email || "User";
     });
-    
+
     // Format group names
     const groupNames = groups.map(group => {
       if (group.is_unknown || !group.id) {
@@ -2009,7 +2011,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
       }
       return group.name || "Group";
     });
-    
+
     // Create display text
     let displayText = "";
     if (userNames.length > 0 && groupNames.length > 0) {
@@ -2021,7 +2023,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
     } else {
       displayText = "Not assigned";
     }
-    
+
     return {
       users: userNames,
       groups: groupNames,
@@ -2036,16 +2038,16 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
   // Get user initials for avatar
   const getUserInitials = (user) => {
     if (!user) return "?";
-    
+
     if (user.name && user.name !== "Unknown User") {
       return user.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
     }
-    
+
     if (user.email && user.email !== "unknown@example.com") {
       const namePart = user.email.split('@')[0];
       return namePart.substring(0, 2).toUpperCase();
     }
-    
+
     return "?";
   };
 
@@ -2054,22 +2056,22 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
     if (!Array.isArray(ticketList)) return [];
     return ticketList.map(ticket => ({
       ...ticket,
-      assigned_users: Array.isArray(ticket.assigned_users) 
+      assigned_users: Array.isArray(ticket.assigned_users)
         ? ticket.assigned_users.map(user => ({
-            id: user.id || null,
-            name: user.name || user.full_name || user.email || "Unknown User",
-            email: user.email || "unknown@example.com",
-            full_name: user.full_name || user.name || user.email || "Unknown User",
-            is_unknown: !user.id
-          }))
+          id: user.id || null,
+          name: user.name || user.full_name || user.email || "Unknown User",
+          email: user.email || "unknown@example.com",
+          full_name: user.full_name || user.name || user.email || "Unknown User",
+          is_unknown: !user.id
+        }))
         : [],
       assigned_groups: Array.isArray(ticket.assigned_groups)
         ? ticket.assigned_groups.map(group => ({
-            id: group.id || null,
-            name: group.name || "Unknown Group",
-            description: group.description || "",
-            is_unknown: !group.id
-          }))
+          id: group.id || null,
+          name: group.name || "Unknown Group",
+          description: group.description || "",
+          is_unknown: !group.id
+        }))
         : []
     }));
   };
@@ -2080,7 +2082,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
     setError(null);
     try {
       console.log("propUserStatus :", propUserStatus);
-      
+
       if (propUserStatus) {
         let processedStatus = propUserStatus;
         if (propUserStatus.user_stats) {
@@ -2101,16 +2103,16 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
         setUserStatus(processedStatus);
       } else {
         console.log('Fetching tickets...');
-        
+
         // Check authentication first
         const token = localStorage.getItem("access_token");
         if (!token) {
           throw new Error("No authentication token found. Please login again.");
         }
-        
+
         const data = await fetchApproverTickets();
         console.log('Tickets data received:', data);
-        
+
         if (data && data.success) {
           let processedStats;
           if (data.user_stats) {
@@ -2148,13 +2150,13 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
       } else {
         errorMessage = err.message || errorMessage;
       }
-      
+
       setError(errorMessage);
       toast.error(errorMessage);
-      
+
       // Set fallback empty state
-      setUserStatus({ 
-        new_assigned: 0, 
+      setUserStatus({
+        new_assigned: 0,
         solved: 0,
         closed: 0,
         new_assigned_tickets: [],
@@ -2188,15 +2190,15 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
     if (userStatus?.[type] !== undefined) {
       return userStatus[type];
     }
-    
+
     const ticketArray = tickets[type] || [];
     return ticketArray.length;
   };
 
   const statusCards = [
-    { id: "new_assigned", label: "PENDING", color: "warning.main", icon: <NewReleasesIcon />, count: getCount("new_assigned") },
-    { id: "solved", label: "SOLVED", color: "success.main", icon: <DoneAllIcon />, count: getCount("solved") },
-    { id: "closed", label: "CLOSED", color: "info.main", icon: <LockIcon />, count: getCount("closed") },
+    { id: "new_assigned", label: "PENDING", color: "warning", icon: <NewReleasesIcon />, count: getCount("new_assigned") },
+    { id: "solved", label: "RESOLVED", color: "success", icon: <DoneAllIcon />, count: getCount("solved") },
+    { id: "closed", label: "CLOSED", color: "info", icon: <LockIcon />, count: getCount("closed") },
   ];
 
   const RequestTabelCol = [
@@ -2219,29 +2221,88 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
   );
 
   const headingMap = {
-    new_assigned: "NEW ASSIGNED Tickets",
+    new_assigned: "PENDING Tickets",
     solved: "SOLVED Tickets",
     closed: "CLOSED Tickets",
   };
 
-  const filteredRows = useMemo(() => {
-    if (!Array.isArray(selectedTickets)) {
-      return [];
-    }
-    
-    return selectedTickets.filter((row) => {
-      if (!row) return false;
-      
-      const searchStr = Object.values(row)
-        .join(" ")
-        .toLowerCase();
-      
-      const matchesSearch = search ? searchStr.includes(search.toLowerCase()) : true;
-      const matchesDept = department ? row.department_detail?.field_name === department : true;
+  // const filteredRows = useMemo(() => {
+  //   if (!Array.isArray(selectedTickets)) {
+  //     return [];
+  //   }
 
-      return matchesSearch && matchesDept;
+  //   return selectedTickets.filter((row) => {
+  //     if (!row) return false;
+
+  //     const searchStr = Object.values(row)
+  //       .join(" ")
+  //       .toLowerCase();
+
+  //     const matchesSearch = search ? searchStr.includes(search.toLowerCase()) : true;
+  //     const matchesDept = department ? row.department_detail?.field_name === department : true;
+
+  //     return matchesSearch && matchesDept;
+  //   });
+  // }, [selectedTickets, search, department]);
+    
+const filteredRows = useMemo(() => {
+    const searchLower = search.toLowerCase().trim();
+ 
+    if (!searchLower && !department) {
+        return selectedTickets;
+    }
+ 
+    return selectedTickets.filter((row) => {
+        // Department filter (separate dropdown)
+        const matchesDept = department
+            ? row.department_detail?.field_name === department
+            : true;
+ 
+        if (!searchLower) return matchesDept;
+ 
+        // 1. Ticket Number
+        if (String(row.ticket_no || "").toLowerCase().includes(searchLower)) return true;
+ 
+        // 2. Title
+        if (row.title?.toLowerCase().includes(searchLower)) return true;
+ 
+        // 3. Description
+        if (row.description?.toLowerCase().includes(searchLower)) return true;
+ 
+        // 4. Status
+        if (row.status_detail?.field_values?.toLowerCase().includes(searchLower)) return true;
+ 
+        // 5. Priority
+        if (row.priority_detail?.field_values?.toLowerCase().includes(searchLower)) return true;
+ 
+        // 6. Category
+        if (row.category_detail?.category_name?.toLowerCase().includes(searchLower)) return true;
+ 
+        // 7. Subcategory
+        if (row.subcategory_detail?.subcategory_name?.toLowerCase().includes(searchLower)) return true;
+ 
+        // 8. Department
+        if (row.department_detail?.field_name?.toLowerCase().includes(searchLower)) return true;
+ 
+        // 9. Location
+        if (row.location_detail?.field_name?.toLowerCase().includes(searchLower)) return true;
+ 
+        // 10. Requested By (email or name)
+        if (row.requested_detail?.email?.toLowerCase().includes(searchLower)) return true;
+        if (row.requested_detail?.name?.toLowerCase().includes(searchLower)) return true;
+ 
+        // 11. Dates (Open Date / Last Update) - match formatted or raw
+        const openDate = new Date(row.created_date).toLocaleDateString().toLowerCase();
+        const updateDate = new Date(row.updated_date).toLocaleDateString().toLowerCase();
+        if (openDate.includes(searchLower) || updateDate.includes(searchLower)) return true;
+ 
+        return false;
+    }).filter((row) => {
+        // Apply department filter at the end (in case user uses both search + department dropdown)
+        return department ? row.department_detail?.field_name === department : true;
     });
-  }, [selectedTickets, search, department]);
+}, [selectedTickets, search, department]);
+
 
   // Get initials for avatar
   const getInitials = (name) => {
@@ -2370,18 +2431,18 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
       // Ensure ticket_no is a string
       const ticketNoStr = String(currentChatTicket.id);
       console.log('Updating ticket:', ticketNoStr); // Debug log
-      
+
       // Extract current assignments for preservation
       const assigneesDetail = currentTicketData.assignees_detail || [];
       const assignedGroupsDetail = currentTicketData.assigned_groups_detail || [];
-      
+
       // Map to required fields: assignee (emails), assigned_group (IDs), assigned_to_type (based on presence)
       const assigneeEmails = assigneesDetail.map(user => user.email).filter(Boolean);
       const assignedGroupIds = assignedGroupsDetail.map(group => group.id).filter(Boolean);
       const assignedToType = [];
       if (assigneeEmails.length > 0) assignedToType.push('user');
       if (assignedGroupIds.length > 0) assignedToType.push('group');
-      
+
       // Construct payload with title, description, category (PK), status, and assignments
       const categoryId = currentTicketData.category || currentTicketData.category_detail?.id;
       const payload = {
@@ -2394,12 +2455,12 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
         assigned_group: assignedGroupIds  // List of group IDs
       };
       console.log('Update payload:', payload); // Debug log
-      
+
       const result = await updateTicket(ticketNoStr, payload);
       if (!result.success) {
         throw new Error(result.error || "Update failed");
       }
-      
+
       toast.success("Ticket updated and marked as Solved successfully!");
 
       // Close drawer and refresh data
@@ -2430,19 +2491,19 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
     setLoadingFollowUpChats(true);
     setShowFollowUpChat(true);
     setFollowUpChats([]);
-    
+
     try {
       // Ensure ticketNo is a string
       const ticketNoStr = String(ticketNo);
       console.log('Fetching details for ticket:', ticketNoStr); // Debug log
-      
+
       // Fetch ticket details to get requester details and full data
       const ticketDetails = await getTicketDetails(ticketNoStr);
       const ticketData = ticketDetails.ticket || ticketDetails;
-      
+
       // NEW: Set full ticket data for updates
       setCurrentTicketData(ticketData);
-      
+
       // Get requester details
       const requesterDetail = ticketData.requested_detail;
       if (!requesterDetail || (!requesterDetail?.id && !requesterDetail?.email)) {
@@ -2450,7 +2511,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
       }
 
       setChatRecipient(requesterDetail);
-      
+
       // Set ticket details (ensure id is string)
       setCurrentChatTicket({
         id: ticketNoStr,
@@ -2458,7 +2519,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
       });
 
       const requesterId = requesterDetail.id || requesterDetail.email; // Fallback to email if no id
-      
+
       // Fetch messages based on ticket_no and between current user and requester
       const ticketMessages = await fetchTicketMessages(ticketNoStr, currentUserId, requesterId);
 
@@ -2490,12 +2551,12 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
   if (error && !loading) {
     return (
       <Box sx={{ width: "100%" }}>
-        <Alert 
-          severity="error" 
+        <Alert
+          severity="error"
           sx={{ mb: 2 }}
           action={
-            <Button 
-              color="inherit" 
+            <Button
+              color="inherit"
               size="small"
               onClick={loadData}
             >
@@ -2534,18 +2595,18 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
       <Box sx={{ width: "100%" }}>
         <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
           <CardContent>
-            <Typography
+            {/* <Typography
               textAlign="center"
               variant={isMobile ? "h6" : "h5"}
               fontWeight={700}
               sx={{ mb: 4, color: "#2D3748" }}
             >
-              MY REQUEST DASHBOARD
-            </Typography>
-            
+              APPROVER DASHBOARD
+            </Typography> */}
+{/* 
             <Grid container spacing={3} sx={{ mb: 4 }}>
               {statusCards.map((item) => (
-                <Grid item xs={12} sm={6} md={4} key={item.id}>
+                <Grid  size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
                   <Card
                     onClick={() => handleCardClick(item.id)}
                     sx={{
@@ -2593,7 +2654,104 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                   </Card>
                 </Grid>
               ))}
+            </Grid> */}
+          <Grid container spacing={3} sx={{ mb: 4 }}>
+              {statusCards.map((item) => (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={item.id}>
+                  {isMobile ? (
+                    <Card
+                      onClick={() => handleCardClick(item.id)}
+                      sx={{
+                        p: 1,
+                        m: 1,
+                        transition: "0.3s ease",
+                        maxWidth: "600px",
+                        borderRadius: 5,
+                        "&:hover": {
+                          background: "linear-gradient(135deg, #667eea, #764ba2)",
+                          color: "#fff",
+                          transform: "scale(1.03)",
+                        }
+                      }}
+                    >
+                      <CardContent sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+                        <Box
+                          sx={{
+                            width: { xs: 50, sm: 40, md: 50 },
+                            height: { xs: 50, sm: 40, md: 50 },
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 2,
+                            bgcolor: `${item.color}.main`,
+                            color: "#fff",
+                          }}
+                        >
+                          <Icon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }}>{item.icon}</Icon>
+                        </Box>
+                        <Box>
+                          <Typography fontSize={{ xs: 25, sm: 20, md: 25 }} fontWeight={600}>
+                            {item.count}
+                          </Typography>
+                          <Typography fontSize={{ xs: 20, sm: 14, md: 20 }} fontWeight={550}>
+                            {item.label}
+                          </Typography>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <Card
+                      onClick={() => handleCardClick(item.id)}
+                      sx={{
+                        p: 1,
+                        m: 1,
+                        transition: "0.3s ease",
+                        maxWidth: "600px",
+                        borderRadius: 5,
+                        "&:hover": {
+                          background: "linear-gradient(135deg, #667eea, #764ba2)",
+                          color: "#fff",
+                          transform: "scale(1.03)",
+                        }
+                      }}
+                    >
+                      <CardContent
+                        sx={{
+                          height: "100%",
+                          display: "flex",
+                          gap: 2,
+                          //justifyContent: "space-between",
+                          p: 3,
+                          alignItems: "center",
+                        }}>
+                        <Box
+                          sx={{
+                            width: { xs: 50, sm: 40, md: 50 },
+                            height: { xs: 50, sm: 40, md: 50 },
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            borderRadius: 2,
+                            bgcolor: `${item.color}.main`,
+                            color: "#fff",
+                          }}
+                        >
+                          <Icon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }}>{item.icon}</Icon>
+                        </Box>
+                        <Typography fontSize={{ xs: 25, sm: 20, md: 25 }} fontWeight={600}>
+                          {item.count}
+                        </Typography>
+                        <Typography fontSize={{ xs: 20, sm: 14, md: 20 }} fontWeight={550}>
+                          {item.label}
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  )}
+                </Grid>
+              ))}
             </Grid>
+
+
             
             {selectedType && (
               <Box>
@@ -2668,7 +2826,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                     </Button>
                   </Box>
                 </Box>
-                
+
                 <Card sx={{
                   borderRadius: 3,
                   boxShadow: 2,
@@ -2873,7 +3031,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                   </TableCell>
                                   <TableCell sx={{ color: "#4A5568", maxWidth: 150 }}>
                                     <Tooltip title={t.requested_detail?.email || t.requested_by || "-"}>
-                                      <Typography 
+                                      <Typography
                                         sx={{
                                           overflow: 'hidden',
                                           textOverflow: 'ellipsis',
@@ -2927,7 +3085,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                       </Table>
                     </TableContainer>
                   )}
-                  
+
                   {filteredRows.length > 0 && (
                     <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ py: 2, px: 3, borderTop: "1px solid #E2E8F0" }}>
                       <Typography variant="body2" color="#718096">
@@ -3003,21 +3161,21 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
 
           {/* Tab Buttons */}
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs 
-              value={chatTab} 
-              onChange={(e, newValue) => setChatTab(newValue)} 
+            <Tabs
+              value={chatTab}
+              onChange={(e, newValue) => setChatTab(newValue)}
               centered
               disabled={isTicketSolved()}  // NEW: Disable tabs if already solved
             >
               <Tab label="Follow-up" icon={<ChatIcon />} />
-              <Tab 
-                label="Solution" 
-                icon={<DoneAllIcon />} 
+              <Tab
+                label="Solution"
+                icon={<DoneAllIcon />}
                 disabled={isTicketSolved()}  // NEW: Disable Solution tab if already solved
               />
             </Tabs>
           </Box>
-          
+
           {/* Tab Content */}
           <Box sx={{ flex: 1 }}>
             {chatTab === 0 && (
@@ -3062,7 +3220,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                             sx={{ bgcolor: "grey.200" }}
                           />
                         </Divider>
-                        
+
                         {group.messages.map((msg, index) => {
                           const isFromCurrentUser = msg.sender === currentUserId;
 
@@ -3097,7 +3255,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                     <Typography variant="body1" sx={{ wordBreak: "break-word" }}>
                                       {msg.message}
                                     </Typography>
-                                    
+
                                     <Box sx={{
                                       display: "flex",
                                       justifyContent: "space-between",
@@ -3150,7 +3308,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                     <Typography variant="body1" sx={{ wordBreak: "break-word" }}>
                                       {msg.message}
                                     </Typography>
-                                    
+
                                     <Box sx={{
                                       display: "flex",
                                       justifyContent: "space-between",
@@ -3195,7 +3353,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                     ))
                   )}
                 </Box>
-                
+
                 {/* Message Input */}
                 <Box sx={{
                   p: 2,
