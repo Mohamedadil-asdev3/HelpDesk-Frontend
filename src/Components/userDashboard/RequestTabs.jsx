@@ -3,6 +3,10 @@ import { useTheme } from "@mui/material/styles";
 import { Box, Card, CardContent, Typography, Grid, TextField, Button, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, useMediaQuery, Autocomplete, Stack, Pagination, Tooltip, IconButton, Icon, Drawer, CircularProgress, Divider, Chip, Avatar, Tabs, Tab } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import CloseIcon from '@mui/icons-material/Close';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import SecurityIcon from '@mui/icons-material/Security';
 import NewReleasesIcon from '@mui/icons-material/NewReleases';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -10,7 +14,7 @@ import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
 import LockIcon from '@mui/icons-material/Lock';
 import { Chat as ChatIcon, Send as SendIcon, } from "@mui/icons-material";
 import { toast } from "react-toastify";
-import { fetchMessages, sendMessage, getTicketDetails, } from "../../Api";
+import { fetchMessages, sendMessage, getTicketDetails, updateTicket} from "../../Api";
 
 const RequestTabs = ({ userStatus }) => {
 
@@ -25,7 +29,9 @@ const RequestTabs = ({ userStatus }) => {
         new_assigned: [],
         solved: [],
         closed: [],
-        Cancelled: []
+        Cancelled: [],
+        clarification_applied: [],
+        clarification_required: [],
     });
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
@@ -40,25 +46,53 @@ const RequestTabs = ({ userStatus }) => {
     const [currentUserId, setCurrentUserId] = useState(null);
     const [currentUserName, setCurrentUserName] = useState("You");
     // Tab state for chat drawer
-    const [chatTab, setChatTab] = useState(0); // 0: Follow-up (Chat), 1: Solution
+    const [chatTab, setChatTab] = useState(0); 
+    console.log("chat", chatTab);
+    
+    // 0: Follow-up (Chat), 1: Solution
     // Solved ticket solution states
     const [isSolvedTicket, setIsSolvedTicket] = useState(false);
     const [solutionText, setSolutionText] = useState("");
     const [isResolved, setIsResolved] = useState(false);
     const [isApproved, setIsApproved] = useState(false);
 
+    const [isProtected, setIsProtected] = useState(false);
+    console.log("protected???", isProtected);
+    
+    const [revealedMessages, setRevealedMessages] = useState(new Set());
+    const [myProtectedMessages, setMyProtectedMessages] = useState({});
+    const [clarificationText, setClarificationText] = useState("");
+    const [clarificationSent, setClarificationSent] = useState(false);
+    const [sendingClarification, setSendingClarification] = useState(false);
+    
+    // useEffect(() => {
+    //     if (userStatus) {
+    //         setTickets({
+    //             new_assigned: Array.isArray(userStatus.new_assigned_tickets) ? userStatus.new_assigned_tickets : [],
+    //             solved: Array.isArray(userStatus.solved_tickets) ? userStatus.solved_tickets : [],
+    //             closed: Array.isArray(userStatus.closed_tickets) ? userStatus.closed_tickets : [],
+    //             Cancelled: Array.isArray(userStatus.cancelled_tickets) ? userStatus.cancelled_tickets : [],
+    //             clarification_required: Array.isArray(userStatus.clarification_required) ? userStatus.clarification_required : [],
+    //             clarification_applied: Array.isArray(userStatus.clarification_applied) ? userStatus.clarification_applied : [],
+    //         });
+    //     }
+    // }, [userStatus]);
     useEffect(() => {
-        if (userStatus) {
-            setTickets({
-                new_assigned: userStatus.new_assigned_tickets || [],
-                solved: userStatus.solved_tickets || [],
-                closed: userStatus.closed_tickets || [],
-                Cancelled:userStatus.cancelled_tickets || []
-
-            });
-        }
-    }, [userStatus]);
-
+    if (userStatus) {
+        setTickets({
+            new_assigned: Array.isArray(userStatus.new_assigned_tickets) ? userStatus.new_assigned_tickets : [],
+            solved: Array.isArray(userStatus.solved_tickets) ? userStatus.solved_tickets : [],
+            closed: Array.isArray(userStatus.closed_tickets) ? userStatus.closed_tickets : [],
+            Cancelled: Array.isArray(userStatus.cancelled_tickets) ? userStatus.cancelled_tickets : [],
+            clarification_required: Array.isArray(userStatus.clarification_required_tickets) 
+                ? userStatus.clarification_required_tickets 
+                : [],
+            clarification_applied: Array.isArray(userStatus.clarification_applied_tickets) 
+                ? userStatus.clarification_applied_tickets 
+                : [],
+        });
+    }
+}, [userStatus]);
     // Get current user ID and name on component mount - Ticket Creator (Requester)
     useEffect(() => {
         const userDataString = localStorage.getItem("user");
@@ -78,7 +112,7 @@ const RequestTabs = ({ userStatus }) => {
     const statusCards = [
         {
             id: "new_assigned",
-            label: "NEW",
+            label: "New",
             color: "warning",
             icon: <NewReleasesIcon />,
             count: userStatus?.new_assigned || 0,
@@ -95,24 +129,15 @@ const RequestTabs = ({ userStatus }) => {
         },
         {
             id: "solved",
-            label: "RESOLVED",
+            label: "Resolved",
             color: "success",
             icon: <DoneAllIcon />,
             count: userStatus?.solved || 0,
             description: "Tickets you have resolved"
         },
-        // {
-        //     id: "cancel",
-        //     label: "CANCEL",
-        //     color: "error",
-        //     icon: <CancelIcon />,
-        //     count: userStatus?.cancelled|| 0,
-        //     // count: 0,
-        //     description: "Tickets recently assigned to you"
-        // },
         {
             id: "Cancelled",  // ← Change from "cancel" to "Cancelled"
-            label: "CANCEL",
+            label: "Cancel",
             color: "error",
             icon: <CancelIcon />,
             count: userStatus?.cancelled || 0,
@@ -120,19 +145,46 @@ const RequestTabs = ({ userStatus }) => {
         },
         {
             id: "closed",
-            label: "CLOSED",
+            label: "Closed",
             color: "info",
             icon: <LockIcon />,
             count: userStatus?.closed || 0,
             description: "Tickets that are completed"
         },
+        { 
+            id: "clarification_applied",
+            label: "Clar Supplied", 
+            color: "error", 
+            icon: <CancelIcon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }} />, 
+            count: userStatus?.clarification_applied || 0,
+        },
+        { 
+            id: "clarification_required", 
+            label: "Clar Required", 
+            color: "error", 
+            icon: <CancelIcon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }} />, 
+            count: userStatus?.clarification_required || 0,
+        },
     ];
 
-    const selectedTickets = tickets[selectedType] || [];
-    const departmentList = useMemo(
-        () => [...new Set(selectedTickets.map((row) => row.department_detail?.field_name).filter(Boolean))],
-        [selectedTickets]
-    );
+    // const selectedTickets = tickets[selectedType] || [];
+    // const departmentList = useMemo(
+    //     () => [...new Set(selectedTickets.map((row) => row.department_detail?.field_name).filter(Boolean))],
+    //     [selectedTickets]
+    // );
+
+    const selectedTickets = useMemo(() => {
+        const ticketsForType = tickets[selectedType];
+        return Array.isArray(ticketsForType) ? ticketsForType : [];
+    }, [tickets, selectedType]);
+
+    const departmentList = useMemo(() => {
+        if (!Array.isArray(selectedTickets)) return [];
+        const departments = selectedTickets
+            .map((row) => row?.department_detail?.field_name)
+            .filter(Boolean);
+        return [...new Set(departments)];
+    }, [selectedTickets]);
 
     // Get initials for avatar
     const getInitials = (name) => {
@@ -165,6 +217,8 @@ const RequestTabs = ({ userStatus }) => {
         solved: "SOLVED TICKETS (MY REQUEST)",
         cancel: "CANCEL TICKETS (MY REQUEST)",
         closed: "CLOSED TICKETS (MY REQUEST)",
+        clarification_applied : "Clarification Supplied Ticket",
+        clarification_required : "Clarification Required Ticket"
     };
 
     const RequestTabelCol = [
@@ -206,64 +260,396 @@ const RequestTabs = ({ userStatus }) => {
         }
     };
 
-    const sendFollowUpMessageHandler = async (messageText) => {
-        if (!messageText.trim()) {
+    // const sendFollowUpMessageHandler = async (messageText) => {
+    //     if (!messageText.trim()) {
+    //         toast.error("Message cannot be empty");
+    //         return;
+    //     }
+
+    //     if (!currentChatTicket?.id) {
+    //         toast.error("No ticket selected");
+    //         return;
+    //     }
+    //     if (!assignee?.id) {
+    //         toast.error("Assignee not loaded");
+    //         return;
+    //     }
+    //     if (!currentUserId) {
+    //         toast.error("User not authenticated");
+    //         return;
+    //     }
+    //     const receiverId = assignee.id;
+    //     setSendingFollowUpMessage(true);
+    //     try {
+    //         const payload = {
+    //             sender: currentUserId, // Explicitly include sender (logged-in user - ticket creator)
+    //             receiver: receiverId,
+    //             ticket_no: currentChatTicket.id,
+    //             message: messageText.trim(),
+    //             protected: isProtected,
+    //         };
+    //         const resData = await sendMessage(payload);
+    //         const newMessage = {
+    //             ...resData,
+    //             sender: currentUserId,
+    //             createdon: new Date().toISOString(),
+    //         };
+
+    //         const message = await fetchMessages();
+    //         const ticketMsgs = message.filter(msg => msg.ticket_no == currentChatTicket.id);
+    //         setFollowUpChats(ticketMsgs.sort((a,b) => new Date(a.createdon) - new Date(b.createdon)));
+
+    //         setNewFollowUpMessage("");
+    //         setIsProtected(false);
+    //         toast.success(isProtected ? "Protected message sent!" : "Message sent successfully!");
+    //     } catch (err) {
+    //         toast.error("Failed to send message");
+    //         console.error("Error sending message:", err);
+    //     } finally {
+    //         setSendingFollowUpMessage(false);
+    //     }
+    // };
+
+    // const handleResolveSolution = () => {
+    //     // TODO: Call API to resolve solution
+    //     setIsResolved(true);
+    //     toast.success("Solution resolved!");
+    // };
+
+    // const sendFollowUpMessageHandler = async (text) => {
+    //     if (!text.trim() || !chatRecipient?.id || !currentChatTicket?.id) {
+    //         toast.error("Cannot send message: missing details");
+    //         return;
+    //     }
+ 
+    //     const receiverId = chatRecipient.id;
+ 
+    //     setSendingFollowUpMessage(true);
+    //     try {
+    //         await sendMessage({
+    //             receiver: receiverId,
+    //             ticket_no: currentChatTicket.id,
+    //             message: text.trim(),
+    //             protected: isProtected,
+    //         });
+ 
+    //         // Refetch messages to show the new one
+    //         const messages = await fetchMessages();
+    //         const ticketMsgs = messages.filter(m => m.ticket_no == currentChatTicket.id);
+    //         setFollowUpChats(ticketMsgs.sort((a, b) => new Date(a.createdon) - new Date(b.createdon)));
+ 
+    //         setNewFollowUpMessage("");
+    //         setIsProtected(false); // Reset shield toggle
+    //         toast.success(isProtected ? "🔒 Protected message sent!" : "Message sent!");
+    //     } catch (err) {
+    //         console.error("Send error:", err);
+    //         toast.error("Failed to send message");
+    //     } finally {
+    //         setSendingFollowUpMessage(false);
+    //     }
+    // };
+
+
+    const sendFollowUpMessageHandler = async (text) => {
+        if (!text.trim()) {
             toast.error("Message cannot be empty");
             return;
         }
+        if (!assignee?.id || !currentChatTicket?.id || !currentUserId) {
+            toast.error("Cannot send message: missing details");
+            return;
+        }
 
-        if (!currentChatTicket?.id) {
-            toast.error("No ticket selected");
-            return;
-        }
-        if (!assignee?.id) {
-            toast.error("Assignee not loaded");
-            return;
-        }
-        if (!currentUserId) {
-            toast.error("User not authenticated");
-            return;
-        }
         const receiverId = assignee.id;
+        
         setSendingFollowUpMessage(true);
+
         try {
-            const payload = {
-                sender: currentUserId, // Explicitly include sender (logged-in user - ticket creator)
+            await sendMessage({
                 receiver: receiverId,
                 ticket_no: currentChatTicket.id,
-                message: messageText.trim(),
-            };
-            const resData = await sendMessage(payload);
-            const newMessage = {
-                ...resData,
-                sender: currentUserId,
-                createdon: new Date().toISOString(),
-            };
+                message: text.trim(),
+                protected: isProtected,
+            });
+            
+            
+            const message = await fetchMessages();
+            const ticketMsgs = message.filter(
+                m =>
+                    m.ticket_no == currentChatTicket.id &&
+                    ((m.sender === currentUserId && m.receiver === receiverId) ||
+                    (m.sender === receiverId && m.receiver === currentUserId))
+            );
+            setFollowUpChats(ticketMsgs.sort((a, b) => new Date(a.createdon) - new Date(b.createdon)));
 
-            // Add to local state and sort
-            const updatedChats = [...followUpChats, newMessage].sort((a, b) => new Date(a.createdon) - new Date(b.createdon));
-            setFollowUpChats(updatedChats);
             setNewFollowUpMessage("");
-
-            toast.success("Message sent successfully!");
+            toast.success(isProtected ? "Protected message sent!" : "Message sent!");
         } catch (err) {
+            console.error("Send error:", err);
             toast.error("Failed to send message");
-            console.error("Error sending message:", err);
+
+            if (newMessageId) {
+                setFollowUpChats(prev => prev.filter(m => m.id !== newMessageId));
+                setMyProtectedMessages(prev => {
+                    const copy = { ...prev };
+                    delete copy[newMessageId];
+                    return copy;
+                });
+            }
         } finally {
             setSendingFollowUpMessage(false);
         }
     };
 
-    const handleResolveSolution = () => {
-        // TODO: Call API to resolve solution
-        setIsResolved(true);
-        toast.success("Solution resolved!");
-    };
+    const handleResolveSolution = async () => {
+        if (!currentChatTicket?.id) {
+            toast.error("No ticket selected");
+            return;
+        }
 
-    const handleApproveSolution = () => {
-        // TODO: Call API to approve solution
-        setIsApproved(true);
-        toast.success("Solution approved!");
+        let currentTicketData = {};
+        try {
+            const ticketDetails = await getTicketDetails(currentChatTicket.id);
+            currentTicketData = ticketDetails.ticket || ticketDetails;
+        } catch (err) {
+            toast.error("Could not fetch ticket details");
+            return;
+        }
+
+        // try {
+        //     const ticketNoStr = String(currentChatTicket.id);
+
+        //     const assigneesDetail = currentTicketData.assignees_detail || [];
+        //     const assignedGroupsDetail = currentTicketData.assigned_groups_detail || [];
+
+        //     const assigneeEmails = assigneesDetail.map(u => u.email).filter(Boolean);
+        //     const assignedGroupIds = assignedGroupsDetail.map(g => g.id).filter(Boolean);
+
+        //     const assignedToType = [];
+        //     if (assigneeEmails.length > 0) assignedToType.push('user');
+        //     if (assignedGroupIds.length > 0) assignedToType.push('group');
+
+        //     const categoryId = currentTicketData.category || currentTicketData.category_detail?.id;
+
+        //     const payload = {
+        //         title: currentTicketData.title || "",
+        //         description: currentTicketData.description || "",
+        //         category: categoryId,
+        //         status: "41", // ← NEW (or use another ID like "Resolved" if you have one)
+        //         assigned_to_type: assignedToType,
+        //         assignee: assigneeEmails,
+        //         assigned_group: assignedGroupIds,
+        //         resolved_status: "yes" // optional
+        //     };
+
+        //     const result = await updateTicket(ticketNoStr, payload);
+        //     if (!result.success) throw new Error(result.error || "Failed");
+
+        //     toast.success("Solution resolved! Ticket status changed to New.");
+
+        //     // Move ticket from solved → new_assigned (or wherever "New" tickets appear)
+        //     setTickets(prev => {
+        //         const ticket = prev.solved.find(t => t.ticket_no == currentChatTicket.id);
+        //         if (!ticket) return prev;
+
+        //         // Update status display locally
+        //         ticket.status_detail = { field_values: "New" };
+
+        //         return {
+        //             ...prev,
+        //             solved: prev.solved.filter(t => t.ticket_no != currentChatTicket.id),
+        //             new_assigned: [ticket, ...prev.new_assigned]
+        //         };
+        //     });
+
+        //     setIsResolved(true);
+        //     setShowFollowUpChat(false);
+        //     setSelectedType("new_assigned"); // or "solved" if you keep it there
+
+        //     await sendFollowUpMessageHandler("I have resolved the solution. Ticket reopened as New if further action needed.");
+
+        // } catch (err) {
+        //     console.error(err);
+        //     toast.error("Failed to resolve solution");
+        // }
+        try {
+            const ticketNoStr = String(currentChatTicket.id);
+
+            const assignedUsers =
+                currentTicketData.assignees_detail ||
+                currentTicketData.assigned_users ||
+                [];
+
+            const assignedGroups =
+                currentTicketData.assigned_groups_detail ||
+                currentTicketData.assigned_groups ||
+                [];
+
+            const formData = new FormData();
+
+            // BASIC FIELDS
+            formData.append("title", currentTicketData.title || "");
+            formData.append("description", currentTicketData.description || "");
+            formData.append("category", currentTicketData.category || currentTicketData.category_detail?.id || "");
+
+            // STATUS (New)
+            formData.append("status", "41"); // New
+            formData.append("resolved_status", "yes");
+
+            //ASSIGNED USERS
+    
+            let assignedTypeIndex = 0;
+
+            assignedUsers.forEach((user, index) => {
+                if (user?.email) {
+                formData.append(`assignee[${index}]`, user.email);
+                }
+            });
+
+            if (assignedUsers.length > 0) {
+                formData.append(`assigned_to_type[${assignedTypeIndex}]`, "user");
+                assignedTypeIndex++;
+            }
+
+            //ASSIGNED GROUPS
+    
+            assignedGroups.forEach((group, index) => {
+                if (group?.id) {
+                formData.append(`assigned_group[${index}]`, group.id);
+                }
+            });
+
+            if (assignedGroups.length > 0) {
+                formData.append(`assigned_to_type[${assignedTypeIndex}]`, "group");
+            }
+
+            const result = await updateTicket(ticketNoStr, formData);
+            if (!result.success) throw new Error(result.error || "Failed");
+
+            toast.success("Solution resolved! Ticket status changed to New.");
+
+            // Update UI
+            setTickets(prev => {
+                const ticket = prev.solved.find(
+                t => t.ticket_no == currentChatTicket.id
+                );
+                if (!ticket) return prev;
+
+                ticket.status_detail = { field_values: "New" };
+
+                return {
+                ...prev,
+                solved: prev.solved.filter(
+                    t => t.ticket_no != currentChatTicket.id
+                ),
+                new_assigned: [ticket, ...prev.new_assigned]
+                };
+            });
+
+            setIsResolved(true);
+            setShowFollowUpChat(false);
+            setSelectedType("new_assigned");
+
+            await sendFollowUpMessageHandler(
+                "I have resolved the solution. Ticket reopened as New if further action needed."
+            );
+
+        } catch (err) {
+        console.error(err);
+        toast.error("Failed to resolve solution");
+        }
+    };
+    // const handleApproveSolution = () => {
+    //     // TODO: Call API to approve solution
+    //     setIsApproved(true);
+    //     toast.success("Solution approved!");
+    // };
+   const handleApproveSolution = async () => {
+        if (!currentChatTicket?.id) {
+            toast.error("No ticket selected");
+            return;
+        }
+
+        // Get fresh ticket details to preserve current data
+        let currentTicketData = {};
+        try {
+            const ticketDetails = await getTicketDetails(currentChatTicket.id);
+            currentTicketData = ticketDetails.ticket || ticketDetails;
+        } catch (err) {
+            console.error("Failed to fetch latest ticket details:", err);
+            toast.error("Could not fetch ticket details");
+            return;
+        }
+
+        try {
+            const ticketNoStr = String(currentChatTicket.id);
+            console.log("Updating ticket to Closed:", ticketNoStr);
+
+            const assignedUsers =
+                currentTicketData.assignees_detail ||
+                currentTicketData.assigned_users ||
+                [];
+
+            const assignedGroups =
+                currentTicketData.assigned_groups_detail ||
+                currentTicketData.assigned_groups ||
+                [];
+
+            const formData = new FormData();
+
+            // BASIC FIELDS
+            formData.append("title", currentTicketData.title || "");
+            formData.append("description", currentTicketData.description || "");
+            formData.append("category", currentTicketData.category || currentTicketData.category_detail?.id || "");
+
+            // CLOSED STATUS
+            formData.append("status", "46"); // Closed
+
+            //ASSIGNEES
+            let assignedTypeIndex = 0;
+
+            assignedUsers.forEach((user, index) => {
+                if (user?.email) {
+                formData.append(`assignee[${index}]`, user.email);
+                }
+            });
+
+            if (assignedUsers.length > 0) {
+                formData.append(`assigned_to_type[${assignedTypeIndex}]`, "user");
+                assignedTypeIndex++;
+            }
+
+            //  GROUPS
+            assignedGroups.forEach((group, index) => {
+                if (group?.id) {
+                formData.append(`assigned_group[${index}]`, group.id);
+                }
+            });
+
+            if (assignedGroups.length > 0) {
+                formData.append(`assigned_to_type[${assignedTypeIndex}]`, "group");
+            }
+
+            console.log("Approve Solution → Closing ticket (FormData):", [
+                ...formData.entries(),
+            ]);
+
+            const result = await updateTicket(ticketNoStr, formData);
+            if (!result.success) {
+                throw new Error(result.error || "Failed to close ticket");
+            }
+
+            toast.success("Solution approved and ticket closed successfully!");
+
+            // UI updates
+            setIsApproved(true);
+            setShowFollowUpChat(false);
+            loadData();
+            setSelectedType("closed");
+        } catch (err) {
+        console.error("Error closing ticket on approve:", err);
+        toast.error("Failed to close ticket");
+        }
     };
 
     const handleChatDrawerOpen = async (ticketNo) => {
@@ -335,6 +721,37 @@ const RequestTabs = ({ userStatus }) => {
         }
     };
 
+    const handleSendClarification = async () => {
+        if (!clarificationText.trim()) return;
+
+        setSendingClarification(true);
+        try {
+            await sendMessage({
+                receiver: currentUserId === assignee?.id ? currentChatTicket?.requested_by : assignee?.id, // Send to requester if assignee is sending
+                ticket_no: currentChatTicket.id,
+                message: `[CLARIFICATION REQUEST]\n\n${clarificationText.trim()}`,
+                protected: false, // or true if you want it private
+            });
+
+            // Optional: Add to chat as a visible message
+            await sendFollowUpMessageHandler(`[CLARIFICATION REQUEST] ${clarificationText.trim()}`);
+
+            setClarificationText("");
+            setClarificationSent(true);
+            toast.success("Clarification request sent!");
+
+            // Auto switch back to Follow-up tab
+            setChatTab(0);
+
+            // Reset alert after 5 seconds
+            setTimeout(() => setClarificationSent(false), 5000);
+        } catch (err) {
+            toast.error("Failed to send clarification");
+        } finally {
+            setSendingClarification(false);
+        }
+    };
+
     const handleChatDrawerClose = () => {
         setShowFollowUpChat(false);
         setCurrentChatTicket(null);
@@ -347,6 +764,8 @@ const RequestTabs = ({ userStatus }) => {
         setSolutionText("");
         setIsResolved(false);
         setIsApproved(false);
+        setClarificationText("");
+        setClarificationSent(false);
     };
 
     // const filteredRows = useMemo(() => {
@@ -471,57 +890,55 @@ const filteredRows = useMemo(() => {
     };
 
     return (
-        <Box sx={{ width: "100%" }}>
-            <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
-                <CardContent>
-                   
-                    <Grid container spacing={1} sx={{ mb: 4 }}>
-                        {statusCards.map((item) => (
-                            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} key={item.id}>
-                                <Card
-                                    onClick={() => handleCardClick(item.id)}
+        <Box sx={{ width: "100%", mb:2 }}>
+            <Grid container spacing={1} sx={{ mb: 4 }}>
+                {statusCards.map((item) => (
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 1.7 }} key={item.id}>
+                        <Card
+                            onClick={() => handleCardClick(item.id)}
+                            sx={{
+                                p: 1,
+                                m: 1,
+                                transition: "0.3s ease",
+                                maxWidth: "600px",
+                                borderRadius: 5,
+                                "&:hover": {
+                                    background: "linear-gradient(135deg, #667eea, #764ba2)",
+                                    color: "#fff",
+                                    transform: "scale(1.03)",
+                                }
+                            }}
+                        >
+                            <CardContent sx={{ display: "flex", gap: 2, alignItems: "center", "&: last-child" : {pt:1},}}>
+                                <Box
                                     sx={{
-                                        p: 1,
-                                        m: 1,
-                                        transition: "0.3s ease",
-                                        maxWidth: "600px",
-                                        borderRadius: 5,
-                                        "&:hover": {
-                                            background: "linear-gradient(135deg, #667eea, #764ba2)",
-                                            color: "#fff",
-                                            transform: "scale(1.03)",
-                                        }
+                                        width: { xs: 50, sm: 40, md: 50 },
+                                        height: { xs: 50, sm: 40, md: 50 },
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        borderRadius: 2,
+                                        bgcolor: `${item.color}.main`,
+                                        color: "#fff",
                                     }}
                                 >
-                                    <CardContent sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-                                        <Box
-                                            sx={{
-                                                width: { xs: 50, sm: 40, md: 50 },
-                                                height: { xs: 50, sm: 40, md: 50 },
-                                                display: "flex",
-                                                alignItems: "center",
-                                                justifyContent: "center",
-                                                borderRadius: 2,
-                                                bgcolor: `${item.color}.main`,
-                                                color: "#fff",
-                                            }}
-                                        >
-                                            <Icon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }}>{item.icon}</Icon>
-                                        </Box>
-                                        <Box>
-                                            <Typography fontSize={{ xs: 25, sm: 20, md: 25 }} fontWeight={600}>
-                                                {item.count}
-                                            </Typography>
-                                            <Typography fontSize={{ xs: 20, sm: 14, md: 20 }} fontWeight={550}>
-                                                {item.label}
-                                            </Typography>
-                                        </Box>
-                                    </CardContent>
-                                </Card>
-                            </Grid>
-                        ))}
+                                    <Icon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }}>{item.icon}</Icon>
+                                </Box>
+                                <Box>
+                                    <Typography fontSize={{ xs: 25, sm: 20, md: 25 }} fontWeight={600}>
+                                        {item.count}
+                                    </Typography>
+                                    <Typography fontSize={{ xs: 20, sm: 14, md: 20 }} fontWeight={550}>
+                                        {item.label}
+                                    </Typography>
+                                </Box>
+                            </CardContent>
+                        </Card>
                     </Grid>
-
+                ))}
+            </Grid>
+            <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
+                <CardContent>
                     {selectedType && (
                         <Box>
                             <Box
@@ -530,7 +947,7 @@ const filteredRows = useMemo(() => {
                                     flexDirection: isMobile || isTablet ? "column" : "row",
                                     justifyContent: !isMobile || !isTablet ? "space-between" : undefined,
                                     alignItems: isMobile ? "flex-start" : "center",
-                                    mb: 4,
+                                    mb: 1,
                                     gap: isMobile ? 2 : 0,
                                 }}
                             >
@@ -808,7 +1225,8 @@ const filteredRows = useMemo(() => {
                                                                             <Box>
                                                                                 <div><strong>Category:</strong> {t.category_detail?.category_name || "-"}</div>
                                                                                 <div><strong>Subcategory:</strong> {t.subcategory_detail?.subcategory_name || "-"}</div>
-                                                                            </Box>
+                                                                                    
+</Box>
                                                                         }
                                                                     >
                                                                         <Box sx={{ cursor: "pointer" }}>
@@ -950,52 +1368,15 @@ const filteredRows = useMemo(() => {
                     bgcolor: "background.paper"
                 }}>
                     {/* Header */}
-                    <Box sx={{
-                        p: 2,
-                        borderBottom: 1,
-                        borderColor: "divider",
-                        bgcolor: "primary.main",
-                        color: "white"
-                    }}>
-                        {/* <Typography variant="h6">
-                            <ChatIcon sx={{ mr: 1, verticalAlign: "middle" }} />
-                            Chat with {assignee?.name || "Assignee"}
-                        </Typography> */}
-                        <Typography variant="h6" sx={{ color: "white" }}>
-                            Ticket #{currentChatTicket?.id}
-                        </Typography>
-                        <Typography variant="subtitle1" sx={{  fontWeight: 600 }}>
-                            {currentChatTicket?.title || "No Title"}
-                        </Typography>
-                       
-    {/* <Tooltip
-        title={currentChatTicket.description || ""}
-        arrow
-        placement="top-start"
-        sx={{ maxWidth: "none" }} // Allows long tooltips to be wide
-    >
-        <Typography
-            variant="body2"
-            sx={{
-                mt: 1,
-                //opacity: 0.9,
-                fontSize: 16,
-                
-                lineHeight: 2,
-                display: "-webkit-box",
-                WebkitLineClamp: 1,           // Show only 1 line
-                WebkitBoxOrient: "vertical",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                cursor: "pointer",            // Indicates it's hoverable
-                color: "white",
-            }}
-        >
-            {currentChatTicket.description}
-        </Typography>
-    </Tooltip> */}
-
-                        
+                    <Box sx={{ p: 2, bgcolor: "primary.main", color: "white", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                        <Box>
+                            <Typography variant="body2">Ticket #{currentChatTicket?.id}</Typography>
+                            <Typography variant="body2">{currentChatTicket?.title}</Typography>
+                            <Typography variant="caption" sx={{ color: "white" }}>{currentChatTicket?.description}</Typography>
+                        </Box>
+                        <IconButton onClick={() => setShowFollowUpChat(false)} sx={{ color: "white" }}>
+                            <CloseIcon />
+                        </IconButton>
                     </Box>
                     {/* Tab Buttons */}
                     <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -1006,6 +1387,7 @@ const filteredRows = useMemo(() => {
                         >
                             <Tab label="Follow-up" icon={<ChatIcon />} />
                             {isSolvedTicket && <Tab label="Solution" icon={<DoneAllIcon />} />}
+                            <Tab label="Clarification Supplied" icon={<HelpOutlineIcon />} /> 
                         </Tabs>
                     </Box>
                     {/* Tab Content */}
@@ -1053,18 +1435,35 @@ const filteredRows = useMemo(() => {
                                                     />
                                                 </Divider>
                                                 {group.messages.map((msg, index) => {
-                                                    const isFromCurrentUser = msg.sender === currentUserId;
+                                                    const isMe = Number(msg.sender) === Number(currentUserId);
+                                                    const isProtected = msg.protected === true;
+                                                    const messageId = msg.id;
+                                                    const isRevealed = revealedMessages.has(messageId);
+                                                    const canViewDecrypted = Number(msg.sender) === Number(currentUserId) || Number(msg.receiver) === Number(currentUserId);
+
+                                                    const toggleReveal = () => {
+                                                        if (!canViewDecrypted) return;
+                                                        setRevealedMessages(prev => {
+                                                            const newSet = new Set(prev);
+                                                            if (newSet.has(messageId)) {
+                                                                newSet.delete(messageId);
+                                                            } else {
+                                                                newSet.add(messageId);
+                                                            }
+                                                            return newSet;
+                                                        });
+                                                    };
 
                                                     return (
                                                         <Box
                                                             key={msg.id || index}
                                                             sx={{
                                                                 display: "flex",
-                                                                justifyContent: isFromCurrentUser ? "flex-end" : "flex-start",
+                                                                justifyContent: isMe ? "flex-end" : "flex-start",
                                                                 mb: 2
                                                             }}
                                                         >
-                                                            {!isFromCurrentUser ? (
+                                                            {!isMe ? (
                                                                 <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}>
                                                                     <Avatar sx={{ width: 40, height: 40, bgcolor: "grey.300" }}>
                                                                         {getInitials(assignee?.name)}
@@ -1081,40 +1480,77 @@ const filteredRows = useMemo(() => {
                                                                             borderBottomLeftRadius: 4,
                                                                             borderBottomRightRadius: 12,
                                                                             boxShadow: 1,
+                                                                            position: "relative",
                                                                         }}
                                                                     >
+                                                                        {isProtected && (
+                                                                            <SecurityIcon
+                                                                                sx={{
+                                                                                    position: "absolute",
+                                                                                    top: -10,
+                                                                                    right: -10,
+                                                                                    fontSize: 20,
+                                                                                    bgcolor: "#4CAF50",
+                                                                                    color: "white",
+                                                                                    borderRadius: "50%",
+                                                                                    p: 0.5,
+                                                                                    boxShadow: 2,
+                                                                                }}
+                                                                            />
+                                                                        )}
                                                                         <Typography variant="body1" sx={{ wordBreak: "break-word" }}>
-                                                                            {msg.message}
-                                                                        </Typography>
+                                                                            {(() => {
+                                                                                if (!msg.protected) {
+                                                                                    return msg.message; // Normal message
+                                                                                }
 
-                                                                        <Box sx={{
-                                                                            display: "flex",
-                                                                            justifyContent: "space-between",
-                                                                            alignItems: "center",
-                                                                            mt: 1
-                                                                        }}>
-                                                                            <Typography
-                                                                                variant="caption"
+                                                                                const isSender = Number(msg.sender) === Number(currentUserId);
+                                                                                const isReceiver = Number(msg.receiver) === Number(currentUserId);
+                                                                                const canDecrypt = isSender || isReceiver;
+
+                                                                                if (!canDecrypt) {
+                                                                                    return "*** PROTECTED MESSAGE - VISIBLE ONLY TO RECEIVER ***";
+                                                                                }
+
+                                                                                // Show real text if revealed AND we have it (from local or server)
+                                                                                const realText = isSender 
+                                                                                    ? myProtectedMessages[msg.id] 
+                                                                                    : msg.decrypted_message; // Receiver relies on backend
+
+                                                                                if (isRevealed && realText) {
+                                                                                    return realText;
+                                                                                }
+
+                                                                                // Default: show masked
+                                                                                return msg.message || "*** PROTECTED MESSAGE - VISIBLE ONLY TO RECEIVER ***";
+                                                                            })()}
+                                                                        </Typography>
+                                                                        {/* Eye Toggle - Only for protected messages and authorized users */}
+                                                                        {msg.protected && (Number(msg.sender) === Number(currentUserId) || Number(msg.receiver) === Number(currentUserId)) && (
+                                                                            <IconButton
+                                                                                size="small"
+                                                                                onClick={toggleReveal}
                                                                                 sx={{
-                                                                                    color: "text.secondary",
-                                                                                    fontSize: "0.7rem"
+                                                                                    position: "absolute",
+                                                                                    bottom: 6,
+                                                                                    right: 8,
+                                                                                    color: isMe ? "white" : "inherit",
+                                                                                    opacity: 0.8,
+                                                                                    bgcolor: isMe ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)",
+                                                                                    '&:hover': {
+                                                                                        bgcolor: isMe ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.2)"
+                                                                                    }
                                                                                 }}
                                                                             >
-                                                                                {new Date(msg.createdon).toLocaleTimeString([], {
-                                                                                    hour: '2-digit',
-                                                                                    minute: '2-digit',
-                                                                                    hour12: true
-                                                                                })}
+                                                                                {isRevealed ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                                                                            </IconButton>
+                                                                        )}
+
+                                                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
+                                                                            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
+                                                                                {new Date(msg.createdon).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                                                                             </Typography>
-                                                                            <Typography
-                                                                                variant="caption"
-                                                                                sx={{
-                                                                                    ml: 1,
-                                                                                    color: "text.primary",
-                                                                                    fontSize: "0.75rem",
-                                                                                    fontWeight: "bold"
-                                                                                }}
-                                                                            >
+                                                                            <Typography variant="caption" sx={{ ml: 1, color: "text.primary", fontSize: "0.75rem", fontWeight: "bold" }}>
                                                                                 {assignee?.name || "Assignee"}
                                                                             </Typography>
                                                                         </Box>
@@ -1134,40 +1570,40 @@ const filteredRows = useMemo(() => {
                                                                             borderBottomLeftRadius: 12,
                                                                             borderBottomRightRadius: 4,
                                                                             boxShadow: 1,
+                                                                            position: "relative",
                                                                         }}
                                                                     >
                                                                         <Typography variant="body1" sx={{ wordBreak: "break-word" }}>
-                                                                            {msg.message}
+                                                                            {isProtected && canViewDecrypted && isRevealed && msg.decrypted_message
+                                                                                ? msg.decrypted_message
+                                                                                : msg.message
+                                                                            }
                                                                         </Typography>
 
-                                                                        <Box sx={{
-                                                                            display: "flex",
-                                                                            justifyContent: "space-between",
-                                                                            alignItems: "center",
-                                                                            mt: 1
-                                                                        }}>
-                                                                            <Typography
-                                                                                variant="caption"
+                                                                        {/* Eye Toggle for Sender */}
+                                                                        {isProtected && canViewDecrypted && (
+                                                                            <IconButton
+                                                                                size="small"
+                                                                                onClick={toggleReveal}
                                                                                 sx={{
-                                                                                    color: "rgba(255,255,255,0.8)",
-                                                                                    fontSize: "0.7rem"
-                                                                                }}
-                                                                            >
-                                                                                {new Date(msg.createdon).toLocaleTimeString([], {
-                                                                                    hour: '2-digit',
-                                                                                    minute: '2-digit',
-                                                                                    hour12: true
-                                                                                })}
-                                                                            </Typography>
-                                                                            <Typography
-                                                                                variant="caption"
-                                                                                sx={{
-                                                                                    mr: 1,
+                                                                                    position: "absolute",
+                                                                                    bottom: 6,
+                                                                                    right: 8,
                                                                                     color: "white",
-                                                                                    fontSize: "0.75rem",
-                                                                                    fontWeight: "bold"
+                                                                                    opacity: 0.8,
+                                                                                    bgcolor: "rgba(255,255,255,0.2)",
+                                                                                    '&:hover': { bgcolor: "rgba(255,255,255,0.3)" }
                                                                                 }}
                                                                             >
+                                                                                {isRevealed ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                                                                            </IconButton>
+                                                                        )}
+
+                                                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
+                                                                            <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.8)", fontSize: "0.7rem" }}>
+                                                                                {new Date(msg.createdon).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                                                            </Typography>
+                                                                            <Typography variant="caption" sx={{ mr: 1, color: "white", fontSize: "0.75rem", fontWeight: "bold" }}>
                                                                                 You
                                                                             </Typography>
                                                                         </Box>
@@ -1180,6 +1616,7 @@ const filteredRows = useMemo(() => {
                                                         </Box>
                                                     );
                                                 })}
+                                                
                                             </Box>
                                         ))
                                     )}
@@ -1194,7 +1631,7 @@ const filteredRows = useMemo(() => {
                                     <Box sx={{ display: "flex", gap: 1 }}>
                                         <TextField
                                             fullWidth
-                                            size="medium"
+                                            size="small"
                                             placeholder="Type your message..."
                                             value={newFollowUpMessage}
                                             onChange={e => setNewFollowUpMessage(e.target.value)}
@@ -1208,66 +1645,174 @@ const filteredRows = useMemo(() => {
                                             multiline
                                             maxRows={4}
                                         />
+                                        <Tooltip title={isProtected ? "Protected mode ON" : "Send protected message"}>
+                                            <IconButton
+                                                onClick={() => setIsProtected(true)}
+                                                sx={{
+                                                    color: isProtected ? "white" : "success.main",
+                                                    bgcolor: isProtected ? "success.main" : "transparent",
+                                                    border: "1px solid",
+                                                    "&:hover": {
+                                                        bgcolor: isProtected ? "success.dark" : "success.light",
+                                                    },
+                                                }}
+                                            >
+                                                <SecurityIcon />
+                                            </IconButton>
+                                        </Tooltip>
+                                        {/* <Tooltip title={isProtected ? "Protected mode ON" : "Send protected message"}>
+                                            <IconButton
+                                                onClick={() => setIsProtected(!isProtected)}
+                                                sx={{
+                                                    color: isProtected ? "white" : "success.main",
+                                                    bgcolor: isProtected ? "success.main" : "transparent",
+                                                    border: "1px solid",
+                                                    "&:hover": {
+                                                        bgcolor: isProtected ? "success.dark" : "success.light",
+                                                    },
+                                                }}
+                                            >
+                                                <SecurityIcon />
+                                            </IconButton>
+                                        </Tooltip> */}
                                         <IconButton
                                             onClick={() => sendFollowUpMessageHandler(newFollowUpMessage)}
                                             disabled={!newFollowUpMessage.trim() || sendingFollowUpMessage || !assignee}
                                             color="primary"
-                                            sx={{ alignSelf: "flex-end", height: 40, width: 40 }}
+                                            sx={{ alignSelf: "flex-end",  }}
                                         >
                                             {sendingFollowUpMessage ? <CircularProgress size={20} /> : <SendIcon />}
                                         </IconButton>
+                                        
                                     </Box>
+                                    {isProtected && (
+                                        <Typography variant="caption" color="success.main" sx={{ mt: 1, display: "block", textAlign: "center" }}>
+                                            <SecurityIcon fontSize="small" sx={{ verticalAlign: "middle", mr: 0.5 }} />
+                                            This message will be sent as protected
+                                        </Typography>
+                                    )}
                                 </Box>
                             </Box>
                         )}
-                        {chatTab === 1 && isSolvedTicket && (
-                            // Solution Tab: Approve/Resolve Solution
-                            <Box sx={{
-                                display: "flex",
-                                flexDirection: "column",
-                                justifyContent: "center",
-                                alignItems: "center",
-                                height: "100%",
-                                p: 4,
-                                gap: 2,
-                                textAlign: "center"
-                            }}>
-                                <DoneAllIcon sx={{ fontSize: 64, color: "success.main" }} />
-                                <Typography variant="h6" fontWeight={600} color="text.primary">
-                                    Solution Provided
-                                </Typography>
-                                <Typography variant="body1" sx={{ mb: 3, wordBreak: "break-word", color: "text.primary" }}>
-                                    {solutionText}
-                                </Typography>
-                                <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                                    <Button
-                                        variant={isResolved ? "contained" : "outlined"}
-                                        color="success"
-                                        onClick={handleResolveSolution}
-                                        disabled={isResolved}
-                                        size="small"
-                                    >
-                                        {isResolved ? "Resolved" : "Resolve Solution"}
-                                    </Button>
-                                    <Button
-                                        variant={isApproved ? "contained" : "outlined"}
-                                        color="primary"
-                                        onClick={handleApproveSolution}
-                                        disabled={isApproved}
-                                        size="small"
-                                    >
-                                        {isApproved ? "Approved" : "Approve Solution"}
-                                    </Button>
-                                </Box>
-                                <Button
-                                    variant="outlined"
-                                    onClick={() => setChatTab(0)}
-                                    sx={{ mt: 1 }}
+                        {isSolvedTicket ? (
+                            (chatTab === 1 && (
+                                // Solution Tab: Approve/Resolve Solution
+                                <Box 
+                                    sx={{
+                                        display: "flex",
+                                        flexDirection: "column",
+                                        justifyContent: "center",
+                                        alignItems: "center",
+                                        height: "100%",
+                                        p: 4,
+                                        gap: 2,
+                                        textAlign: "center"
+                                    }}
                                 >
-                                    Back to Follow-up
-                                </Button>
-                            </Box>
+                                    <DoneAllIcon sx={{ fontSize: 64, color: "success.main" }} />
+                                    <Typography variant="h6" fontWeight={600} color="text.primary">
+                                        Solution Provided
+                                    </Typography>           
+                                    <Typography variant="body1" sx={{ mb: 3, wordBreak: "break-word", color: "text.primary" }}>
+                                        {solutionText}
+                                    </Typography>
+                                    <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                                        <Button
+                                            variant={isResolved ? "contained" : "outlined"}
+                                            color="success"
+                                            onClick={handleResolveSolution}
+                                            disabled={isResolved}
+                                            size="small"
+                                        >
+                                            {isResolved ? "Resolved" : "Resolve Solution"}
+                                        </Button>
+                                        <Button
+                                            variant={isApproved ? "contained" : "outlined"}
+                                            color="primary"
+                                            onClick={handleApproveSolution}
+                                            disabled={isApproved}
+                                            size="small"
+                                        >
+                                            {isApproved ? "Approved" : "Approve Solution"}
+                                        </Button>
+                                    </Box>
+                                    <Button
+                                        variant="outlined"
+                                        onClick={() => setChatTab(0)}
+                                        sx={{ mt: 1 }}
+                                    >
+                                        Back to Follow-up
+                                    </Button>
+                                </Box>
+                            ))
+                        ) : (
+                            (chatTab === 2 && (
+                                <Box sx={{ display: "flex", flexDirection: "column", height: "100%", p: 3 }}>
+                                    {isTicketClarificationRequired() ? (
+                                        <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                            <HelpOutlineIcon sx={{ fontSize: 80, color: "warning.main", mb: 2 }} />
+                                            <Typography variant="h6" fontWeight={600}>Clarification Request Already Sent</Typography>
+                                            <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
+                                                Waiting for requester to respond.
+                                            </Typography>
+                                            <Button variant="outlined" onClick={() => setChatTab(0)}>
+                                                Back to Follow-up
+                                            </Button>
+                                        </Box>
+                                    ) : isTicketSolved() ? (
+                                        <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                            <DoneAllIcon sx={{ fontSize: 80, color: "success.main", mb: 2 }} />
+                                            <Typography variant="h6" fontWeight={600}>Ticket Already Solved</Typography>
+                                            <Typography color="text.secondary" sx={{ mt: 1 }}>
+                                                Cannot request clarification on solved tickets.
+                                             </Typography>
+                                        </Box>
+                                    ) : (
+                                        <>
+                                        <Box sx={{ textAlign: "center", mb: 3 }}>
+                                            <HelpOutlineIcon sx={{ fontSize: 60, color: "warning.main", mb: 2 }} />
+                                            <Typography variant="h6" fontWeight={600}>Request Clarification</Typography>
+                                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                                Ask for more details if something is unclear.
+                                            </Typography>
+                                        </Box>
+                                        <TextField
+                                            multiline
+                                            rows={6}
+                                            placeholder="Please clarify the following..."
+                                            value={clarificationText}
+                                            onChange={(e) => setClarificationText(e.target.value)}
+                                            variant="outlined"
+                                            fullWidth
+                                            sx={{ mb: 3 }}
+                                            disabled={sendingClarification}
+                                        />
+                                        <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
+                                            <Button
+                                                variant="contained"
+                                                color="warning"
+                                                size="large"
+                                                startIcon={<QuestionAnswerIcon />}
+                                                onClick={handleSendClarification}
+                                                disabled={!clarificationText.trim() || sendingClarification}
+                                            >
+                                                {sendingClarification ? <CircularProgress size={20} /> : "Send Request"}
+                                            </Button>
+                                            <Button variant="outlined" onClick={() => { setClarificationText(""); setChatTab(0); }} disabled={sendingClarification}>
+                                                Cancel
+                                            </Button>
+                                        </Box>
+                                        </>
+                                    )}
+                                </Box>
+                            ))
+                            )}
+                        {/* {chatTab === 1 && isSolvedTicket && (
+                            
                         )}
+                        {isSolvedTicket ? chatTab === 2 : chatTab === 1 && (
+                            
+                        )} */}
                     </Box>
                 </Box>
             </Drawer>
@@ -1275,6 +1820,8 @@ const filteredRows = useMemo(() => {
     );
 };
 export default RequestTabs;
+
+
 // import { useState, useEffect, useMemo } from "react";
 // import { useTheme } from "@mui/material/styles";
 // import { Box, Card, CardContent, Typography, Grid, TextField, Button, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, useMediaQuery, Autocomplete, Stack, Pagination, Tooltip, IconButton, Icon, Drawer, CircularProgress, Divider, Chip, Avatar, Tabs, Tab, List, ListItem, ListItemButton, ListItemText } from "@mui/material";

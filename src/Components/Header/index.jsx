@@ -1024,6 +1024,14 @@ const Header = () => {
             return availableMappings.length > 1;
         }
     }, [currentRole, entities.length, availableMappings.length]);
+    const isGlobalEntity = (entity) => {
+    // Match by name (case-insensitive) or by id if it's '0' or 0
+    return (
+        entity.name?.toLowerCase() === 'global' ||
+        entity.id === '0' || 
+        entity.id === 0
+    );
+};
     const handleLogout = async () => {
         try {
             await logoutAPI();
@@ -1032,19 +1040,39 @@ const Header = () => {
         navigate("/");
     };
     const fetchEntities = async () => {
-        setLoadingEntities(true);
-        try {
-            const data = await fetchEntitiesAPI();
-            // For superadmin, limit to first 3 entities
-            const limitedEntities = currentRole === 'superadmin' ? data.slice(0, 3) : data;
-            setEntities(limitedEntities);
-        } catch (error) {
-            console.error("Failed to fetch entities:", error);
-            setEntities([]);
-        } finally {
-            setLoadingEntities(false);
-        }
-    };
+    setLoadingEntities(true);
+    try {
+        const data = await fetchEntitiesAPI();
+        // Exclude Global entity
+        const filtered = data.filter(ent => !isGlobalEntity(ent));
+
+        // For superadmin, limit to first 3 (after filtering)
+        const limitedEntities = currentRole === 'superadmin' 
+            ? filtered.slice(0, 3) 
+            : filtered;
+
+        setEntities(limitedEntities);
+    } catch (error) {
+        console.error("Failed to fetch entities:", error);
+        setEntities([]);
+    } finally {
+        setLoadingEntities(false);
+    }
+};
+    // const fetchEntities = async () => {
+    //     setLoadingEntities(true);
+    //     try {
+    //         const data = await fetchEntitiesAPI();
+    //         // For superadmin, limit to first 3 entities
+    //         const limitedEntities = currentRole === 'superadmin' ? data.slice(0, 3) : data;
+    //         setEntities(limitedEntities);
+    //     } catch (error) {
+    //         console.error("Failed to fetch entities:", error);
+    //         setEntities([]);
+    //     } finally {
+    //         setLoadingEntities(false);
+    //     }
+    // };
     const handleEntitySelect = (entity) => {
         const userData = getUserData();
         let defaultRoleName = getUserRole();
@@ -1074,21 +1102,42 @@ const Header = () => {
         setShouldNavigateAfterSelect(false);
     };
     const loadAvailableMappings = async () => {
-        setLoadingMappings(true);
-        try {
-            const mappings = JSON.parse(localStorage.getItem("available_role_mappings") || "[]");
-            setAvailableMappings(mappings);
-            if (mappings.length === 0) {
-                await fetchEntities();
-            }
-        } catch (error) {
-            console.error("Failed to load available mappings:", error);
-            setAvailableMappings([]);
+    setLoadingMappings(true);
+    try {
+        let mappings = JSON.parse(localStorage.getItem("available_role_mappings") || "[]");
+        
+        // Remove any mappings linked to Global entity
+        mappings = mappings.filter(m => !isGlobalEntity(m));
+
+        setAvailableMappings(mappings);
+
+        if (mappings.length === 0) {
             await fetchEntities();
-        } finally {
-            setLoadingMappings(false);
         }
-    };
+    } catch (error) {
+        console.error("Failed to load available mappings:", error);
+        setAvailableMappings([]);
+        await fetchEntities();
+    } finally {
+        setLoadingMappings(false);
+    }
+};
+    // const loadAvailableMappings = async () => {
+    //     setLoadingMappings(true);
+    //     try {
+    //         const mappings = JSON.parse(localStorage.getItem("available_role_mappings") || "[]");
+    //         setAvailableMappings(mappings);
+    //         if (mappings.length === 0) {
+    //             await fetchEntities();
+    //         }
+    //     } catch (error) {
+    //         console.error("Failed to load available mappings:", error);
+    //         setAvailableMappings([]);
+    //         await fetchEntities();
+    //     } finally {
+    //         setLoadingMappings(false);
+    //     }
+    // };
     const handleCreateTicketClick = async () => {
         if (hasValidMapping()) {
             const selected = getSelectedMapping();

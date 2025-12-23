@@ -4,6 +4,7 @@ export const Media_URL = "http://localhost:8000";
 
 //  const API_BASE_URL = "http://localhost:8000/api/";
 const API_BASE_URL = "http://192.168.60.149:8000/api/";
+// const API_BASE_URL = "http://192.168.0.242:8000/api/";
 
 
 const api = axios.create({
@@ -400,7 +401,8 @@ export const updateTicket = async (ticketNo, data) => {
     const response = await api.put(`tickets/tickets/${ticketNo}/`, data, {
       headers: {
         Authorization: `Bearer ${token}`, // Pass token
-        "Content-Type": "application/json", // Ensure JSON
+        // "Content-Type": "application/json", // Ensure JSON
+        "Content-Type": "multipart/form-data",
       },
     });
 
@@ -410,7 +412,23 @@ export const updateTicket = async (ticketNo, data) => {
     return { success: false, error: error.response?.data || error.message };
   }
 };
-
+// In Admik ticket counts
+ 
+export const fetchAdminTickets = async (params = {}) => {
+  const token = localStorage.getItem("access_token");
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const user = userData?.id;
+  const response = await api.get(`tickets/admin/count/?user=${user}`, {
+    headers: { Authorization: `Bearer ${token}` },
+   
+  });
+ console.log("response :",response);
+ 
+  if (response.status != 200) throw new Error("Failed to fetch approver tickets");
+  return response.data;
+};
+ 
+ 
 //------------------- Get All SLAs -----------------
 export const fetchTicketSLAs = async (params = {}) => {
   try {
@@ -1305,7 +1323,7 @@ export const fetchMessages = async () => {
         throw err;
     }
 };
-export const sendMessage = async ({ receiver, ticket_no, message }) => {
+export const sendMessage = async ({ receiver, ticket_no, message, protected: isProtected = false }) => {
   try {
     const token = localStorage.getItem("access_token");
     const userData = JSON.parse(localStorage.getItem("user")); // get logged-in user
@@ -1320,6 +1338,7 @@ export const sendMessage = async ({ receiver, ticket_no, message }) => {
         receiver,
         ticket_no,
         message,
+        protected: Boolean(isProtected),
       },
       {
         headers: { 
@@ -1341,9 +1360,13 @@ export const fetchApproverTickets = async (params = {}) => {
   const token = localStorage.getItem("access_token");
   const userData = JSON.parse(localStorage.getItem("user"));
   const user = userData?.id;
-  const response = await api.get(`tickets/approver/count/?user=${user}`, {
+  const response = await api.get(`tickets/approver/count/`, {
     headers: { Authorization: `Bearer ${token}` },
-    
+    params: {
+        start_date: params.start_date,
+        end_date: params.end_date,
+        search: params.search || '',
+      },
   });
  console.log("response :",response);
  
@@ -1352,19 +1375,55 @@ export const fetchApproverTickets = async (params = {}) => {
 };
 
 
-export const fetchAdminTickets = async (params = {}) => {
+export const fetchCategorySLA = async (entityId = null) => {
   const token = localStorage.getItem("access_token");
-  const userData = JSON.parse(localStorage.getItem("user"));
-  const user = userData?.id;
-  const response = await api.get(`tickets/admin/count/?user=${user}`, {
-    headers: { Authorization: `Bearer ${token}` },
-    
-  });
- console.log("response :",response);
  
-  if (response.status != 200) throw new Error("Failed to fetch approver tickets");
+  // If entityId is not provided, default to the current selected entity from localStorage
+  if (entityId === null) {
+    try {
+      const userData = JSON.parse(localStorage.getItem("user_data") || "{}");
+      const selectedRoleMapping = JSON.parse(localStorage.getItem("selected_role_mapping") || "{}");
+     
+      // Prefer selected_role_mapping.entity_id if available, fallback to user_data.entity_data.id
+      entityId = selectedRoleMapping.entity_id || (userData.entity_data ? userData.entity_data.id : null);
+     
+      if (entityId === null) {
+        throw new Error("No entity ID found in localStorage");
+      }
+    } catch (error) {
+      console.error("Error parsing localStorage for entity ID:", error);
+      throw new Error("Failed to determine current entity ID");
+    }
+  }
+ 
+  let url = 'tickets/categories-full/';
+  url += `?entity_id=${entityId}`;
+ 
+  const response = await api.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+ 
+  console.log("response :", response);
+ 
+  if (response.status !== 200) throw new Error("Failed to fetch category sla");
+ 
   return response.data;
-};
+}
+ 
+
+// export const fetchAdminTickets = async (params = {}) => {
+//   const token = localStorage.getItem("access_token");
+//   const userData = JSON.parse(localStorage.getItem("user"));
+//   const user = userData?.id;
+//   const response = await api.get(`tickets/admin/count/?user=${user}`, {
+//     headers: { Authorization: `Bearer ${token}` },
+    
+//   });
+//  console.log("response :",response);
+ 
+//   if (response.status != 200) throw new Error("Failed to fetch approver tickets");
+//   return response.data;
+// };
 // export const fetchRolePermissions = async () => {
 //   try {
 //     const response = await fetch('/api/role-permissions/'); // Adjust URL
