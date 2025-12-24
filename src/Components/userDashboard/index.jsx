@@ -5,9 +5,10 @@ import UserHeader from "./Header";
 import { fetchApproverTickets, ticketcounts } from "../../Api"
 import { useEffect, useState } from "react";
 import stemzLogo from "../../assets/download.png";
-import RequestTabs from "./RequestTabs";
-import ApproverTabs from "./ApproverTabs";
+import UserTabs from "./UserTabs";
+import TechnicianTabs from "./TechnicianTabs";
 import { toast } from "react-toastify";
+import AdminTabs from "./AdminTabs";
 
 const UserDashboard = () => {
 
@@ -20,6 +21,7 @@ const UserDashboard = () => {
         localStorage.getItem("selected_role_mapping") || "{}"
     );
     const roleName = roleMapping?.role_name; // Technician, Admin, User, etc.
+    const isAdmin = roleName === "Admin";
     const isTechnician = roleName === "Technician";
 
     const fetchDashboard = async (filters = {}) => {
@@ -78,11 +80,13 @@ const UserDashboard = () => {
                     <TabsPage  DashboardData={DashboardData}/>
                 </Grid> */}
                 <Grid size={12}>
-                    {isTechnician ?
-                        <ApproverTabs approverStatus={userStatus} />
-                        :
-                        <RequestTabs userStatus={userStatus} />
-                    }
+                    {isAdmin ? (
+                        <AdminTabs adminStatus={userStatus} />
+                    ) : isTechnician ? (
+                        <TechnicianTabs approverStatus={userStatus} />
+                    ) : (
+                        <UserTabs userStatus={userStatus} />
+                    )}
                 </Grid>
             </Grid>
             <Backdrop

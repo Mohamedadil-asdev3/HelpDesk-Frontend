@@ -901,40 +901,19 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import {
-    AppBar,
-    Avatar,
-    Box,
+    AppBar, Avatar, Box, Drawer, IconButton, List, ListItem, ListItemButton, ListItemText, Toolbar, Typography, useMediaQuery,
+    useTheme, Paper, Tooltip, Dialog, DialogTitle, DialogContent, DialogActions, ListItemIcon, CircularProgress, FormControl,
+    InputLabel, Select, MenuItem, Button,
+    Badge,
+    Menu,
     Divider,
-    Drawer,
-    IconButton,
-    List,
-    ListItem,
-    ListItemButton,
-    ListItemText,
-    Toolbar,
-    Typography,
-    useMediaQuery,
-    useTheme,
-    Paper,
-    Tooltip,
-    Dialog,
-    DialogTitle,
-    DialogContent,
-    DialogActions,
-    ListItemIcon,
-    CircularProgress,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
-    Button,
+    ListItemAvatar,
 } from "@mui/material";
-import AddIcon from '@mui/icons-material/Add';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { LuTicketPlus } from "react-icons/lu";
-import MenuIcon from '@mui/icons-material/Menu';
 import CloseIcon from '@mui/icons-material/Close';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 import SwapHorizontalCircleIcon from '@mui/icons-material/SwapHorizontalCircle';
 import BusinessIcon from '@mui/icons-material/Business';
 import { useNavigate } from 'react-router-dom';
@@ -963,6 +942,44 @@ const Header = () => {
 
     const navigate = useNavigate();
     const media_url = Media_URL;
+
+    const [notificationOpen, setNotificationOpen] = useState(false);
+    const [notifications, setNotifications] = useState([]);
+
+    const unreadCount = notifications.filter(n => !n.read).length;
+
+    const handleNotificationClick = (notification) => {
+        setNotifications(prev =>
+            prev.map(n =>
+                n.id === notification.id ? { ...n, read: true } : n
+            )
+        );
+
+        setNotificationOpen(false);
+
+        navigate("/approval");
+    };
+
+
+    useEffect(() => {
+        // Replace with real API
+        setNotifications([
+            {
+                id: 1,
+                title: "New Ticket Created",
+                description: "Ticket #1234",
+                read: false,
+                time: "2 min ago"
+            },
+            {
+                id: 2,
+                title: "Ticket Assigned",
+                description: "Ticket #1220",
+                read: true,
+                time: "1 hr ago"
+            }
+        ]);
+    }, []);
 
     const getSelectedMapping = () => {
         const mappingStr = localStorage.getItem('selected_role_mapping');
@@ -1232,6 +1249,16 @@ const Header = () => {
                     </Box>
                 </Box>
                 <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                    <IconButton onClick={() => setNotificationOpen(true)}>
+                        <Badge
+                            badgeContent={unreadCount}
+                            color="error"
+                            invisible={unreadCount === 0}
+                        >
+                            <NotificationsIcon />
+                        </Badge>
+                    </IconButton>
+
                     {canCreateTicket && (
                         <Tooltip title={!hasValidMapping() ? "First select entity" : ""} arrow placement="bottom">
                             <span>
@@ -1310,7 +1337,6 @@ const Header = () => {
                     )}
                 </Box>
 
-
                 {/* Custom Profile Panel */}
                 {profileOpen && (
                     <Paper
@@ -1367,6 +1393,77 @@ const Header = () => {
                         </ListItemButton>
                     </Paper>
                 )}
+
+                <Drawer
+                    anchor="right"
+                    open={notificationOpen}
+                    onClose={() => setNotificationOpen(false)}
+                    PaperProps={{
+                        sx: {
+                            width: { xs: "100%", sm: 380 }
+                        }
+                    }}
+                >
+                    {/* Header */}
+                    <Box
+                        sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            p: 2,
+                            borderBottom: "1px solid #eee"
+                        }}
+                    >
+                        <Typography fontWeight={600}>
+                            Notifications
+                        </Typography>
+                        <IconButton onClick={() => setNotificationOpen(false)}>
+                            <CloseIcon />
+                        </IconButton>
+                    </Box>
+
+                    {/* Notification List */}
+                    <List sx={{ p: 0 }}>
+                        {notifications.length === 0 ? (
+                            <Box sx={{ p: 3, textAlign: "center", color: "#999" }}>
+                                No notifications
+                            </Box>
+                        ) : (
+                            notifications.map((item) => (
+                                <Box key={item.id}>
+                                    <ListItem
+                                        sx={{
+                                            backgroundColor: item.read ? "inherit" : "#f5f7ff",
+                                            cursor: "pointer"
+                                        }}
+                                        onClick={() => handleNotificationClick(item)}
+                                    >
+                                        <ListItemAvatar>
+                                            <Avatar>
+                                                <NotificationsIcon fontSize="small" />
+                                            </Avatar>
+                                        </ListItemAvatar>
+
+                                        <ListItemText
+                                            primary={item.title}
+                                            secondary={
+                                                <>
+                                                    <Typography variant="body2">
+                                                        {item.description}
+                                                    </Typography>
+                                                    <Typography variant="caption" color="text.secondary">
+                                                        {item.time}
+                                                    </Typography>
+                                                </>
+                                            }
+                                        />
+                                    </ListItem>
+                                    <Divider />
+                                </Box>
+                            ))
+                        )}
+                    </List>
+                </Drawer>
 
                 {/* Drawer (Mobile Menu) */}
                 <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>

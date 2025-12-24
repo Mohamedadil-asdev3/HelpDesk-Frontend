@@ -208,7 +208,7 @@ function Layout() {
         <Route
           path="/CreateTicket"
           element={
-            <ProtectedRoute allowedRoles={['user', 'technician', 'superadmin']}>
+            <ProtectedRoute allowedRoles={['user', 'technician', 'superadmin','admin']}>
               <TicketForm />
             </ProtectedRoute>
           }

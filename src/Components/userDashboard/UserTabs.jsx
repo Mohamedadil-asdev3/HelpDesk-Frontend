@@ -1345,7 +1345,7 @@ import { Chat as ChatIcon, Send as SendIcon, } from "@mui/icons-material";
 import { toast } from "react-toastify";
 import { fetchMessages, sendMessage, getTicketDetails, } from "../../Api";
 
-const RequestTabs = ({ userStatus }) => {
+const UserTabs = ({ userStatus }) => {
 
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -1577,16 +1577,276 @@ const RequestTabs = ({ userStatus }) => {
         }
     };
 
-    const handleResolveSolution = () => {
-        // TODO: Call API to resolve solution
-        setIsResolved(true);
-        toast.success("Solution resolved!");
-    };
+    const handleResolveSolution = async () => {
+        if (!currentChatTicket?.id) {
+            toast.error("No ticket selected");
+            return;
+        }
 
-    const handleApproveSolution = () => {
-        // TODO: Call API to approve solution
-        setIsApproved(true);
-        toast.success("Solution approved!");
+        let currentTicketData = {};
+        try {
+            const ticketDetails = await getTicketDetails(currentChatTicket.id);
+            currentTicketData = ticketDetails.ticket || ticketDetails;
+        } catch (err) {
+            toast.error("Could not fetch ticket details");
+            return;
+        }
+
+        // try {
+        //     const ticketNoStr = String(currentChatTicket.id);
+
+        //     const assigneesDetail = currentTicketData.assignees_detail || [];
+        //     const assignedGroupsDetail = currentTicketData.assigned_groups_detail || [];
+
+        //     const assigneeEmails = assigneesDetail.map(u => u.email).filter(Boolean);
+        //     const assignedGroupIds = assignedGroupsDetail.map(g => g.id).filter(Boolean);
+
+        //     const assignedToType = [];
+        //     if (assigneeEmails.length > 0) assignedToType.push('user');
+        //     if (assignedGroupIds.length > 0) assignedToType.push('group');
+
+        //     const categoryId = currentTicketData.category || currentTicketData.category_detail?.id;
+
+        //     const payload = {
+        //         title: currentTicketData.title || "",
+        //         description: currentTicketData.description || "",
+        //         category: categoryId,
+        //         status: "41", // ← NEW (or use another ID like "Resolved" if you have one)
+        //         assigned_to_type: assignedToType,
+        //         assignee: assigneeEmails,
+        //         assigned_group: assignedGroupIds,
+        //         resolved_status: "yes" // optional
+        //     };
+
+        //     const result = await updateTicket(ticketNoStr, payload);
+        //     if (!result.success) throw new Error(result.error || "Failed");
+
+        //     toast.success("Solution resolved! Ticket status changed to New.");
+
+        //     // Move ticket from solved → new_assigned (or wherever "New" tickets appear)
+        //     setTickets(prev => {
+        //         const ticket = prev.solved.find(t => t.ticket_no == currentChatTicket.id);
+        //         if (!ticket) return prev;
+
+        //         // Update status display locally
+        //         ticket.status_detail = { field_values: "New" };
+
+        //         return {
+        //             ...prev,
+        //             solved: prev.solved.filter(t => t.ticket_no != currentChatTicket.id),
+        //             new_assigned: [ticket, ...prev.new_assigned]
+        //         };
+        //     });
+
+        //     setIsResolved(true);
+        //     setShowFollowUpChat(false);
+        //     setSelectedType("new_assigned"); // or "solved" if you keep it there
+
+        //     await sendFollowUpMessageHandler("I have resolved the solution. Ticket reopened as New if further action needed.");
+
+        // } catch (err) {
+        //     console.error(err);
+        //     toast.error("Failed to resolve solution");
+        // }
+        try {
+            const ticketNoStr = String(currentChatTicket.id);
+
+            const assignedUsers =
+                currentTicketData.assignees_detail ||
+                currentTicketData.assigned_users ||
+                [];
+
+            const assignedGroups =
+                currentTicketData.assigned_groups_detail ||
+                currentTicketData.assigned_groups ||
+                [];
+
+            const formData = new FormData();
+
+            // BASIC FIELDS
+            formData.append("title", currentTicketData.title || "");
+            formData.append("description", currentTicketData.description || "");
+            formData.append(
+                "category",
+                currentTicketData.category || currentTicketData.category_detail?.id || ""
+            );
+
+            // STATUS (New)
+            formData.append("status", "41"); // New
+            formData.append("resolved_status", "yes");
+
+            /* -----------------------------
+               ASSIGNED USERS
+            ------------------------------*/
+            let assignedTypeIndex = 0;
+
+            assignedUsers.forEach((user, index) => {
+                if (user?.email) {
+                    formData.append(`assignee[${index}]`, user.email);
+                }
+            });
+
+            if (assignedUsers.length > 0) {
+                formData.append(`assigned_to_type[${assignedTypeIndex}]`, "user");
+                assignedTypeIndex++;
+            }
+
+            /* -----------------------------
+               ASSIGNED GROUPS
+            ------------------------------*/
+            assignedGroups.forEach((group, index) => {
+                if (group?.id) {
+                    formData.append(`assigned_group[${index}]`, group.id);
+                }
+            });
+
+            if (assignedGroups.length > 0) {
+                formData.append(`assigned_to_type[${assignedTypeIndex}]`, "group");
+            }
+
+            const result = await updateTicket(ticketNoStr, formData);
+            if (!result.success) throw new Error(result.error || "Failed");
+
+            toast.success("Solution resolved! Ticket status changed to New.");
+
+            // Update UI
+            setTickets(prev => {
+                const ticket = prev.solved.find(
+                    t => t.ticket_no == currentChatTicket.id
+                );
+                if (!ticket) return prev;
+
+                ticket.status_detail = { field_values: "New" };
+
+                return {
+                    ...prev,
+                    solved: prev.solved.filter(
+                        t => t.ticket_no != currentChatTicket.id
+                    ),
+                    new_assigned: [ticket, ...prev.new_assigned]
+                };
+            });
+
+            setIsResolved(true);
+            setShowFollowUpChat(false);
+            setSelectedType("new_assigned");
+
+            await sendFollowUpMessageHandler(
+                "I have resolved the solution. Ticket reopened as New if further action needed."
+            );
+
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to resolve solution");
+        }
+
+    };
+    // const handleResolveSolution = () => {
+    //     // TODO: Call API to resolve solution
+    //     setIsResolved(true);
+    //     toast.success("Solution resolved!");
+    // };
+
+    // const handleApproveSolution = () => {
+    //     // TODO: Call API to approve solution
+    //     setIsApproved(true);
+    //     toast.success("Solution approved!");
+    // };
+    const handleApproveSolution = async () => {
+        if (!currentChatTicket?.id) {
+            toast.error("No ticket selected");
+            return;
+        }
+
+        // Get fresh ticket details to preserve current data
+        let currentTicketData = {};
+        try {
+            const ticketDetails = await getTicketDetails(currentChatTicket.id);
+            currentTicketData = ticketDetails.ticket || ticketDetails;
+        } catch (err) {
+            console.error("Failed to fetch latest ticket details:", err);
+            toast.error("Could not fetch ticket details");
+            return;
+        }
+
+        try {
+            const ticketNoStr = String(currentChatTicket.id);
+            console.log("Updating ticket to Closed:", ticketNoStr);
+
+            const assignedUsers =
+                currentTicketData.assignees_detail ||
+                currentTicketData.assigned_users ||
+                [];
+
+            const assignedGroups =
+                currentTicketData.assigned_groups_detail ||
+                currentTicketData.assigned_groups ||
+                [];
+
+            const formData = new FormData();
+
+            // BASIC FIELDS
+            formData.append("title", currentTicketData.title || "");
+            formData.append("description", currentTicketData.description || "");
+            formData.append(
+                "category",
+                currentTicketData.category || currentTicketData.category_detail?.id || ""
+            );
+
+            // CLOSED STATUS
+            formData.append("status", "46"); // Closed
+
+            /* -----------------------------
+               ASSIGNEES
+            ------------------------------*/
+            let assignedTypeIndex = 0;
+
+            assignedUsers.forEach((user, index) => {
+                if (user?.email) {
+                    formData.append(`assignee[${index}]`, user.email);
+                }
+            });
+
+            if (assignedUsers.length > 0) {
+                formData.append(`assigned_to_type[${assignedTypeIndex}]`, "user");
+                assignedTypeIndex++;
+            }
+
+            /* -----------------------------
+               GROUPS
+            ------------------------------*/
+            assignedGroups.forEach((group, index) => {
+                if (group?.id) {
+                    formData.append(`assigned_group[${index}]`, group.id);
+                }
+            });
+
+            if (assignedGroups.length > 0) {
+                formData.append(`assigned_to_type[${assignedTypeIndex}]`, "group");
+            }
+
+            console.log("Approve Solution → Closing ticket (FormData):", [
+                ...formData.entries(),
+            ]);
+
+            const result = await updateTicket(ticketNoStr, formData);
+            if (!result.success) {
+                throw new Error(result.error || "Failed to close ticket");
+            }
+
+            toast.success("Solution approved and ticket closed successfully!");
+
+            // UI updates
+            setIsApproved(true);
+            setShowFollowUpChat(false);
+            loadData();
+            setSelectedType("closed");
+
+        } catch (err) {
+            console.error("Error closing ticket on approve:", err);
+            toast.error("Failed to close ticket");
+        }
+
     };
 
     const handleChatDrawerOpen = async (ticketNo) => {
@@ -1626,6 +1886,7 @@ const RequestTabs = ({ userStatus }) => {
                 id: ticketNo,
                 title: ticketData.title || ticket.title || "",
                 description: ticketData.description || ticket.description || "",
+
             });
             // Check if solved ticket and set solution data (for ticket creator view)
             if (selectedType === "solved") {
@@ -2251,21 +2512,17 @@ const RequestTabs = ({ userStatus }) => {
                 }}>
                     {/* Header */}
                     <Box sx={{
-                        display: "flow",
                         p: 2,
                         borderBottom: 1,
                         borderColor: "divider",
                         bgcolor: "primary.main",
                         color: "white"
                     }}>
-                        <Typography variant="caption" sx={{ color: "white", verticalAlign: "middle" }}>
+                        <Typography variant="h6" sx={{ color: "white" }}>
                             Ticket #{currentChatTicket?.id}
                         </Typography>
-                        <Typography variant="caption" sx={{ color: "white" }}>
-                            {currentChatTicket?.title}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: "white" }}>
-                            {currentChatTicket?.description}
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                            {currentChatTicket?.title || "No Title"}
                         </Typography>
                     </Box>
                     {/* Tab Buttons */}
@@ -2545,4 +2802,4 @@ const RequestTabs = ({ userStatus }) => {
         </Box >
     );
 };
-export default RequestTabs;
+export default UserTabs;

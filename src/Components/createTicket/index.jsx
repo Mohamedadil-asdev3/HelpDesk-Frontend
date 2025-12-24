@@ -699,9 +699,9 @@ const TicketForm = () => {
 
   return (
     <Box sx={{ p: { xs: 1, md: 2 }, display: "flex", justifyContent: "center" }}>
-      <Card sx={{ width: "100%", maxWidth: "1400px", borderRadius: 4, p: 3, }}>
+      <Card sx={{ width: "100%", maxWidth: "1400px", borderRadius: 4, p: 1, }}>
         <CardContent>
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mb: 1 }}>
             <Typography fontSize={30} fontWeight={700}>
               {editMode ? `Edit Ticket #${editTicketId}` : "Create New Ticket"}
             </Typography>
@@ -713,7 +713,7 @@ const TicketForm = () => {
             )}
           </Box>
 
-          <Grid container spacing={3}>
+          <Grid container spacing={1}>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Typography fontSize={15} fontWeight={600}>
                 Type <span style={{ color: "red" }}>*</span>
@@ -887,7 +887,7 @@ const TicketForm = () => {
           </Grid>
 
           <Grid size={12}>
-            <Box sx={{ mt: 3 }}>
+            <Box sx={{ mt: 1 }}>
               <Typography fontSize={15} fontWeight={600}>
                 Title <span style={{ color: "red" }}>*</span>
               </Typography>
@@ -903,7 +903,7 @@ const TicketForm = () => {
           </Grid>
 
           <Grid size={12}>
-            <Box sx={{ mt: 3 }}>
+            <Box sx={{ mt: 1 }}>
               <Typography fontSize={15} fontWeight={600}>
                 Description <span style={{ color: "red" }}>*</span>
               </Typography>
@@ -951,128 +951,130 @@ const TicketForm = () => {
               >
                 <EditorContent editor={editor} className="editor-area" />
               </Box>
-              <Typography textAlign="right" sx={{ mt: 0.5 }} color="text.secondary">
-                {editor?.getText().length || 0}/5000 characters
-              </Typography>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography fontWeight={600}>Attachments (Max 5 file & 5 Mb)</Typography>
+                <Typography textAlign="right" sx={{ mt: 0.5 }} color="text.secondary">
+                  {editor?.getText().length || 0}/5000 characters
+                </Typography>
+              </Box>
             </Box>
           </Grid>
-
           <Grid size={12}>
-            <Box sx={{ mt: 3 }}>
-              <Typography fontWeight={600}>Attachments</Typography>
-              <Button variant="contained" component="label" disabled={files.length >= MAX_FILES} sx={{ mt: 1, px: 4, py: 1, borderRadius: "10px", fontWeight: 600, background: "linear-gradient(135deg, #667eea, #764ba2)", opacity: files.length >= MAX_FILES ? 0.6 : 1 }}>
-                Choose Files ({files.length})
-                <input ref={fileInputRef} type="file" hidden multiple accept=".pdf,.png,.jpg,.jpeg" onChange={handleFileChange} />
-              </Button>
-              {files.length > 0 && (
-                <Box
-                  sx={{
-                    mt: 2,
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: 2,
-                  }}
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1.5 }}>
+              <Box>
+                <Button variant="contained" component="label" disabled={files.length >= MAX_FILES} sx={{ px: 4, py: 1, borderRadius: "10px", fontWeight: 600, background: "linear-gradient(135deg, #667eea, #764ba2)", opacity: files.length >= MAX_FILES ? 0.6 : 1 }}>
+                  Choose Files ({files.length})
+                  <input ref={fileInputRef} type="file" hidden multiple accept=".pdf,.png,.jpg,.jpeg" onChange={handleFileChange} />
+                </Button>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, alignItems: "center" }}>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleCancel}
+                  size="small"
+                  sx={{ px: 5, "&:hover": { backgroundColor: "#e41010ff" } }}
                 >
-                  {files.map((file, index) => {
-                    const isImage = file.type.startsWith("image/");
-                    const previewUrl = URL.createObjectURL(file);
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={editMode ? handleUpdateTicket : handleCreateTicket}
+                  disabled={loading}
+                  sx={{ px: 5, backgroundColor: "#22c55e", "&:hover": { backgroundColor: "#16a34a" } }}
+                >
+                  {loading ? "Saving..." : editMode ? "Update" : "Create"}
+                </Button>
+              </Box>
+            </Box>
+            {files.length > 0 && (
+              <Box
+                sx={{
+                  mt: 2,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 2,
+                }}
+              >
+                {files.map((file, index) => {
+                  const isImage = file.type.startsWith("image/");
+                  const previewUrl = URL.createObjectURL(file);
 
-                    return (
-                      <Box
-                        key={index}
+                  return (
+                    <Box
+                      key={index}
+                      sx={{
+                        width: 120,
+                        border: "1px solid #E2E8F0",
+                        borderRadius: 2,
+                        p: 1,
+                        textAlign: "center",
+                        position: "relative",
+                      }}
+                    >
+                      <IconButton
+                        size="small"
+                        onClick={() => removeFile(index)}
                         sx={{
-                          width: 120,
-                          border: "1px solid #E2E8F0",
-                          borderRadius: 2,
-                          p: 1,
-                          textAlign: "center",
-                          position: "relative",
+                          position: "absolute",
+                          top: -8,
+                          right: -8,
+                          color: "red",
+                          bgcolor: "white",
+                          boxShadow: 1,
                         }}
                       >
-                        <IconButton
-                          size="small"
-                          onClick={() => removeFile(index)}
+                        <CloseIcon />
+                      </IconButton>
+
+                      {isImage ? (
+                        <Box
+                          component="img"
+                          src={previewUrl}
+                          alt={file.name}
                           sx={{
-                            position: "absolute",
-                            top: -8,
-                            right: -8,
-                            color: "red",
-                            bgcolor: "white",
-                            boxShadow: 1,
+                            width: "100%",
+                            height: 80,
+                            objectFit: "cover",
+                            borderRadius: 1,
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            height: 80,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            bgcolor: "#EDF2F7",
+                            borderRadius: 1,
+                            fontWeight: 600,
+                            color: "#4A5568",
                           }}
                         >
-                          <CloseIcon />
-                        </IconButton>
+                          PDF
+                        </Box>
+                      )}
 
-                        {isImage ? (
-                          <Box
-                            component="img"
-                            src={previewUrl}
-                            alt={file.name}
-                            sx={{
-                              width: "100%",
-                              height: 80,
-                              objectFit: "cover",
-                              borderRadius: 1,
-                            }}
-                          />
-                        ) : (
-                          <Box
-                            sx={{
-                              height: 80,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              bgcolor: "#EDF2F7",
-                              borderRadius: 1,
-                              fontWeight: 600,
-                              color: "#4A5568",
-                            }}
-                          >
-                            PDF
-                          </Box>
-                        )}
-
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            mt: 0.5,
-                            display: "block",
-                            whiteSpace: "nowrap",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                          }}
-                        >
-                          {file.name}
-                        </Typography>
-                      </Box>
-                    );
-                  })}
-                </Box>
-              )}
-            </Box>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          mt: 0.5,
+                          display: "block",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {file.name}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
           </Grid>
-
-          <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-            <Button
-              variant="contained"
-              color="error"
-              onClick={handleCancel}
-              size="small"
-              sx={{ px: 5, "&:hover": { backgroundColor: "#e41010ff" } }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              size="small"
-              onClick={editMode ? handleUpdateTicket : handleCreateTicket}
-              disabled={loading}
-              sx={{ px: 5, backgroundColor: "#22c55e", "&:hover": { backgroundColor: "#16a34a" } }}
-            >
-              {loading ? "Saving..." : editMode ? "Update Ticket" : "Create Ticket"}
-            </Button>
-          </Box>
         </CardContent>
       </Card>
     </Box>

@@ -1888,7 +1888,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { fetchApproverTickets, fetchMessages, sendMessage, getTicketDetails, updateTicket, } from "../../Api";
 
-const ApproverTabs = ({ approverStatus: propUserStatus }) => {
+const TechnicianTabs = ({ approverStatus: propUserStatus }) => {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -1899,7 +1899,8 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
   const [tickets, setTickets] = useState({
     new_assigned: [],
     solved: [],
-    closed: []
+    closed: [],
+    cancelled: [],
   });
 
   const [page, setPage] = useState(0);
@@ -2841,7 +2842,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                           overflow: "hidden",
                                           textOverflow: "ellipsis",
                                           cursor: "pointer",
-                                          
+
                                         }}
                                       >
                                         {t.description || "-"}
@@ -3298,4 +3299,4 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
   );
 };
 
-export default ApproverTabs;
+export default TechnicianTabs;

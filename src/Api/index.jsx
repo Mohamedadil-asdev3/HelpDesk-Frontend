@@ -1288,11 +1288,12 @@ export const fetchPlatforms = async (entityId = null) => {
     throw error;
   }
 };
+
 export const fetchMessages = async () => { 
     try {
         const token = localStorage.getItem("access_token");
-         const userData = JSON.parse(localStorage.getItem("user")); // get logged-in user
-    const user = userData?.id;
+        const userData = JSON.parse(localStorage.getItem("user")); // get logged-in user
+        const user = userData?.id;
         const res = await api.get(`tickets/users/${user}/messages/`, {
             headers: { Authorization: `Bearer ${token}` },
         });
@@ -1302,22 +1303,26 @@ export const fetchMessages = async () => {
         throw err;
     }
 };
-export const sendMessage = async ({ receiver, ticket_no, message }) => {
+
+export const sendMessage = async ({ receiver, ticket_no, message, protected: isProtected = false }) => {
   try {
     const token = localStorage.getItem("access_token");
-    const userData = JSON.parse(localStorage.getItem("user")); // get logged-in user
+    const userData = JSON.parse(localStorage.getItem("user"));
     const sender = userData?.id;
 
     if (!sender) throw new Error("Sender not found. User not logged in.");
 
+    const payload = {
+      sender,
+      receiver,
+      ticket_no,
+      message,
+      protected: Boolean(isProtected),
+    };
+
     const res = await api.post(
-      `tickets/users/${sender}/messages/`, // API endpoint expects sender ID
-      {
-        sender,
-        receiver,
-        ticket_no,
-        message,
-      },
+      `tickets/users/${sender}/messages/`,
+      payload,
       {
         headers: { 
           Authorization: `Bearer ${token}`,
@@ -1347,6 +1352,24 @@ export const fetchApproverTickets = async (params = {}) => {
   if (response.status != 200) throw new Error("Failed to fetch approver tickets");
   return response.data;
 };
+
+// In Admin ticket counts
+
+export const fetchAdminTickets = async (params = {}) => {
+  const token = localStorage.getItem("access_token");
+  const userData = JSON.parse(localStorage.getItem("user"));
+  const user = userData?.id;
+  const response = await api.get(`tickets/admin/count/?user=${user}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    
+  });
+ console.log("response :",response);
+ 
+  if (response.status != 200) throw new Error("Failed to fetch approver tickets");
+  return response.data;
+};
+
+
 // export const fetchRolePermissions = async () => {
 //   try {
 //     const response = await fetch('/api/role-permissions/'); // Adjust URL
