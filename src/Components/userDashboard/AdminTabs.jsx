@@ -2059,6 +2059,18 @@ const AdminTabs = () => {
     loadAdminData();
   }, []);
 
+    const RequestTabelCol = [
+        { id: 1, title: <>Ticket ID</> },
+        { id: 2, title: <>Title</> },
+        { id: 3, title: <>Description</> },
+        { id: 4, title: <>Status<br />Priority</> },
+        { id: 5, title: <>Category<br />Subcategory</> },
+        { id: 6, title: <>Department<br />Location</> },
+        { id: 7, title: <>Requested By</> },
+        { id: 8, title: <>Open Date<br />Last Update</> },
+        { id: 9, title: <>Action</> },
+    ];
+
     // Status cards - using exact keys from your API
     const statusCards = [
         { id: "new_assigned", label: "New", color: "warning", icon: <NewReleasesIcon />, count: adminData?.admin_stats?.new_assigned || 0 },
