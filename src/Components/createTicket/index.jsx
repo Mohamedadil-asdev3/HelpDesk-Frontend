@@ -2061,6 +2061,299 @@
 // };
  
 // export default TicketForm;
+// import { useEffect, useState } from "react";
+// import {
+//   Box,
+//   Grid,
+//   Card,
+//   CardContent,
+//   TextField,
+//   Typography,
+//   MenuItem,
+//   Button,
+//   Autocomplete,
+//   Chip,
+//   FormControl,
+//   Select,
+//   InputLabel,
+// } from "@mui/material";
+// import { toast } from "react-toastify";
+// import {
+//   fetchConfigurations,
+//   fetchPlatforms,
+//   fetchWatcherGroups,
+//   fetchCategorySLA,
+//   createTicket,
+// } from "../../Api";
+
+// const TicketForm = () => {
+//   const currentUser = JSON.parse(localStorage.getItem("user_data"));
+//   const userEntity = JSON.parse(localStorage.getItem("userEntity"));
+
+//   /* ---------------- BASIC ---------------- */
+//   const [loading, setLoading] = useState(false);
+//   const [title, setTitle] = useState("");
+//   const [description, setDescription] = useState("");
+//   const [priority, setPriority] = useState("");
+
+//   /* ---------------- CONFIG ---------------- */
+//   const [priorities, setPriorities] = useState([]);
+//   const [departments, setDepartments] = useState([]);
+//   const [locations, setLocations] = useState([]);
+//   const [platforms, setPlatforms] = useState([]);
+
+//   const [selectedDepartment, setSelectedDepartment] = useState(null);
+//   const [selectedLocation, setSelectedLocation] = useState(null);
+//   const [selectedPlatform, setSelectedPlatform] = useState(null);
+
+//   /* ---------------- CATEGORY / SLA ---------------- */
+//   const [categories, setCategories] = useState([]);
+//   const [subcategories, setSubcategories] = useState([]);
+//   const [categoryId, setCategoryId] = useState(null);
+//   const [subcategoryId, setSubcategoryId] = useState(null);
+
+//   /* ---------------- ASSIGN ---------------- */
+//   const [allUsers, setAllUsers] = useState([]);
+//   const [groups, setGroups] = useState([]);
+
+//   const [selectionTypes, setSelectionTypes] = useState([]);
+//   const [selectedUsers, setSelectedUsers] = useState([]);
+//   const [selectedGroups, setSelectedGroups] = useState([]);
+//   const [selectedWatchers, setSelectedWatchers] = useState([]);
+
+//   /* ================= LOAD DATA ================= */
+//   useEffect(() => {
+//     const load = async () => {
+//       try {
+//         const cfg = await fetchConfigurations();
+//         setPriorities(cfg.filter(c => c.field_type === "Priority"));
+//         setDepartments(cfg.filter(c => c.field_type === "Department"));
+//         setLocations(cfg.filter(c => c.field_type === "Location"));
+
+//         setSelectedDepartment(
+//           cfg.find(c => c.id === currentUser?.department_id) || null
+//         );
+//         setSelectedLocation(
+//           cfg.find(c => c.id === currentUser?.location_id) || null
+//         );
+
+//         const platformRes = await fetchPlatforms();
+//         setPlatforms(platformRes || []);
+
+//         const catRes = await fetchCategorySLA(
+//           userEntity?.entity_data?.id
+//         );
+//         setCategories(catRes || []);
+
+//         const grp = await fetchWatcherGroups();
+//         setGroups(grp || []);
+
+//         const token = localStorage.getItem("access_token");
+//         const u = await fetch(
+//           "http://192.168.60.149:8000/api/tickets/watcher-users/",
+//           { headers: { Authorization: `Bearer ${token}` } }
+//         );
+//         setAllUsers(await u.json());
+//       } catch (e) {
+//         console.error(e);
+//       }
+//     };
+//     load();
+//   }, []);
+
+//   /* ================= CATEGORY → SUBCATEGORY ================= */
+//   useEffect(() => {
+//     const cat = categories.find(c => c.id === categoryId);
+//     setSubcategories(cat?.subcategories || []);
+//   }, [categoryId, categories]);
+
+//   /* ================= SLA AUTO ASSIGN (NULL SAFE) ================= */
+//   useEffect(() => {
+//     const sub = subcategories.find(s => s.id === subcategoryId);
+//     const sla = sub?.slas?.find(s => s.is_active === "Y");
+
+//     // reset but DO NOT hide UI
+//     setSelectionTypes([]);
+//     setSelectedUsers([]);
+//     setSelectedGroups([]);
+//     setSelectedWatchers([]);
+
+//     if (!sla) return;
+
+//     if (sla.assigned_user_detail) {
+//       setSelectionTypes(["user"]);
+//       setSelectedUsers([sla.assigned_user_detail]);
+//       setSelectedWatchers([sla.assigned_user_detail.id]);
+//     }
+
+//     if (sla.assigned_group_detail) {
+//       setSelectionTypes(["group"]);
+//       setSelectedGroups([sla.assigned_group_detail]);
+//       setSelectedWatchers(
+//         sla.assigned_group_detail.users?.map(u => u.id) || []
+//       );
+//     }
+//   }, [subcategoryId, subcategories]);
+
+//   /* ================= CREATE ================= */
+//   const handleSubmit = async () => {
+//     try {
+//       setLoading(true);
+//       const fd = new FormData();
+
+//       fd.append("entity_id", userEntity?.id || "");
+//       fd.append("title", title);
+//       fd.append("description", description);
+//       fd.append("priority", priority || "");
+//       fd.append("department", selectedDepartment?.id || "");
+//       fd.append("location", selectedLocation?.id || "");
+//       fd.append("platform", selectedPlatform?.id || "");
+//       fd.append("category", categoryId || "");
+//       fd.append("subcategory", subcategoryId || "");
+//       fd.append("requested", currentUser?.id || "");
+
+//       selectionTypes.forEach(t => fd.append("assigned_to_type", t));
+//       selectedUsers.forEach(u => fd.append("assignee", u.email));
+//       selectedGroups.forEach(g => fd.append("assigned_group", g.id));
+//       selectedWatchers.forEach(w => fd.append("watchers", w));
+
+//       await createTicket(fd);
+//       toast.success("Ticket created");
+//     } catch {
+//       toast.error("Failed");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   /* ================= UI ================= */
+//   return (
+//     <Box p={3}>
+//       <Card>
+//         <CardContent>
+//           <Typography fontSize={26} fontWeight={700}>
+//             Create Ticket
+//           </Typography>
+
+//           <Grid container spacing={3} mt={2}>
+//             <Grid item xs={3}>
+//               <TextField
+//                 fullWidth
+//                 label="Title"
+//                 value={title}
+//                 onChange={e => setTitle(e.target.value)}
+//               />
+//             </Grid>
+
+//             <Grid item xs={3}>
+//               <FormControl fullWidth>
+//                 <InputLabel>Priority</InputLabel>
+//                 <Select
+//                   value={priority || ""}
+//                   label="Priority"
+//                   onChange={e => setPriority(e.target.value)}
+//                 >
+//                   {priorities.map(p => (
+//                     <MenuItem key={p.id} value={p.id}>
+//                       {p.field_name}
+//                     </MenuItem>
+//                   ))}
+//                 </Select>
+//               </FormControl>
+//             </Grid>
+
+//             <Grid item xs={3}>
+//               <Autocomplete
+//                 options={categories}
+//                 value={categories.find(c => c.id === categoryId) || null}
+//                 getOptionLabel={o => o?.category_name || "Not Available"}
+//                 onChange={(_, v) => setCategoryId(v?.id || null)}
+//                 renderInput={p => <TextField {...p} label="Category" />}
+//               />
+//             </Grid>
+
+//             <Grid item xs={3}>
+//               <Autocomplete
+//                 options={subcategories}
+//                 value={subcategories.find(s => s.id === subcategoryId) || null}
+//                 getOptionLabel={o => o?.subcategory_name || "Not Available"}
+//                 onChange={(_, v) => setSubcategoryId(v?.id || null)}
+//                 renderInput={p => <TextField {...p} label="Subcategory" />}
+//               />
+//             </Grid>
+//           </Grid>
+
+//           {/* ASSIGN SECTION — ALWAYS SHOWN */}
+//           <Box mt={3}>
+//             <Typography fontWeight={600}>Assign To</Typography>
+
+//             <Autocomplete
+//               multiple
+//               options={[
+//                 { label: "User", value: "user" },
+//                 { label: "Group", value: "group" },
+//               ]}
+//               value={selectionTypes.map(t => ({
+//                 label: t,
+//                 value: t,
+//               }))}
+//               getOptionLabel={o => o.label}
+//               renderInput={p => (
+//                 <TextField {...p} placeholder="Assign Type" />
+//               )}
+//             />
+
+//             <Box mt={2}>
+//               <Typography fontSize={14}>Users</Typography>
+//               <Autocomplete
+//                 multiple
+//                 options={allUsers}
+//                 value={selectedUsers}
+//                 getOptionLabel={u => u?.name || "Not Available"}
+//                 renderInput={p => <TextField {...p} />}
+//               />
+//             </Box>
+
+//             <Box mt={2}>
+//               <Typography fontSize={14}>Groups</Typography>
+//               <Autocomplete
+//                 multiple
+//                 options={groups}
+//                 value={selectedGroups}
+//                 getOptionLabel={g => g?.name || "Not Available"}
+//                 renderInput={p => <TextField {...p} />}
+//               />
+//             </Box>
+//           </Box>
+
+//           <Box mt={3}>
+//             <TextField
+//               fullWidth
+//               multiline
+//               rows={4}
+//               label="Description"
+//               value={description}
+//               onChange={e => setDescription(e.target.value)}
+//             />
+//           </Box>
+
+//           <Box mt={4} textAlign="right">
+//             <Button
+//               variant="contained"
+//               disabled={loading}
+//               onClick={handleSubmit}
+//             >
+//               {loading ? "Saving..." : "Create Ticket"}
+//             </Button>
+//           </Box>
+//         </CardContent>
+//       </Card>
+//     </Box>
+//   );
+// };
+
+// export default TicketForm;
+
 
 import { useState, useEffect, useRef } from "react";
 import {
@@ -2169,7 +2462,7 @@ useEffect(() => {
           console.warn("No access token found");
           return;
         }
-        const usersRes = await fetch("http://192.168.60.118:8000/api/tickets/watcher-users/", {
+        const usersRes = await fetch("http://192.168.60.149:8000/api/tickets/watcher-users/", {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -2234,6 +2527,34 @@ useEffect(() => {
       setSubcategoryId("");
     }
   }, [categoryId, categories]);
+    /* ================= SLA AUTO ASSIGN (NULL SAFE) ================= */
+  useEffect(() => {
+    const sub = subcategories.find(s => s.id === subcategoryId);
+    const sla = sub?.slas?.find(s => s.is_active === "Y");
+
+    // reset but DO NOT hide UI
+    setSelectionTypes([]);
+    setSelectedUsers([]);
+    setSelectedGroups([]);
+    setSelectedWatchers([]);
+
+    if (!sla) return;
+
+    if (sla.assigned_user_detail) {
+      setSelectionTypes(["user"]);
+      setSelectedUsers([sla.assigned_user_detail]);
+      setSelectedWatchers([sla.assigned_user_detail.id]);
+    }
+
+    if (sla.assigned_group_detail) {
+      setSelectionTypes(["group"]);
+      setSelectedGroups([sla.assigned_group_detail]);
+      setSelectedWatchers(
+        sla.assigned_group_detail.users?.map(u => u.id) || []
+      );
+    }
+  }, [subcategoryId, subcategories]);
+
   // Update watchers based on selected users/groups
   const updateWatchers = () => {
     const userIds = selectedUsers.map(u => u.id) || [];
