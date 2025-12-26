@@ -3,7 +3,8 @@ import axios from "axios";
 export const Media_URL = "http://localhost:8000";
 
 //  const API_BASE_URL = "http://localhost:8000/api/";
-const API_BASE_URL = "http://192.168.60.149:8000/api/";
+//const API_BASE_URL = "http://192.168.60.149:8000/api/";
+const API_BASE_URL = "http://192.168.1.33:8000/api/";
 // const API_BASE_URL = "http://192.168.0.242:8000/api/";
 
 

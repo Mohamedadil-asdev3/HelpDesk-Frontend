@@ -2066,12 +2066,12 @@ const AdminTabs = () => {
 
     // Status cards - using exact keys from your API
     const statusCards = [
-        { id: "new_assigned", label: "NEW", color: "warning", icon: <NewReleasesIcon />, count: adminData?.admin_stats?.new_assigned || 0 },
-        { id: "solved", label: "SOLVED", color: "success", icon: <DoneAllIcon />, count: adminData?.admin_stats?.solved || 0 },
-        { id: "closed", label: "CLOSED", color: "info", icon: <LockIcon />, count: adminData?.admin_stats?.closed || 0 },
-        { id: "cancelled", label: "CANCELLED", color: "error", icon: <CancelIcon />, count: adminData?.admin_stats?.cancelled || 0 },
-        { id: "clarification_applied", label: "CLARIFICATION APPLIED", color: "error", icon: <CancelIcon />, count: adminData?.admin_stats?.clarification_applied || 0 },
-        { id: "clarification_required", label: "CLARIFICATION REQUIRED", color: "error", icon: <CancelIcon />, count: adminData?.admin_stats?.clarification_required || 0 },
+        { id: "new_assigned", label: "New", color: "warning", icon: <NewReleasesIcon />, count: adminData?.admin_stats?.new_assigned || 0 },
+        { id: "solved", label: "Solved", color: "success", icon: <DoneAllIcon />, count: adminData?.admin_stats?.solved || 0 },
+        { id: "closed", label: "Closed", color: "info", icon: <LockIcon />, count: adminData?.admin_stats?.closed || 0 },
+        { id: "cancelled", label: "Cancelled", color: "error", icon: <CancelIcon />, count: adminData?.admin_stats?.cancelled || 0 },
+        { id: "clarification_applied", label: "Clar. Supplied", color: "primary", icon: <QuestionAnswerIcon />, count: adminData?.admin_stats?.clarification_applied || 0 },
+        { id: "clarification_required", label: "Clar. Required", color: "error", icon: <HelpOutlineIcon />, count: adminData?.admin_stats?.clarification_required || 0 },
     ];
 
     const RequestTabelCol = [
@@ -2400,17 +2400,16 @@ const AdminTabs = () => {
 
     return (
         <Box sx={{ width: "100%", mb: 2 }}>
-            {/* Cards */}
-            <Grid container spacing={1} sx={{ mb: 4 }}>
+            <Grid container spacing={1} sx={{ mb: 2 }}>
                 {statusCards.map((card) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 4 }} key={card.id}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} key={card.id}>
                         <Card
                             onClick={() => handleCardClick(card.id)}
                             sx={{
-                                p: 1,
                                 transition: "0.3s ease",
-                                maxWidth: "600px",
-                                maxHeight: 90,
+                                maxWidth: 300,
+                                maxHeight: 110,
+                                minHeight: 100,
                                 borderRadius: 5,
                                 "&:hover": {
                                     background: "linear-gradient(135deg, #667eea, #764ba2)",
@@ -2918,7 +2917,7 @@ const AdminTabs = () => {
                                                     const messageId = msg.id;
                                                     const isRevealed = revealedMessages.has(messageId);
                                                     const canViewDecrypted = Number(msg.sender) === Number(currentUserId) || Number(msg.receiver) === Number(currentUserId);
-                                                    const isClar = msg.message?.includes("[CLARIFICATION REQUEST]");
+                                                    const isClar = msg.message?.includes("[Clarification Required]");
     
                                                     const toggleReveal = () => {
                                                         if (!canViewDecrypted) return;

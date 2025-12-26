@@ -10,6 +10,9 @@ import SecurityIcon from '@mui/icons-material/Security';
 import NewReleasesIcon from '@mui/icons-material/NewReleases';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import CancelIcon from '@mui/icons-material/Cancel';
+//import QuestionAnswerIcon from '@mui/icons-material/QuestionAnswer';
+//import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
 import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
 import LockIcon from '@mui/icons-material/Lock';
 import { Chat as ChatIcon, Send as SendIcon, } from "@mui/icons-material";
@@ -55,6 +58,7 @@ const RequestTabs = ({ userStatus }) => {
     const [solutionText, setSolutionText] = useState("");
     const [isResolved, setIsResolved] = useState(false);
     const [isApproved, setIsApproved] = useState(false);
+    const [clarificationRequested, setClarificationRequested] = useState(false);
 
     const [isProtected, setIsProtected] = useState(false);
     console.log("protected???", isProtected);
@@ -118,15 +122,15 @@ const RequestTabs = ({ userStatus }) => {
             count: userStatus?.new_assigned || 0,
             description: "Tickets recently assigned to you"
         },
-        {
-            id: "pending",
-            label: "Processing",
-            color: "warning",
-            icon: <AccessTimeFilledIcon />,
-            //count: userStatus?.new_assigned || 0,
-            count: 0,
-            description: "Tickets recently assigned to you"
-        },
+        // {
+        //     id: "pending",
+        //     label: "InProcess",
+        //     color: "warning",
+        //     icon: <AccessTimeFilledIcon />,
+        //     //count: userStatus?.new_assigned || 0,
+        //     count: 0,
+        //     description: "Tickets recently assigned to you"
+        // },
         {
             id: "solved",
             label: "Resolved",
@@ -137,7 +141,7 @@ const RequestTabs = ({ userStatus }) => {
         },
         {
             id: "Cancelled",  // ← Change from "cancel" to "Cancelled"
-            label: "Cancel",
+            label: "Cancelled",
             color: "error",
             icon: <CancelIcon />,
             count: userStatus?.cancelled || 0,
@@ -153,16 +157,16 @@ const RequestTabs = ({ userStatus }) => {
         },
         { 
             id: "clarification_applied",
-            label: "Clar Supplied", 
-            color: "error", 
-            icon: <CancelIcon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }} />, 
+            label: "Clar. Supplied", 
+            color: "primary", 
+            icon: <QuestionAnswerIcon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }} />, 
             count: userStatus?.clarification_applied || 0,
         },
         { 
             id: "clarification_required", 
-            label: "Clar Required", 
+            label: "Clar. Required", 
             color: "error", 
-            icon: <CancelIcon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }} />, 
+            icon: <HelpOutlineIcon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }} />, 
             count: userStatus?.clarification_required || 0,
         },
     ];
@@ -212,11 +216,11 @@ const RequestTabs = ({ userStatus }) => {
 
     // Headings for New Assigned, Solved, Closed
     const headingMap = {
-        new_assigned: "NEW ASSIGNED TICKETS (MY REQUEST)",
-        pending: "PENDING TICKETS (MY REQUEST)",
-        solved: "SOLVED TICKETS (MY REQUEST)",
-        cancel: "CANCEL TICKETS (MY REQUEST)",
-        closed: "CLOSED TICKETS (MY REQUEST)",
+        new_assigned: "NEW ASSIGNED TICKETS",
+        pending: "PENDING TICKETS",
+        solved: "SOLVED TICKETS",
+        cancel: "CANCELLED TICKETS",
+        closed: "CLOSED TICKETS",
         clarification_applied : "Clarification Supplied Ticket",
         clarification_required : "Clarification Required Ticket"
     };
@@ -648,7 +652,7 @@ const RequestTabs = ({ userStatus }) => {
             setSelectedType("closed");
         } catch (err) {
         console.error("Error closing ticket on approve:", err);
-        toast.error("Failed to close ticket");
+        //toast.error("Failed to close ticket");
         }
     };
 
@@ -684,6 +688,7 @@ const RequestTabs = ({ userStatus }) => {
                 throw new Error("Assignee ID not found");
             }
             setAssignee(assigneeDetail);
+            setClarificationRequested(ticketData.status === "156" || ticketData.clarification_requested);
             // Set ticket details
             setCurrentChatTicket({
                 id: ticketNo,
@@ -729,16 +734,16 @@ const RequestTabs = ({ userStatus }) => {
             await sendMessage({
                 receiver: currentUserId === assignee?.id ? currentChatTicket?.requested_by : assignee?.id, // Send to requester if assignee is sending
                 ticket_no: currentChatTicket.id,
-                message: `[CLARIFICATION REQUEST]\n\n${clarificationText.trim()}`,
+                message: `[Clarification Required]\n\n${clarificationText.trim()}`,
                 protected: false, // or true if you want it private
             });
 
             // Optional: Add to chat as a visible message
-            await sendFollowUpMessageHandler(`[CLARIFICATION REQUEST] ${clarificationText.trim()}`);
+            await sendFollowUpMessageHandler(`[Clarification Required] ${clarificationText.trim()}`);
 
             setClarificationText("");
             setClarificationSent(true);
-            toast.success("Clarification request sent!");
+            toast.success("Clarification required sent!");
 
             // Auto switch back to Follow-up tab
             setChatTab(0);
@@ -751,6 +756,102 @@ const RequestTabs = ({ userStatus }) => {
             setSendingClarification(false);
         }
     };
+
+    const handleRequestClarification = async () => {
+        if (!clarificationText.trim()) {
+            toast.error("Please enter clarification details");
+            return;
+        }
+        if (!currentChatTicket?.id) {
+            toast.error("No ticket selected");
+            return;
+        }
+
+        setSendingClarification(true);
+        try {
+            // Step 1: Update ticket status to "57" - Clarification Required
+            let currentTicketData = {};
+            try {
+                const ticketDetails = await getTicketDetails(currentChatTicket.id);
+                currentTicketData = ticketDetails.ticket || ticketDetails;
+            } catch (err) {
+                toast.error("Could not fetch ticket details");
+                return;
+            }
+
+        const ticketNoStr = String(currentChatTicket.id);
+        const assignedUsers = currentTicketData.assignees_detail || currentTicketData.assigned_users || [];
+        const assignedGroups = currentTicketData.assigned_groups_detail || currentTicketData.assigned_groups || [];
+
+        const formData = new FormData();
+        formData.append("title", currentTicketData.title || "");
+        formData.append("description", currentTicketData.description || "");
+        formData.append("category", currentTicketData.category || currentTicketData.category_detail?.id || "");
+        formData.append("status", "157"); // ← Clarification Required
+
+        let assignedTypeIndex = 0;
+        assignedUsers.forEach((user, index) => {
+            if (user?.email) {
+                formData.append(`assignee[${index}]`, user.email);
+            }
+        });
+        if (assignedUsers.length > 0) {
+            formData.append(`assigned_to_type[${assignedTypeIndex}]`, "user");
+            assignedTypeIndex++;
+        }
+
+        assignedGroups.forEach((group, index) => {
+            if (group?.id) {
+                formData.append(`assigned_group[${index}]`, group.id);
+            }
+        });
+        if (assignedGroups.length > 0) {
+            formData.append(`assigned_to_type[${assignedTypeIndex}]`, "group");
+        }
+
+        const result = await updateTicket(ticketNoStr, formData);
+        if (!result.success) {
+            throw new Error(result.error || "Failed to update ticket status");
+        }
+
+        // Step 2: Send clarification message in chat
+        const clarificationMessage = `[Clarification Supplied]\n\n${clarificationText.trim()}`;
+        await sendMessage({
+            receiver: assignee?.id,
+            ticket_no: currentChatTicket.id,
+            message: clarificationMessage,
+            protected: false,
+        });
+
+        // Optional: Also add to visible chat
+        await sendFollowUpMessageHandler(clarificationMessage);
+
+        toast.success("Clarification Supplied sent and ticket status updated!");
+        setClarificationText("");
+        setChatTab(0); // Switch back to chat
+
+        // Update local tickets list: move to clarification_required
+        setTickets(prev => {
+            const ticket = prev[selectedType]?.find(t => t.ticket_no == currentChatTicket.id);
+            if (ticket) {
+                ticket.status_detail = { field_values: "Clarification Required" };
+                return {
+                    ...prev,
+                    [selectedType]: prev[selectedType].filter(t => t.ticket_no != currentChatTicket.id),
+                    clarification_required: [ticket, ...(prev.clarification_required || [])]
+                };
+            }
+            return prev;
+        });
+
+        setSelectedType("clarification_required");
+    } catch (err) {
+        console.error("Error requesting clarification:", err);
+        toast.error("Failed to send clarification request");
+    } finally {
+        setSendingClarification(false);
+    }
+};
 
     const handleChatDrawerClose = () => {
         setShowFollowUpChat(false);
@@ -893,14 +994,14 @@ const filteredRows = useMemo(() => {
         <Box sx={{ width: "100%", mb:2 }}>
             <Grid container spacing={1} sx={{ mb: 4 }}>
                 {statusCards.map((item) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 1.7 }} key={item.id}>
+                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} key={item.id}>
                         <Card
                             onClick={() => handleCardClick(item.id)}
                             sx={{
-                                p: 1,
-                                m: 1,
                                 transition: "0.3s ease",
-                                maxWidth: "600px",
+                                maxWidth: 300,
+                                maxHeight: 110,
+                                minHeight: 100,
                                 borderRadius: 5,
                                 "&:hover": {
                                     background: "linear-gradient(135deg, #667eea, #764ba2)",
@@ -909,11 +1010,19 @@ const filteredRows = useMemo(() => {
                                 }
                             }}
                         >
-                            <CardContent sx={{ display: "flex", gap: 2, alignItems: "center", "&: last-child" : {pt:1},}}>
+                            <CardContent 
+                            sx={{
+                                    "&:last-child": { pt: 1 },
+                                    display: "flex",
+                                    gap: 2,
+                                    alignItems: "center"
+                                }}
+                            >
                                 <Box
                                     sx={{
-                                        width: { xs: 50, sm: 40, md: 50 },
-                                        height: { xs: 50, sm: 40, md: 50 },
+                                        width: { xs: 40, sm: 40, md: 40 },
+                                        height: { xs: 40, sm: 40, md: 40 },
+                                        minWidth: 40,
                                         display: "flex",
                                         alignItems: "center",
                                         justifyContent: "center",
@@ -1144,7 +1253,8 @@ const filteredRows = useMemo(() => {
                                                                 whiteSpace: "nowrap",
                                                                 color: "#2D3748",
                                                                 borderBottom: "2px solid #E2E8F0",
-                                                                py: 2
+                                                                py: 2,
+                                                                lineHeight: 1.2,
                                                             }}
                                                         >
                                                             {col.title}
@@ -1181,7 +1291,7 @@ const filteredRows = useMemo(() => {
                                                                                 overflow: "hidden",
                                                                                 textOverflow: "ellipsis",
                                                                                 cursor: "pointer",
-                                                                                mt: 0.5
+                                                                               
                                                                             }}
                                                                         >
                                                                             {t.title}
@@ -1224,9 +1334,8 @@ const filteredRows = useMemo(() => {
                                                                         title={
                                                                             <Box>
                                                                                 <div><strong>Category:</strong> {t.category_detail?.category_name || "-"}</div>
-                                                                                <div><strong>Subcategory:</strong> {t.subcategory_detail?.subcategory_name || "-"}</div>
-                                                                                    
-</Box>
+                                                                                <div><strong>Subcategory:</strong> {t.subcategory_detail?.subcategory_name || "-"}</div>                                                                                
+                                                                            </Box>
                                                                         }
                                                                     >
                                                                         <Box sx={{ cursor: "pointer" }}>
@@ -1380,14 +1489,10 @@ const filteredRows = useMemo(() => {
                     </Box>
                     {/* Tab Buttons */}
                     <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-                        <Tabs
-                            value={chatTab}
-                            onChange={(e, newValue) => setChatTab(newValue)}
-                            centered
-                        >
+                        <Tabs value={chatTab} onChange={(e, v) => setChatTab(v)} centered>
                             <Tab label="Follow-up" icon={<ChatIcon />} />
-                            {isSolvedTicket && <Tab label="Solution" icon={<DoneAllIcon />} />}
-                            <Tab label="Clarification Supplied" icon={<HelpOutlineIcon />} /> 
+                            <Tab label="Solution" icon={<DoneAllIcon />} disabled={!isSolvedTicket} />
+                            <Tab label="Clarification Supplied" icon={<HelpOutlineIcon />} disabled={isSolvedTicket} />
                         </Tabs>
                     </Box>
                     {/* Tab Content */}
@@ -1425,7 +1530,7 @@ const filteredRows = useMemo(() => {
                                             <Typography>No messages yet. Start the conversation!</Typography>
                                         </Box>
                                     ) : (
-                                        groupedChats.map((group, groupIndex) => (
+                                        groupedChats.map((group) => (
                                             <Box key={group.date} sx={{ mb: 3 }}>
                                                 <Divider sx={{ my: 2, width: "100%" }}>
                                                     <Chip
@@ -1694,88 +1799,150 @@ const filteredRows = useMemo(() => {
                                 </Box>
                             </Box>
                         )}
-                        {isSolvedTicket ? (
-                            (chatTab === 1 && (
-                                // Solution Tab: Approve/Resolve Solution
-                                <Box 
-                                    sx={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        justifyContent: "center",
-                                        alignItems: "center",
-                                        height: "100%",
-                                        p: 4,
-                                        gap: 2,
-                                        textAlign: "center"
-                                    }}
-                                >
-                                    <DoneAllIcon sx={{ fontSize: 64, color: "success.main" }} />
-                                    <Typography variant="h6" fontWeight={600} color="text.primary">
-                                        Solution Provided
-                                    </Typography>           
-                                    <Typography variant="body1" sx={{ mb: 3, wordBreak: "break-word", color: "text.primary" }}>
-                                        {solutionText}
-                                    </Typography>
-                                    <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                                        <Button
-                                            variant={isResolved ? "contained" : "outlined"}
-                                            color="success"
-                                            onClick={handleResolveSolution}
-                                            disabled={isResolved}
-                                            size="small"
-                                        >
-                                            {isResolved ? "Resolved" : "Resolve Solution"}
-                                        </Button>
-                                        <Button
-                                            variant={isApproved ? "contained" : "outlined"}
-                                            color="primary"
-                                            onClick={handleApproveSolution}
-                                            disabled={isApproved}
-                                            size="small"
-                                        >
-                                            {isApproved ? "Approved" : "Approve Solution"}
-                                        </Button>
-                                    </Box>
+                        {chatTab === 1 && isSolvedTicket && (
+                            <Box 
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    height: "100%",
+                                    p: 4,
+                                    gap: 2,
+                                    textAlign: "center"
+                                }}
+                            >
+                                <DoneAllIcon sx={{ fontSize: 64, color: "success.main" }} />
+                                <Typography variant="h6" fontWeight={600} color="text.primary">
+                                    Solution Provided
+                                </Typography>           
+                                <Typography variant="body1" sx={{ mb: 3, wordBreak: "break-word", color: "text.primary" }}>
+                                    {solutionText}
+                                </Typography>
+                                <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
                                     <Button
-                                        variant="outlined"
-                                        onClick={() => setChatTab(0)}
-                                        sx={{ mt: 1 }}
+                                        variant={isResolved ? "contained" : "outlined"}
+                                        color="error"
+                                        onClick={handleResolveSolution}
+                                        disabled={isResolved}
+                                        size="small"
                                     >
-                                        Back to Follow-up
+                                        {isResolved ? "Resolved" : "Resolve Solution"}
+                                    </Button>
+                                    <Button
+                                        variant={isApproved ? "contained" : "outlined"}
+                                        color="success"
+                                        onClick={handleApproveSolution}
+                                        disabled={isApproved}
+                                        size="small"
+                                    >
+                                        {isApproved ? "Approved" : "Approve Solution"}
                                     </Button>
                                 </Box>
-                            ))
-                        ) : (
-                            (chatTab === 2 && (
-                                <Box sx={{ display: "flex", flexDirection: "column", height: "100%", p: 3 }}>
-                                    {isTicketClarificationRequired() ? (
-                                        <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                                            <HelpOutlineIcon sx={{ fontSize: 80, color: "warning.main", mb: 2 }} />
-                                            <Typography variant="h6" fontWeight={600}>Clarification Request Already Sent</Typography>
-                                            <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
-                                                Waiting for requester to respond.
-                                            </Typography>
-                                            <Button variant="outlined" onClick={() => setChatTab(0)}>
-                                                Back to Follow-up
-                                            </Button>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => setChatTab(0)}
+                                    sx={{ mt: 1 }}
+                                >
+                                    Back to Follow-up
+                                </Button>
+                            </Box>
+                        )}
+                        {/* {chatTab === 2 && !isSolvedTicket && (
+                            <Box sx={{ display: "flex", flexDirection: "column", height: "100%", p: 3 }}>
+                                {isTicketClarificationRequired() ? (
+                                    <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                        <HelpOutlineIcon sx={{ fontSize: 80, color: "warning.main", mb: 2 }} />
+                                        <Typography variant="h6" fontWeight={600}>Clarification Request Already Sent</Typography>
+                                        <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
+                                            Waiting for requester to respond.
+                                        </Typography>
+                                        <Button variant="outlined" onClick={() => setChatTab(0)}>
+                                            Back to Follow-up
+                                        </Button>
                                         </Box>
-                                    ) : isTicketSolved() ? (
-                                        <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                                            <DoneAllIcon sx={{ fontSize: 80, color: "success.main", mb: 2 }} />
-                                            <Typography variant="h6" fontWeight={600}>Ticket Already Solved</Typography>
-                                            <Typography color="text.secondary" sx={{ mt: 1 }}>
-                                                Cannot request clarification on solved tickets.
-                                             </Typography>
-                                        </Box>
-                                    ) : (
+                                ) : isTicketSolved() ? (
+                                    <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                        <DoneAllIcon sx={{ fontSize: 80, color: "success.main", mb: 2 }} />
+                                        <Typography variant="h6" fontWeight={600}>Ticket Already Solved</Typography>
+                                        <Typography color="text.secondary" sx={{ mt: 1 }}>
+                                            Cannot request clarification on solved tickets.
+                                        </Typography>
+                                    </Box>
+                                ) : (
                                         <>
+                                            <Box sx={{ textAlign: "center", mb: 3 }}>
+                                                <HelpOutlineIcon sx={{ fontSize: 60, color: "warning.main", mb: 2 }} />
+                                                <Typography variant="h6" fontWeight={600}>Request Clarification</Typography>
+                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                                    Ask for more details if something is unclear.
+                                                </Typography>
+                                            </Box>
+                                            <TextField
+                                                multiline
+                                                rows={6}
+                                                placeholder="Please clarify the following..."
+                                                value={clarificationText}
+                                                onChange={(e) => setClarificationText(e.target.value)}
+                                                variant="outlined"
+                                                fullWidth
+                                                sx={{ mb: 3 }}
+                                                disabled={sendingClarification}
+                                            />
+                                            <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
+                                                <Button
+                                                    variant="contained"
+                                                    color="warning"
+                                                    size="large"
+                                                    startIcon={<QuestionAnswerIcon />}
+                                                    onClick={handleRequestClarification}
+                                                    disabled={!clarificationText.trim() || sendingClarification}
+                                                >
+                                                    {sendingClarification ? <CircularProgress size={20} /> : "Send Request"}
+                                                </Button>
+                                                <Button variant="outlined" onClick={() => { setClarificationText(""); setChatTab(0); }} disabled={sendingClarification}>
+                                                    Cancel
+                                                </Button>
+                                            </Box>
+                                        </>
+                                    )}
+                            </Box>
+                        )} */}
+                        {chatTab === 2 && (
+                            <Box sx={{ display: "flex", flexDirection: "column", height: "100%", p: 3 }}>
+                                {clarificationRequested ? (
+                                    // Already requested clarification
+                                    <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                        <HelpOutlineIcon sx={{ fontSize: 80, color: "warning.main", mb: 2 }} />
+                                        <Typography variant="h6" fontWeight={600}>Clarification Request Already Sent</Typography>
+                                        <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
+                                            Waiting for the assignee to respond.
+                                        </Typography>
+                                        <Button variant="outlined" onClick={() => setChatTab(0)}>
+                                            Back to Follow-up
+                                        </Button>
+                                    </Box>
+                                ) : isSolvedTicket ? (
+                                    // Ticket is solved — cannot request clarification
+                                    <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                        <DoneAllIcon sx={{ fontSize: 80, color: "success.main", mb: 2 }} />
+                                        <Typography variant="h6" fontWeight={600}>Ticket Already Solved</Typography>
+                                        <Typography color="text.secondary" sx={{ mt: 1 }}>
+                                            Cannot request clarification on solved tickets.
+                                        </Typography>
+                                        <Button variant="outlined" onClick={() => setChatTab(0)}>
+                                            Back to Follow-up
+                                        </Button>
+                                    </Box>
+                                ) : (
+                                    // Show the form to request clarification
+                                    <>
                                         <Box sx={{ textAlign: "center", mb: 3 }}>
-                                            <HelpOutlineIcon sx={{ fontSize: 60, color: "warning.main", mb: 2 }} />
-                                            <Typography variant="h6" fontWeight={600}>Request Clarification</Typography>
-                                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                                Ask for more details if something is unclear.
-                                            </Typography>
+                                            <QuestionAnswerIcon sx={{ fontSize: 60, color: "primary.main", mb: 2 }} />
+                                            <Typography variant="h6" fontWeight={600}>Clarification Supplied</Typography>
+                                            
                                         </Box>
+
                                         <TextField
                                             multiline
                                             rows={6}
@@ -1787,32 +1954,34 @@ const filteredRows = useMemo(() => {
                                             sx={{ mb: 3 }}
                                             disabled={sendingClarification}
                                         />
+
                                         <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
                                             <Button
                                                 variant="contained"
                                                 color="warning"
                                                 size="large"
-                                                startIcon={<QuestionAnswerIcon />}
-                                                onClick={handleSendClarification}
+                                                startIcon={sendingClarification ? <CircularProgress size={20} /> : <QuestionAnswerIcon />}
+                                                onClick={handleRequestClarification}
                                                 disabled={!clarificationText.trim() || sendingClarification}
                                             >
-                                                {sendingClarification ? <CircularProgress size={20} /> : "Send Request"}
+                                                Send Request
                                             </Button>
-                                            <Button variant="outlined" onClick={() => { setClarificationText(""); setChatTab(0); }} disabled={sendingClarification}>
+                                            <Button
+                                                variant="outlined"
+                                                onClick={() => {
+                                                    setClarificationText("");
+                                                    setChatTab(0);
+                                                }}
+                                                disabled={sendingClarification}
+                                            >
                                                 Cancel
                                             </Button>
                                         </Box>
-                                        </>
-                                    )}
-                                </Box>
-                            ))
-                            )}
-                        {/* {chatTab === 1 && isSolvedTicket && (
-                            
+                                    </>
+                                )}
+                            </Box>
                         )}
-                        {isSolvedTicket ? chatTab === 2 : chatTab === 1 && (
-                            
-                        )} */}
+                        
                     </Box>
                 </Box>
             </Drawer>

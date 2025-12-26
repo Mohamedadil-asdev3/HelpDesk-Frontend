@@ -2063,16 +2063,12 @@
 // export default TicketForm;
 
 import { useState, useEffect, useRef } from "react";
-import {
-  Box, Grid, Card, CardContent, TextField, Typography, MenuItem,
-  Button, Autocomplete, Chip, Avatar, FormControl, Select, InputLabel,
-} from "@mui/material";
+import { Box, Grid, Card, CardContent, TextField, Typography, MenuItem, Button, Autocomplete, Chip, Avatar, FormControl, Select, InputLabel, } from "@mui/material";
 import { toast } from "react-toastify";
-import {
-  fetchConfigurations, fetchTicketCategories, fetchSubcategories,
-  createTicket, fetchPlatforms, updateTicket, getTicketDetails,fetchWatcherGroups, fetchCategorySLA
-} from "../../Api";
+import { fetchConfigurations, fetchTicketCategories, fetchSubcategories, createTicket, fetchPlatforms, updateTicket, getTicketDetails, fetchWatcherGroups, fetchCategorySLA } from "../../Api";
+
 const TicketForm = () => {
+  
   const userEntity = JSON.parse(localStorage.getItem("userEntity"));
   const currentUser = JSON.parse(localStorage.getItem("user_data")); // Get current logged-in user data
   const [categoryId, setCategoryId] = useState("");
@@ -2095,6 +2091,8 @@ const TicketForm = () => {
   const [watcherGroups, setWatcherGroups] = useState([]);
   const [platforms, setPlatforms] = useState([]);
   const [selectedPlatform, setSelectedPlatform] = useState(null);
+  const [isConfidential, setIsConfidential] = useState(false);
+
   // Assignment state
   const [selectionTypes, setSelectionTypes] = useState([]); // array of 'user' or 'group'
   const [selectedUsers, setSelectedUsers] = useState([]);
@@ -2106,6 +2104,7 @@ const TicketForm = () => {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [requestedUser, setRequestedUser] = useState(null); // Display requested user info
   const editInitRef = useRef(false);
+  
   // Check for edit mode
   useEffect(() => {
     const id = localStorage.getItem("editTicketId");
@@ -2114,10 +2113,11 @@ const TicketForm = () => {
       setEditTicketId(id);
     }
   }, []);
+
   // Load initial data
-useEffect(() => {
-  const fetchData = async () => {
-    setLoading(true);
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
     try {
       // Configurations
       let configData = [];
@@ -2169,7 +2169,8 @@ useEffect(() => {
           console.warn("No access token found");
           return;
         }
-        const usersRes = await fetch("http://192.168.60.118:8000/api/tickets/watcher-users/", {
+        //const usersRes = await fetch("http://192.168.60.118:8000/api/tickets/watcher-users/", {
+        const usersRes = await fetch("http://192.168.1.33:8000/api/tickets/watcher-users/", {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -2209,12 +2210,14 @@ useEffect(() => {
   };
   fetchData();
 }, []);
+
   // Load ticket for edit after data is loaded
   useEffect(() => {
     if (editMode && editTicketId && configs.length > 0 && departments.length > 0 && locations.length > 0 && platforms.length > 0 && allUsers.length > 0 && watcherGroups.length > 0 && categories.length > 0) {
       loadTicketForEdit(editTicketId);
     }
   }, [configs, departments, locations, platforms, allUsers, watcherGroups, categories, editMode, editTicketId]);
+
   // Load subcategories
   useEffect(() => {
     if (categoryId) {
@@ -2234,6 +2237,7 @@ useEffect(() => {
       setSubcategoryId("");
     }
   }, [categoryId, categories]);
+
   // Update watchers based on selected users/groups
   const updateWatchers = () => {
     const userIds = selectedUsers.map(u => u.id) || [];
@@ -2254,6 +2258,7 @@ useEffect(() => {
     setSelectedWatchers([]);
     updateWatchers();
   };
+
   // Handle users selection (multiple)
   const handleUsersSelection = (_, newValue) => {
     setSelectedUsers(newValue);
@@ -2262,6 +2267,7 @@ useEffect(() => {
       toast.success(`${newValue.length} user(s) selected`);
     }
   };
+
   // Handle groups selection (multiple)
   const handleGroupsSelection = (_, newValue) => {
     setSelectedGroups(newValue);
@@ -2270,6 +2276,7 @@ useEffect(() => {
       toast.success(`${newValue.length} group(s) selected`);
     }
   };
+
   // Handle file changes
   const handleFileChange = (e) => {
     const newFiles = Array.from(e.target.files || []).filter(f =>
@@ -2279,7 +2286,9 @@ useEffect(() => {
       !prev.some(pf => pf.name === f.name && pf.size === f.size)
     )]);
   };
+
   const removeFile = (i) => setFiles(prev => prev.filter((_, idx) => idx !== i));
+
   // Load ticket for edit
   const loadTicketForEdit = async (ticketNo) => {
     try {
@@ -2358,345 +2367,354 @@ useEffect(() => {
     }
     initializedRef.current = true;
   }, [currentUser, departments, locations]);
-const handleCreateTicket = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  try {
-    // Validation
-    if (!ticketType) {
-      toast.error("Type is required");
-      setLoading(false);
-      return;
-    }
-    if (!selectedPlatform) {
-      toast.error("Platform is required");
-      setLoading(false);
-      return;
-    }
-    if (!priority) {
-      toast.error("Priority is required");
-      setLoading(false);
-      return;
-    }
-    if (!categoryId) {
-      toast.error("Category is required");
-      setLoading(false);
-      return;
-    }
-    if (selectionTypes.length === 0) {
-      toast.error("Assign To is required");
-      setLoading(false);
-      return;
-    }
-    if (selectionTypes.includes('user') && selectedUsers.length === 0) {
-      toast.error("Select at least one user if User is selected");
-      setLoading(false);
-      return;
-    }
-    if (selectionTypes.includes('group') && selectedGroups.length === 0) {
-      toast.error("Select at least one group if Group is selected");
-      setLoading(false);
-      return;
-    }
-    if (!title.trim()) {
-      toast.error("Title is required");
-      setLoading(false);
-      return;
-    }
-    if (!description.trim()) {
-      toast.error("Description is required");
-      setLoading(false);
-      return;
-    }
- 
-    // Get IDs from configs
-    const typeObj = ticketTypes.find(t => t.field_name === ticketType);
-    const typeId = typeObj ? typeObj.id : null;
- 
-    const departmentId = selectedDepartment ? selectedDepartment.id : null;
-    const locationId = selectedLocation ? selectedLocation.id : null;
-    const platformId = selectedPlatform ? selectedPlatform.id : null;
- 
-    const priorityObj = priorities.find(p => p.field_name === priority);
-    const priorityId = priorityObj ? priorityObj.id : null;
-    // CRITICAL: Make sure all required IDs are available
-    if (!typeId) {
-      toast.error("Please select a valid ticket type");
-      setLoading(false);
-      return;
-    }
-    if (!departmentId) {
-      toast.error("Please select a valid department");
-      setLoading(false);
-      return;
-    }
-    if (!locationId) {
-      toast.error("Please select a valid location");
-      setLoading(false);
-      return;
-    }
-    if (!platformId) {
-      toast.error("Please select a valid platform");
-      setLoading(false);
-      return;
-    }
-    if (!priorityId) {
-      toast.error("Please select a valid priority");
-      setLoading(false);
-      return;
-    }
-    // Prepare data according to backend serializer structure
-    const formData = new FormData();
- 
-    // Basic fields
-    formData.append("entity_id", userEntity?.id || "");
-    formData.append("type", typeId);
-    formData.append("department", departmentId);
-    formData.append("location", locationId);
-    formData.append("platform", platformId);
-    formData.append("priority", priorityId);
-    formData.append("category", categoryId); // REQUIRED - use 'category' not 'category_id'
- 
-    // Only append subcategory if it exists and is selected
-    if (subcategoryId && subcategories.length > 0) {
-      formData.append("subcategory", subcategoryId); // 'subcategory' not 'subcategory_id'
-    }
- 
-    formData.append("title", title.trim());
-    formData.append("description", description);
- 
-    // Set requested to current logged-in user ID
-    const requestedId = currentUser?.id;
-    if (requestedId) {
-      formData.append("requested", requestedId);
-    } else {
-      toast.error("User ID not found in localStorage. Please log in again.");
-      setLoading(false);
-      return;
-    }
- 
-    // Assignment fields (support multiple types and assignees)
-    selectionTypes.forEach(type => {
-      formData.append("assigned_to_type", type);
-    });
- 
-    if (selectionTypes.includes('user') && selectedUsers.length > 0) {
-      selectedUsers.forEach(user => {
-        formData.append("assignee", user.email);
-      });
-    }
-    if (selectionTypes.includes('group') && selectedGroups.length > 0) {
-      selectedGroups.forEach(group => {
-        formData.append("assigned_group", group.id);
-      });
-    }
- 
-    // Watchers (CC)
-    selectedWatchers.forEach(id => {
-      formData.append("watchers", id);
-    });
- 
-    // Files
-    files.forEach(file => {
-      if (file instanceof File) {
-        formData.append("documents", file);
+
+  const handleCreateTicket = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // Validation
+      if (!ticketType) {
+        toast.error("Type is required");
+        setLoading(false);
+        return;
       }
-    });
-    // Create ticket
-    const result = await createTicket(formData);
- 
-    if (result?.success || result?.ticket_no || result?.id) {
-      const ticketNo = result.ticket_no || result.data?.ticket_no || result.id;
-      toast.success(`Ticket #${ticketNo} created successfully!`);
-      resetForm();
-   
-      // Optional: Clear edit mode if it was set
-      if (editMode) {
+      if (!selectedPlatform) {
+        toast.error("Platform is required");
+        setLoading(false);
+        return;
+      }
+      if (!priority) {
+        toast.error("Priority is required");
+        setLoading(false);
+        return;
+      }
+      if (!categoryId) {
+        toast.error("Category is required");
+        setLoading(false);
+        return;
+      }
+      if (selectionTypes.length === 0) {
+        toast.error("Assign To is required");
+        setLoading(false);
+        return;
+      }
+      if (selectionTypes.includes('user') && selectedUsers.length === 0) {
+        toast.error("Select at least one user if User is selected");
+        setLoading(false);
+        return;
+      }
+      if (selectionTypes.includes('group') && selectedGroups.length === 0) {
+        toast.error("Select at least one group if Group is selected");
+        setLoading(false);
+        return;
+      }
+      if (!title.trim()) {
+        toast.error("Title is required");
+        setLoading(false);
+        return;
+      }
+      if (!description.trim()) {
+        toast.error("Description is required");
+        setLoading(false);
+        return;
+      }
+  
+      // Get IDs from configs
+      const typeObj = ticketTypes.find(t => t.field_name === ticketType);
+      const typeId = typeObj ? typeObj.id : null;
+  
+      const departmentId = selectedDepartment ? selectedDepartment.id : null;
+      const locationId = selectedLocation ? selectedLocation.id : null;
+      const platformId = selectedPlatform ? selectedPlatform.id : null;
+  
+      const priorityObj = priorities.find(p => p.field_name === priority);
+      const priorityId = priorityObj ? priorityObj.id : null;
+      // CRITICAL: Make sure all required IDs are available
+      if (!typeId) {
+        toast.error("Please select a valid ticket type");
+        setLoading(false);
+        return;
+      }
+      if (!departmentId) {
+        toast.error("Please select a valid department");
+        setLoading(false);
+        return;
+      }
+      if (!locationId) {
+        toast.error("Please select a valid location");
+        setLoading(false);
+        return;
+      }
+      if (!platformId) {
+        toast.error("Please select a valid platform");
+        setLoading(false);
+        return;
+      }
+      if (!priorityId) {
+        toast.error("Please select a valid priority");
+        setLoading(false);
+        return;
+      }
+      // Prepare data according to backend serializer structure
+      const formData = new FormData();
+  
+      // Basic fields
+      formData.append("entity_id", userEntity?.id || "");
+      formData.append("type", typeId);
+      formData.append("department", departmentId);
+      formData.append("location", locationId);
+      formData.append("platform", platformId);
+      formData.append("priority", priorityId);
+      formData.append("category", categoryId); // REQUIRED - use 'category' not 'category_id'
+  
+      // Only append subcategory if it exists and is selected
+      if (subcategoryId && subcategories.length > 0) {
+        formData.append("subcategory", subcategoryId);
+      }
+
+      // ADD CONFIDENTIAL FIELD
+      formData.append("confidential", isConfidential ? "true" : "false");
+  
+      formData.append("title", title.trim());
+      formData.append("description", description);
+  
+      // Set requested to current logged-in user ID
+      const requestedId = currentUser?.id;
+      if (requestedId) {
+        formData.append("requested", requestedId);
+      } else {
+        toast.error("User ID not found in localStorage. Please log in again.");
+        setLoading(false);
+        return;
+      }
+  
+      // Assignment fields (support multiple types and assignees)
+      selectionTypes.forEach(type => {
+        formData.append("assigned_to_type", type);
+      });
+  
+      if (selectionTypes.includes('user') && selectedUsers.length > 0) {
+        selectedUsers.forEach(user => {
+          formData.append("assignee", user.email);
+        });
+      }
+      if (selectionTypes.includes('group') && selectedGroups.length > 0) {
+        selectedGroups.forEach(group => {
+          formData.append("assigned_group", group.id);
+        });
+      }
+  
+      // Watchers (CC)
+      selectedWatchers.forEach(id => {
+        formData.append("watchers", id);
+      });
+  
+      // Files
+      files.forEach(file => {
+        if (file instanceof File) {
+          formData.append("documents", file);
+        }
+      });
+      // Create ticket
+      const result = await createTicket(formData);
+  
+      if (result?.success || result?.ticket_no || result?.id) {
+        const ticketNo = result.ticket_no || result.data?.ticket_no || result.id;
+        toast.success(`Ticket #${ticketNo} created successfully!`);
+        resetForm();
+    
+        // Optional: Clear edit mode if it was set
+        if (editMode) {
+          localStorage.removeItem("editTicketId");
+          setEditMode(false);
+          setEditTicketId(null);
+        }
+    
+        // // Redirect to ticket history
+        // setTimeout(() => {
+        // window.location.href = "/tickethistory";
+        // }, 1500);
+      } else {
+        // Handle different error response formats
+        const errorMsg = result?.error ||
+                        result?.message ||
+                        result?.detail ||
+                        "Failed to create ticket";
+        throw new Error(errorMsg);
+      }
+    } catch (err) {
+      console.error("Ticket creation error:", err);
+  
+      // More user-friendly error messages
+      if (err.message.includes("category")) {
+        toast.error("Category error: " + err.message);
+      } else if (err.message.includes("required")) {
+        toast.error("Missing required field: " + err.message);
+      } else if (err.message.includes("IntegrityError") || err.message.includes("cannot be null")) {
+        toast.error("Database error: Please check all required fields are filled correctly");
+      } else {
+        toast.error(err.message || "Failed to create ticket. Please try again.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateTicket = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      // Similar validation as create
+      if (!ticketType) {
+        toast.error("Type is required");
+        setLoading(false);
+        return;
+      }
+      if (!selectedDepartment) {
+        toast.error("Department is required");
+        setLoading(false);
+        return;
+      }
+      if (!selectedLocation) {
+        toast.error("Location is required");
+        setLoading(false);
+        return;
+      }
+      if (!selectedPlatform) {
+        toast.error("Platform is required");
+        setLoading(false);
+        return;
+      }
+      if (!priority) {
+        toast.error("Priority is required");
+        setLoading(false);
+        return;
+      }
+      if (!categoryId) {
+        toast.error("Category is required");
+        setLoading(false);
+        return;
+      }
+      if (selectionTypes.length === 0) {
+        toast.error("Assign To is required");
+        setLoading(false);
+        return;
+      }
+      if (selectionTypes.includes('user') && selectedUsers.length === 0) {
+        toast.error("Select at least one user if User is selected");
+        setLoading(false);
+        return;
+      }
+      if (selectionTypes.includes('group') && selectedGroups.length === 0) {
+        toast.error("Select at least one group if Group is selected");
+        setLoading(false);
+        return;
+      }
+      if (!title.trim()) {
+        toast.error("Title is required");
+        setLoading(false);
+        return;
+      }
+      if (!description.trim()) {
+        toast.error("Description is required");
+        setLoading(false);
+        return;
+      }
+  
+      // Get IDs
+      const typeObj = ticketTypes.find(t => t.field_name === ticketType);
+      const typeId = typeObj ? typeObj.id : null;
+  
+      const departmentId = selectedDepartment ? selectedDepartment.id : null;
+      const locationId = selectedLocation ? selectedLocation.id : null;
+      const platformId = selectedPlatform?.id;
+  
+      const priorityObj = priorities.find(p => p.field_name === priority);
+      const priorityId = priorityObj ? priorityObj.id : null;
+      if (!typeId || !departmentId || !locationId || !platformId || !priorityId || !categoryId) {
+        toast.error("Please fill all required fields");
+        setLoading(false);
+        return;
+      }
+      const formData = new FormData();
+      formData.append("entity_id", userEntity?.id || "");
+      formData.append("type", typeId);
+      formData.append("department", departmentId);
+      formData.append("location", locationId);
+      formData.append("platform", platformId);
+      formData.append("priority", priorityId);
+      formData.append("category", categoryId);
+  
+      // Only append subcategory if it exists and is selected
+      if (subcategoryId && subcategories.length > 0) {
+        formData.append("subcategory", subcategoryId);
+      }
+
+      // ADD CONFIDENTIAL FIELD ON UPDATE TOO
+      formData.append("confidential", isConfidential ? "true" : "false");
+  
+      formData.append("title", title.trim());
+      formData.append("description", description);
+  
+      // For update, do not override requested unless explicitly needed (keep original)
+      // If you want to update it, uncomment below:
+      // const requestedId = currentUser?.id;
+      // if (requestedId) {
+      // formData.append("requested", requestedId);
+      // }
+  
+      // Assignment fields (support multiple types and assignees)
+      selectionTypes.forEach(type => {
+        formData.append("assigned_to_type", type);
+      });
+  
+      if (selectionTypes.includes('user') && selectedUsers.length > 0) {
+        selectedUsers.forEach(user => {
+          formData.append("assignee", user.email);
+        });
+      }
+      if (selectionTypes.includes('group') && selectedGroups.length > 0) {
+        selectedGroups.forEach(group => {
+          formData.append("assigned_group", group.id);
+        });
+      }
+  
+      // Watchers
+      selectedWatchers.forEach(id => {
+        formData.append("watchers", id);
+      });
+  
+      // Files
+      files.forEach(file => {
+        if (file instanceof File) {
+          formData.append("documents", file);
+        }
+      });
+      const result = await updateTicket(editTicketId, formData);
+  
+      if (result?.success || result?.message?.includes("success")) {
+        toast.success("Ticket updated successfully!");
+    
+        // Clear edit mode
         localStorage.removeItem("editTicketId");
         setEditMode(false);
         setEditTicketId(null);
+    
+        // Redirect after a short delay
+        // setTimeout(() => {
+        // window.location.href = "/tickethistory";
+        // }, 1500);
+      } else {
+        throw new Error(result?.error || "Update failed");
       }
-   
-      // // Redirect to ticket history
-      // setTimeout(() => {
-      // window.location.href = "/tickethistory";
-      // }, 1500);
-    } else {
-      // Handle different error response formats
-      const errorMsg = result?.error ||
-                      result?.message ||
-                      result?.detail ||
-                      "Failed to create ticket";
-      throw new Error(errorMsg);
-    }
-  } catch (err) {
-    console.error("Ticket creation error:", err);
- 
-    // More user-friendly error messages
-    if (err.message.includes("category")) {
-      toast.error("Category error: " + err.message);
-    } else if (err.message.includes("required")) {
-      toast.error("Missing required field: " + err.message);
-    } else if (err.message.includes("IntegrityError") || err.message.includes("cannot be null")) {
-      toast.error("Database error: Please check all required fields are filled correctly");
-    } else {
-      toast.error(err.message || "Failed to create ticket. Please try again.");
-    }
-  } finally {
-    setLoading(false);
-  }
-};
-const handleUpdateTicket = async (e) => {
-  e.preventDefault();
-  setLoading(true);
-  try {
-    // Similar validation as create
-    if (!ticketType) {
-      toast.error("Type is required");
+    } catch (err) {
+      console.error("Ticket update error:", err);
+      toast.error(err.message || "Failed to update ticket");
+    } finally {
       setLoading(false);
-      return;
     }
-    if (!selectedDepartment) {
-      toast.error("Department is required");
-      setLoading(false);
-      return;
-    }
-    if (!selectedLocation) {
-      toast.error("Location is required");
-      setLoading(false);
-      return;
-    }
-    if (!selectedPlatform) {
-      toast.error("Platform is required");
-      setLoading(false);
-      return;
-    }
-    if (!priority) {
-      toast.error("Priority is required");
-      setLoading(false);
-      return;
-    }
-    if (!categoryId) {
-      toast.error("Category is required");
-      setLoading(false);
-      return;
-    }
-    if (selectionTypes.length === 0) {
-      toast.error("Assign To is required");
-      setLoading(false);
-      return;
-    }
-    if (selectionTypes.includes('user') && selectedUsers.length === 0) {
-      toast.error("Select at least one user if User is selected");
-      setLoading(false);
-      return;
-    }
-    if (selectionTypes.includes('group') && selectedGroups.length === 0) {
-      toast.error("Select at least one group if Group is selected");
-      setLoading(false);
-      return;
-    }
-    if (!title.trim()) {
-      toast.error("Title is required");
-      setLoading(false);
-      return;
-    }
-    if (!description.trim()) {
-      toast.error("Description is required");
-      setLoading(false);
-      return;
-    }
- 
-    // Get IDs
-    const typeObj = ticketTypes.find(t => t.field_name === ticketType);
-    const typeId = typeObj ? typeObj.id : null;
- 
-    const departmentId = selectedDepartment ? selectedDepartment.id : null;
-    const locationId = selectedLocation ? selectedLocation.id : null;
-    const platformId = selectedPlatform?.id;
- 
-    const priorityObj = priorities.find(p => p.field_name === priority);
-    const priorityId = priorityObj ? priorityObj.id : null;
-    if (!typeId || !departmentId || !locationId || !platformId || !priorityId || !categoryId) {
-      toast.error("Please fill all required fields");
-      setLoading(false);
-      return;
-    }
-    const formData = new FormData();
-    formData.append("entity_id", userEntity?.id || "");
-    formData.append("type", typeId);
-    formData.append("department", departmentId);
-    formData.append("location", locationId);
-    formData.append("platform", platformId);
-    formData.append("priority", priorityId);
-    formData.append("category", categoryId);
- 
-    // Only append subcategory if it exists and is selected
-    if (subcategoryId && subcategories.length > 0) {
-      formData.append("subcategory", subcategoryId);
-    }
- 
-    formData.append("title", title.trim());
-    formData.append("description", description);
- 
-    // For update, do not override requested unless explicitly needed (keep original)
-    // If you want to update it, uncomment below:
-    // const requestedId = currentUser?.id;
-    // if (requestedId) {
-    // formData.append("requested", requestedId);
-    // }
- 
-    // Assignment fields (support multiple types and assignees)
-    selectionTypes.forEach(type => {
-      formData.append("assigned_to_type", type);
-    });
- 
-    if (selectionTypes.includes('user') && selectedUsers.length > 0) {
-      selectedUsers.forEach(user => {
-        formData.append("assignee", user.email);
-      });
-    }
-    if (selectionTypes.includes('group') && selectedGroups.length > 0) {
-      selectedGroups.forEach(group => {
-        formData.append("assigned_group", group.id);
-      });
-    }
- 
-    // Watchers
-    selectedWatchers.forEach(id => {
-      formData.append("watchers", id);
-    });
- 
-    // Files
-    files.forEach(file => {
-      if (file instanceof File) {
-        formData.append("documents", file);
-      }
-    });
-    const result = await updateTicket(editTicketId, formData);
- 
-    if (result?.success || result?.message?.includes("success")) {
-      toast.success("Ticket updated successfully!");
-   
-      // Clear edit mode
-      localStorage.removeItem("editTicketId");
-      setEditMode(false);
-      setEditTicketId(null);
-   
-      // Redirect after a short delay
-      // setTimeout(() => {
-      // window.location.href = "/tickethistory";
-      // }, 1500);
-    } else {
-      throw new Error(result?.error || "Update failed");
-    }
-  } catch (err) {
-    console.error("Ticket update error:", err);
-    toast.error(err.message || "Failed to update ticket");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
+  
   const resetForm = () => {
     setTitle("");
     setDescription("");
@@ -2705,6 +2723,7 @@ const handleUpdateTicket = async (e) => {
     setPriority("");
     setCategoryId("");
     setSubcategoryId("");
+    setIsConfidential(false);
     setSelectionTypes([]);
     setSelectedUsers([]);
     setSelectedGroups([]);
@@ -2714,11 +2733,13 @@ const handleUpdateTicket = async (e) => {
     setSelectedPlatform(null);
     setRequestedUser(null);
   };
+  
   const handleCancel = () => {
     resetForm();
     localStorage.removeItem("editTicketId");
     toast.info("Form cancelled.");
   };
+  
   const handleDescriptionChange = (e) => {
     if (e.target.value.length <= 5000) setDescription(e.target.value);
   };
@@ -2828,9 +2849,54 @@ const handleUpdateTicket = async (e) => {
                 value={categories.find((c) => c.id === parseInt(categoryId)) || null}
                 onChange={(_, v) => {
                   setCategoryId(v ? v.id : "");
-                  // Reset subcategory when category changes
                   setSubcategoryId("");
+                  let confidential = false;
+                  let newSelectionTypes = [];
+                  let newSelectedUsers = [];
+                  let newSelectedGroups = [];
+                  if (v) {
+                    confidential = v.sla?.confidential === "Y";
+                    const sla = v.sla;
+                    if (sla) {
+                      if (sla.assigned_user_detail) {
+                        const u = sla.assigned_user_detail;
+                        let matched = allUsers.find(au => au.id === u.id || au.email === u.email);
+                        if (!matched) {
+                          matched = { id: u.id, name: u.name, email: u.email };
+                        }
+                        newSelectedUsers = [matched];
+                        newSelectionTypes.push('user');
+                      }
+                      if (sla.assigned_group_detail) {
+                        const g = sla.assigned_group_detail;
+                        let matched = watcherGroups.find(wg => wg.id === g.id);
+                        if (!matched) {
+                          matched = { id: g.id, name: g.name || 'Unknown', users: g.users || [] };
+                        }
+                        newSelectedGroups = [matched];
+                        newSelectionTypes.push('group');
+                      }
+                    }
+                  }
+                  setIsConfidential(confidential);
+                  setSelectedUsers(newSelectedUsers);
+                  setSelectedGroups(newSelectedGroups);
+                  setSelectionTypes(newSelectionTypes);
+                  const userIds = newSelectedUsers.map(u => u.id) || [];
+                  const groupMemberIds = newSelectedGroups.flatMap(g => g.users?.map(u => u.id) || []) || [];
+                  setSelectedWatchers([...new Set([...userIds, ...groupMemberIds])]);
                 }}
+                // onChange={(_, v) => {
+                //   setCategoryId(v ? v.id : "");
+                //   setSubcategoryId(""); // Reset subcategory
+
+                //   if (v) {
+                //     // Default to category-level SLA until subcategory is selected
+                //     setIsConfidential(v.sla?.confidential === "Y");
+                //   } else {
+                //     setIsConfidential(false);
+                //   }
+                // }}
                 renderInput={(params) => (
                   <TextField {...params} label="Select Category" size="small" required sx={{ mt: 1 }} />
                 )}
@@ -2844,7 +2910,92 @@ const handleUpdateTicket = async (e) => {
                   options={subcategories}
                   getOptionLabel={(o) => o.subcategory_name || ""}
                   value={subcategories.find((s) => s.id === parseInt(subcategoryId)) || null}
-                  onChange={(_, v) => setSubcategoryId(v ? v.id : "")}
+                  onChange={(_, v) => {
+                    const newSubId = v ? v.id : "";
+                    setSubcategoryId(newSubId);
+                    let confidential = false;
+                    let newSelectionTypes = [];
+                    let newSelectedUsers = [];
+                    let newSelectedGroups = [];
+                    if (v && v.slas) {
+                      confidential = v.slas.some(s => s.confidential === "Y");
+                      const userSet = new Set();
+                      const groupSet = new Set();
+                      v.slas.forEach(sla => {
+                        if (sla.assigned_user_detail) {
+                          const u = sla.assigned_user_detail;
+                          const key = u.email || u.id;
+                          if (!userSet.has(key)) {
+                            userSet.add(key);
+                            let matched = allUsers.find(au => au.id === u.id || au.email === u.email);
+                            if (!matched) {
+                              matched = { id: u.id, name: u.name, email: u.email };
+                            }
+                            newSelectedUsers.push(matched);
+                          }
+                        }
+                        if (sla.assigned_group_detail) {
+                          const g = sla.assigned_group_detail;
+                          const key = g.id;
+                          if (!groupSet.has(key)) {
+                            groupSet.add(key);
+                            let matched = watcherGroups.find(wg => wg.id === g.id);
+                            if (!matched) {
+                              matched = { id: g.id, name: g.name || 'Unknown', users: g.users || [] };
+                            }
+                            newSelectedGroups.push(matched);
+                          }
+                        }
+                      });
+                      if (newSelectedUsers.length > 0) newSelectionTypes.push('user');
+                      if (newSelectedGroups.length > 0) newSelectionTypes.push('group');
+                    } else {
+                      const selectedCat = categories.find(c => c.id === parseInt(categoryId));
+                      confidential = selectedCat?.sla?.confidential === "Y";
+                      const sla = selectedCat?.sla;
+                      if (sla) {
+                        if (sla.assigned_user_detail) {
+                          const u = sla.assigned_user_detail;
+                          let matched = allUsers.find(au => au.id === u.id || au.email === u.email);
+                          if (!matched) {
+                            matched = { id: u.id, name: u.name, email: u.email };
+                          }
+                          newSelectedUsers = [matched];
+                          newSelectionTypes.push('user');
+                        }
+                        if (sla.assigned_group_detail) {
+                          const g = sla.assigned_group_detail;
+                          let matched = watcherGroups.find(wg => wg.id === g.id);
+                          if (!matched) {
+                            matched = { id: g.id, name: g.name || 'Unknown', users: g.users || [] };
+                          }
+                          newSelectedGroups = [matched];
+                          newSelectionTypes.push('group');
+                        }
+                      }
+                    }
+                    setIsConfidential(confidential);
+                    setSelectedUsers(newSelectedUsers);
+                    setSelectedGroups(newSelectedGroups);
+                    setSelectionTypes(newSelectionTypes);
+                    const userIds = newSelectedUsers.map(u => u.id) || [];
+                    const groupMemberIds = newSelectedGroups.flatMap(g => g.users?.map(u => u.id) || []) || [];
+                    setSelectedWatchers([...new Set([...userIds, ...groupMemberIds])]);
+                  }}
+                  // onChange={(_, v) => {
+                  //   const newSubId = v ? v.id : "";
+                  //   setSubcategoryId(newSubId);
+
+                  //   if (v && v.slas && v.slas.length > 0) {
+                  //     // Check if ANY SLA in this subcategory has confidential: "Y"
+                  //     const hasConfidentialY = v.slas.some(sla => sla.confidential === "Y");
+                  //     setIsConfidential(hasConfidentialY);
+                  //   } else {
+                  //     // No subcategory or no SLAs → fallback to category-level SLA
+                  //     const selectedCat = categories.find(c => c.id === parseInt(categoryId));
+                  //     setIsConfidential(selectedCat?.sla?.confidential === "Y");
+                  //   }
+                  // }}
                   renderInput={(params) => (
                     <TextField {...params} label="Select Subcategory" size="small" sx={{ mt: 1 }} />
                   )}

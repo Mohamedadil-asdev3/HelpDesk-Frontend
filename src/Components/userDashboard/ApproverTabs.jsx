@@ -1905,6 +1905,7 @@ import {
   Alert,
   Tabs,
   Tab,
+  Icon,
 } from "@mui/material";
 import NewReleasesIcon from "@mui/icons-material/NewReleases";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -1929,6 +1930,7 @@ import {
 const ApproverTabs = ({ approverStatus: propUserStatus }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
 
   const [selectedType, setSelectedType] = useState("new_assigned");
   const [search, setSearch] = useState("");
@@ -1967,6 +1969,11 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
   // Protected & Reveal states
   const [isProtectedMode, setIsProtectedMode] = useState(false);
   const [revealedMessages, setRevealedMessages] = useState(new Set());
+
+  // Solution States
+  const [selectedResolutionType, setSelectedResolutionType] = useState(null);
+  const [solutionRemark, setSolutionRemark] = useState("");
+  const [sendingSolution, setSendingSolution] = useState(false);
 
   // Clarification states
   const [clarificationText, setClarificationText] = useState("");
@@ -2110,39 +2117,52 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
   const statusCards = [
     {
       id: "new_assigned",
-      label: "PENDING",
+      label: "Pending",
       color: "warning",
       icon: <NewReleasesIcon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }} />,
       count: getCount("new_assigned"),
     },
     {
       id: "solved",
-      label: "RESOLVED",
+      label: "Resolved",
       color: "success",
       icon: <DoneAllIcon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }} />,
       count: getCount("solved"),
     },
     {
       id: "closed",
-      label: "CLOSED",
+      label: "Closed",
       color: "info",
       icon: <LockIcon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }} />,
       count: getCount("closed"),
     },
     {
       id: "clarification_required",
-      label: "CLARIFICATION REQUIRED",
+      label: "Clar. Required",
       color: "error",
       icon: <HelpOutlineIcon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }} />,
       count: getCount("clarification_required"),
     },
     {
       id: "clarification_applied",
-      label: "CLARIFICATION APPLIED",
+      label: "Clar. Supplied",
       color: "primary",
       icon: <QuestionAnswerIcon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }} />,
       count: getCount("clarification_applied"),
     },
+  ];
+
+  const resolutionTypes = [
+    { value: 1, label: "Configuration Change", description: "Adjust settings or parameters (e.g., user permissions, system options)." },
+    { value: 2, label: "Bug Fix", description: "Resolve a software defect that’s causing an error or crash." },
+    { value: 3, label: "Enhancement", description: "Add a new feature or improve an existing one beyond the original spec." },
+    { value: 4, label: "Infrastructure Issue", description: "Problems with servers, networks, storage, or other backend components." },
+    { value: 5, label: "Security Patch", description: "Apply updates to close vulnerabilities or address compliance gaps." },
+    { value: 6, label: "Performance Tuning", description: "Optimize speed, memory usage, or response times." },
+    { value: 7, label: "Data Correction", description: "Fix inaccurate or corrupted data (e.g., manual record updates)." },
+    { value: 8, label: "Integration Fix", description: "Resolve issues with third-party APIs, interfaces, or middleware." },
+    { value: 9, label: "Third-Party dependencies", description: "Issue caused by or resolved via third-party library/service update." },
+    { value: 10, label: "User Training / Documentation", description: "Provide guidance or update docs when the “issue” is a skill gap." },
   ];
 
   const headingMap = {
@@ -2317,10 +2337,10 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
       const updateResult = await updateTicket(ticketNoStr, formData);
       if (!updateResult.success) throw new Error(updateResult.error || "Failed to update status");
 
-      const clarificationMessage = `[CLARIFICATION REQUEST]\n\n${clarificationText.trim()}`;
+      const clarificationMessage = `[Clarification Required]\n\n${clarificationText.trim()}`;
       await sendFollowUpMessageHandler(clarificationMessage);
 
-      toast.success("Clarification request sent and ticket status updated!");
+      toast.success("Clarification required sent and ticket status updated!");
       setClarificationText("");
       setChatTab(0);
       loadData();
@@ -2342,13 +2362,14 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
       return;
     }
 
+    setSendingSolution(true);
     try {
       const ticketNoStr = String(currentChatTicket.id);
       const formData = new FormData();
       formData.append("title", currentTicketData.title || "");
       formData.append("description", currentTicketData.description || "");
       formData.append("category", currentTicketData.category || currentTicketData.category_detail?.id || "");
-      formData.append("status", "153"); // Solved status ID
+      formData.append("status", "153"); // Solved
       formData.append("entity_id", String(currentEntityId));
 
       const assignedUsers = currentTicketData.assignees_detail || currentTicketData.assigned_users || [];
@@ -2367,13 +2388,44 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
       const result = await updateTicket(ticketNoStr, formData);
       if (!result.success) throw new Error(result.error || "Update failed");
 
-      toast.success("Ticket marked as Solved successfully!");
+      // Send solution message to chat
+      const resolutionLabel = selectedResolutionType?.label || "Not specified";
+      const resolutionDesc = selectedResolutionType?.description || "";
+      const remark = solutionRemark.trim();
+
+      const solutionMessage = `[Solution Provided]\n\n**Type of Fix:** ${resolutionLabel}\n${resolutionDesc ? `\n${resolutionDesc}\n` : ""}${remark ? `\n**Remarks:**\n${remark}` : ""}`;
+
+      await sendMessage({
+        sender: currentUserId,
+        receiver: chatRecipient.id,
+        ticket_no: currentChatTicket.id,
+        message: solutionMessage.trim(),
+        protected: false,
+      });
+
+      // Refresh messages
+      const msgs = await fetchMessages();
+      const filtered = msgs.filter(
+        (m) =>
+          m.ticket_no == currentChatTicket.id &&
+          ((m.sender === currentUserId && m.receiver === chatRecipient.id) ||
+            (m.sender === chatRecipient.id && m.receiver === currentUserId))
+      );
+      setFollowUpChats(filtered.sort((a, b) => new Date(a.createdon) - new Date(b.createdon)));
+
+      toast.success("Ticket marked as Solved and solution sent!");
+
+      setSelectedResolutionType(null);
+      setSolutionRemark("");
+
       setShowFollowUpChat(false);
       setSelectedType("solved");
       loadData();
     } catch (err) {
       console.error("Solution submit error:", err);
       toast.error("Failed to mark as solved");
+    } finally {
+      setSendingSolution(false);
     }
   };
 
@@ -2442,77 +2494,86 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
 
   return (
     <>
-      <Box sx={{ width: "100%" }}>
-        <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
-          <CardContent>
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              {statusCards.map((item) => (
-                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} key={item.id}>
-                  <Card
-                    onClick={() => handleCardClick(item.id)}
+      <Box sx={{ width: "100%", mb:2 }}>
+        <Grid container spacing={1} sx={{ mb: 2 }}>
+          {statusCards.map((item) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} key={item.id}>
+              <Card
+                onClick={() => handleCardClick(item.id)}
+                sx={{
+                  transition: "0.3s ease",
+                  maxWidth: 300,
+                  maxHeight: 110,
+                  minHeight: 100,
+                  borderRadius: 5,
+                  "&:hover": {
+                    background: "linear-gradient(135deg, #667eea, #764ba2)",
+                    color: "#fff",
+                    transform: "scale(1.03)",
+                  },
+                }}
+              >
+                <CardContent 
+                  sx={{
+                    "&:last-child": { pt: 1 },
+                    display: "flex",
+                    gap: 2,
+                    alignItems: "center"
+                  }}
+                >
+                  <Box
                     sx={{
-                      p: 1,
-                      m: 1,
-                      transition: "0.3s ease",
-                      borderRadius: 5,
-                      "&:hover": {
-                        background: "linear-gradient(135deg, #667eea, #764ba2)",
-                        color: "#fff",
-                        transform: "scale(1.03)",
-                      },
+                      width: { xs: 50, sm: 40, md: 50 },
+                      height: { xs: 50, sm: 40, md: 40 },
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: 2,
+                      bgcolor: `${item.color}.main`,
+                      color: "#fff",
                     }}
                   >
-                    <CardContent sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-                      <Box
-                        sx={{
-                          width: { xs: 50, sm: 40, md: 50 },
-                          height: { xs: 50, sm: 40, md: 50 },
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          borderRadius: 2,
-                          bgcolor: `${item.color}.main`,
-                          color: "#fff",
-                        }}
-                      >
-                        {item.icon}
-                      </Box>
-                      <Box>
-                        <Typography fontSize={{ xs: 25, sm: 20, md: 25 }} fontWeight={600}>
-                          {item.count}
-                        </Typography>
-                        <Typography fontSize={{ xs: 20, sm: 14, md: 20 }} fontWeight={550}>
-                          {item.label}
-                        </Typography>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              ))}
+                    <Icon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }}>{item.icon}</Icon>
+                  </Box>
+                  <Box>
+                    <Typography fontSize={{ xs: 25, sm: 20, md: 25 }} fontWeight={600}>
+                      {item.count}
+                    </Typography>
+                    <Typography fontSize={{ xs: 20, sm: 14, md: 20 }} fontWeight={550}>
+                      {item.label}
+                    </Typography>
+                  </Box>
+                </CardContent>
+              </Card>
             </Grid>
-
+          ))}
+        </Grid>
+        <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
+          <CardContent>
             {selectedType && (
               <Box>
                 <Box
                   sx={{
                     display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    mb: 4,
-                    flexDirection: isMobile ? "column" : "row",
+                    flexDirection: isMobile || isTablet ? "column" : "row",
+                    justifyContent: !isMobile || !isTablet ? "space-between" : undefined,
+                    alignItems: isMobile ? "flex-start" : "center",
+                    mb: 1,
                     gap: isMobile ? 2 : 0,
                   }}
                 >
                   <Typography variant="h5" fontWeight={700} sx={{ color: "#2D3748" }}>
-                    {headingMap[selectedType]} {filteredRows.length > 0 && `(${filteredRows.length})`}
+                    {headingMap[selectedType]} 
                   </Typography>
                   <Box
                     sx={{
                       display: "flex",
                       flexDirection: isMobile ? "column" : "row",
-                      justifyContent: "flex-end",
+                      flexWrap: isTablet ? "wrap" : "nowrap",
                       gap: 2,
-                      width: isMobile ? "100%" : "auto",
+                      width: isMobile || isTablet ? "100%" : "auto",
+                      justifyContent: isTablet ? "flex-start" : "flex-end",
+                      mt: isTablet ? 1.5 : 0
                     }}
                   >
                     <Autocomplete
@@ -2523,8 +2584,10 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                         <TextField {...params} label="Department" size="small" variant="outlined" />
                       )}
                       sx={{
-                        width: isMobile ? "100%" : 200,
-                        "& .MuiOutlinedInput-root": { borderRadius: 2 },
+                        width: { xs: "100%", sm: 300, md: 200 },
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        }
                       }}
                       disabled={departmentList.length === 0}
                     />
@@ -2535,8 +2598,10 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                       onChange={(e) => setSearch(e.target.value)}
                       variant="outlined"
                       sx={{
-                        width: isMobile ? "100%" : 200,
-                        "& .MuiOutlinedInput-root": { borderRadius: 2 },
+                        width: { xs: "100%", sm: 300, md: 200 },
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        }
                       }}
                     />
                     <Button
@@ -2555,7 +2620,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                   </Box>
                 </Box>
 
-                <Card sx={{ borderRadius: 3, boxShadow: 2, overflow: "hidden" }}>
+                
                   {isMobile ? (
                     <Box sx={{ p: 2 }}>
                       {filteredRows.length > 0 ? (
@@ -2642,165 +2707,186 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                       )}
                     </Box>
                   ) : (
-                    <TableContainer>
-                      <Table stickyHeader>
-                        <TableHead>
-                          <TableRow sx={{ backgroundColor: "#F7FAFC" }}>
-                            {[
-                              <>Ticket ID</>,
-                              <>Title</>,
-                              <>Description</>,
-                              <>Status<br />Priority</>,
-                              <>Category<br />Subcategory</>,
-                              <>Department<br />Location</>,
-                              <>Requested By</>,
-                              <>Open Date<br />Last Update</>,
-                              <>Action</>,
-                            ].map((title, i) => (
-                              <TableCell
-                                key={i}
-                                sx={{
-                                  fontWeight: 700,
-                                  whiteSpace: "nowrap",
-                                  color: "#2D3748",
-                                  borderBottom: "2px solid #E2E8F0",
-                                  py: 2,
-                                }}
-                              >
-                                {title}
-                              </TableCell>
-                            ))}
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {filteredRows.length > 0 ? (
-                            filteredRows
-                              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                              .map((t, index) => (
-                                <TableRow
-                                  key={t.id || index}
-                                  hover
+                    <Card sx={{ borderRadius: 3, boxShadow: 2, overflow: "hidden" }}>
+                      <TableContainer>
+                        <Table stickyHeader>
+                          <TableHead>
+                            <TableRow sx={{ backgroundColor: "#F7FAFC" }}>
+                              {[
+                                <>Ticket ID</>,
+                                <>Title</>,
+                                <>Description</>,
+                                <>Status<br />Priority</>,
+                                <>Category<br />Subcategory</>,
+                                <>Department<br />Location</>,
+                                <>Requested By</>,
+                                <>Open Date<br />Last Update</>,
+                                <>Action</>,
+                              ].map((title, i) => (
+                                <TableCell
+                                  key={i}
                                   sx={{
-                                    "&:hover": { backgroundColor: "#F7FAFC" },
-                                    "&:last-child td": { borderBottom: 0 },
+                                    fontWeight: 700,
+                                    whiteSpace: "nowrap",
+                                    color: "#2D3748",
+                                    borderBottom: "2px solid #E2E8F0",
+                                    py: 2,
+                                    lineHeight: 1.2,
                                   }}
                                 >
-                                  <TableCell sx={{ color: "#667eea", fontWeight: 600 }}>
-                                    #{t.ticket_no || t.id || "-"}
-                                  </TableCell>
-                                  <TableCell sx={{ color: "#2D3748", fontWeight: 500 }}>{t.title || "-"}</TableCell>
-                                  <TableCell>
-                                    <Tooltip title={t.description || "No description"} arrow placement="top">
-                                      <Typography
-                                        sx={{
-                                          maxWidth: 200,
-                                          whiteSpace: "nowrap",
-                                          overflow: "hidden",
-                                          textOverflow: "ellipsis",
-                                          cursor: "pointer",
-                                          color: "#4A5568",
-                                        }}
-                                      >
-                                        {t.description || "-"}
-                                      </Typography>
-                                    </Tooltip>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Typography fontWeight={500} color="#2D3748">
-                                      {getDisplayStatus(t.status_detail?.field_name || t.status || "-")}
-                                    </Typography>
-                                    <Typography fontSize="0.85rem" color="#718096">
-                                      {t.priority_detail?.field_name || t.priority || "-"}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Tooltip
-                                      arrow
-                                      placement="top"
-                                      title={
-                                        <Box>
-                                          <div>
-                                            <strong>Category:</strong> {t.category_detail?.category_name || "-"}
-                                          </div>
-                                          <div>
-                                            <strong>Subcategory:</strong> {t.subcategory_detail?.subcategory_name || "-"}
-                                          </div>
-                                        </Box>
-                                      }
-                                    >
-                                      <Box sx={{ cursor: "pointer" }}>
-                                        <Typography fontWeight={500} color="#2D3748">
-                                          {t.category_detail?.category_name || "-"}
-                                        </Typography>
-                                        <Typography fontSize="0.85rem" color="#718096">
-                                          {t.subcategory_detail?.subcategory_name || "-"}
-                                        </Typography>
-                                      </Box>
-                                    </Tooltip>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Typography fontWeight={500} color="#2D3748">
-                                      {t.department_detail?.field_name || "-"}
-                                    </Typography>
-                                    <Typography fontSize="0.85rem" color="#718096">
-                                      {t.location_detail?.field_name || "-"}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell sx={{ color: "#4A5568", maxWidth: 150 }}>
-                                    <Tooltip title={t.requested_detail?.email || t.requested_by || "-"}>
-                                      <Typography
-                                        sx={{
-                                          overflow: "hidden",
-                                          textOverflow: "ellipsis",
-                                          whiteSpace: "nowrap",
-                                        }}
-                                      >
-                                        {t.requested_detail?.email || t.requested_by || "-"}
-                                      </Typography>
-                                    </Tooltip>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Typography fontSize="0.9rem" color="#2D3748">
-                                      {t.created_date ? new Date(t.created_date).toLocaleDateString() : "-"}
-                                    </Typography>
-                                    <Typography fontSize="0.8rem" color="#718096">
-                                      {t.updated_date ? new Date(t.updated_date).toLocaleDateString() : "-"}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Box sx={{ display: "flex", gap: 1 }}>
-                                      <Tooltip title="Follow-up Chat">
-                                        <IconButton
-                                          onClick={() => handleChatDrawerOpen(t.ticket_no)}
-                                          size="small"
-                                          sx={{ color: "#667eea" }}
-                                        >
-                                          <ChatIcon fontSize="small" />
-                                        </IconButton>
-                                      </Tooltip>
-                                      <Tooltip title="View Details">
-                                        <IconButton
-                                          onClick={() => handleTicketClick(t.ticket_no)}
-                                          sx={{ color: "#667eea" }}
-                                          size="small"
-                                        >
-                                          <VisibilityIcon fontSize="small" />
-                                        </IconButton>
-                                      </Tooltip>
-                                    </Box>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                          ) : (
-                            <TableRow>
-                              <TableCell colSpan={9} align="center" sx={{ py: 4, color: "#718096" }}>
-                                No tickets found.
-                              </TableCell>
+                                  {title}
+                                </TableCell>
+                              ))}
                             </TableRow>
-                          )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                          </TableHead>
+                          <TableBody>
+                            {filteredRows.length > 0 ? (
+                              filteredRows
+                                .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                                .map((t, index) => (
+                                  <TableRow
+                                    key={t.id || index}
+                                    hover
+                                    sx={{
+                                      '&:hover': { backgroundColor: '#F7FAFC' },
+                                      '&:last-child td': { borderBottom: 0 }
+                                    }}
+                                  >
+                                    <TableCell sx={{ color: "#667eea", fontWeight: 600 }}>
+                                      #{t.ticket_no || t.id || "-"}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Tooltip
+                                        title={t.title}
+                                        arrow
+                                        placement="top"
+                                      >
+                                        <Typography
+                                          sx={{
+                                            maxWidth:200,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            cursor: "pointer",
+                                            mt: 0.5
+                                          }}
+                                        >
+                                          {t.title || "-"}
+                                        </Typography>
+                                      </Tooltip>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Tooltip title={t.description || "No description"} arrow placement="top">
+                                        <Typography
+                                          sx={{
+                                            maxWidth: 200,
+                                            whiteSpace: "nowrap",
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            cursor: "pointer",
+                                          }}
+                                        >
+                                          {t.description || "-"}
+                                        </Typography>
+                                      </Tooltip>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Typography fontWeight={600} fontSize="0.85rem">
+                                        {getDisplayStatus(t.status_detail?.field_name || t.status || "-")}
+                                      </Typography>
+                                      <Typography fontSize="0.85rem">
+                                        {t.priority_detail?.field_name || t.priority || "-"}
+                                      </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Tooltip
+                                        arrow
+                                        placement="top"
+                                        title={
+                                          <Box>
+                                            <div>
+                                              <strong>Category:</strong> {t.category_detail?.category_name || "-"}
+                                            </div>
+                                            <div>
+                                              <strong>Subcategory:</strong> {t.subcategory_detail?.subcategory_name || "-"}
+                                            </div>
+                                          </Box>
+                                        }
+                                      >
+                                        <Box sx={{ cursor: "pointer" }}>
+                                          <Typography fontWeight={600} fontSize="0.85rem">
+                                            {t.category_detail?.category_name || "-"}
+                                          </Typography>
+                                          <Typography fontSize="0.85rem">
+                                            {t.subcategory_detail?.subcategory_name || "-"}
+                                          </Typography>
+                                        </Box>
+                                      </Tooltip>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Typography fontWeight={600} fontSize="0.85rem">
+                                        {t.department_detail?.field_name || "-"}
+                                      </Typography>
+                                      <Typography fontSize="0.85rem">
+                                        {t.location_detail?.field_name || "-"}
+                                      </Typography>
+                                    </TableCell>
+                                    <TableCell sx={{ maxWidth: 150 }}>
+                                      <Tooltip title={t.requested_detail?.email || t.requested_by || "-"}>
+                                        <Typography fontSize="0.85rem"
+                                          sx={{
+                                            overflow: "hidden",
+                                            textOverflow: "ellipsis",
+                                            whiteSpace: "nowrap",
+                                          }}
+                                        >
+                                          {t.requested_detail?.email || t.requested_by || "-"}
+                                        </Typography>
+                                      </Tooltip>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Typography fontSize="0.85rem">
+                                        {t.created_date ? new Date(t.created_date).toLocaleDateString() : "-"}
+                                      </Typography>
+                                      <Typography fontSize="0.85rem">
+                                        {t.updated_date ? new Date(t.updated_date).toLocaleDateString() : "-"}
+                                      </Typography>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Box sx={{ display: "flex", gap: 1 }}>
+                                        <Tooltip title="Follow-up Chat">
+                                          <IconButton
+                                            onClick={() => handleChatDrawerOpen(t.ticket_no)}
+                                            size="small"
+                                            sx={{ color: "#667eea" }}
+                                          >
+                                            <ChatIcon fontSize="small" />
+                                          </IconButton>
+                                        </Tooltip>
+                                        <Tooltip title="View Details">
+                                          <IconButton
+                                            onClick={() => handleTicketClick(t.ticket_no)}
+                                            sx={{ color: "#667eea" }}
+                                            size="small"
+                                          >
+                                            <VisibilityIcon fontSize="small" />
+                                          </IconButton>
+                                        </Tooltip>
+                                      </Box>
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                            ) : (
+                              <TableRow>
+                                <TableCell colSpan={9} align="center" sx={{ py: 4, color: "#718096" }}>
+                                  No tickets found.
+                                </TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                    </Card>
                   )}
                   {filteredRows.length > 0 && (
                     <Stack
@@ -2840,7 +2926,6 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                       />
                     </Stack>
                   )}
-                </Card>
               </Box>
             )}
           </CardContent>
@@ -2895,7 +2980,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                           const messageId = msg.id;
                           const isRevealed = revealedMessages.has(messageId);
                           const canViewDecrypted = Number(msg.sender) === Number(currentUserId) || Number(msg.receiver) === Number(currentUserId);
-                          const isClar = msg.message?.includes("[CLARIFICATION REQUEST]");
+                          const isClar = msg.message?.includes("[Clarification Required]");
 
                           const toggleReveal = () => {
                             if (!canViewDecrypted) return;
@@ -2956,7 +3041,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                       {getDisplayedText()}
                                     </Typography>
 
-                                    {isClar && <Chip label="CLARIFICATION REQUEST" size="small" color="warning" sx={{ mt: 1 }} />}
+                                    {isClar && <Chip label="Clarification Required" size="small" color="primary" sx={{ mt: 1 }} />}
 
                                     {isProtected && canViewDecrypted && (
                                       <IconButton
@@ -2992,7 +3077,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                   <Box
                                     sx={{
                                       position: "relative",
-                                      bgcolor: isClar ? "warning.main" : "primary.main",
+                                      bgcolor: "primary.main",
                                       color: "white",
                                       p: 1.5,
                                       borderRadius: 2,
@@ -3016,14 +3101,6 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                     <Typography variant="body2" sx={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
                                       {getDisplayedText()}
                                     </Typography>
-
-                                    {isClar && (
-                                      <Chip
-                                        label="CLARIFICATION REQUEST"
-                                        size="small"
-                                        sx={{ mt: 1, bgcolor: "rgba(255,255,255,0.2)" }}
-                                      />
-                                    )}
 
                                     {isProtected && canViewDecrypted && (
                                       <IconButton
@@ -3109,7 +3186,80 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
             )}
 
             {chatTab === 1 && (
-              <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100%", p: 4, gap: 2 }}>
+              <Box sx={{ p: 4 }}>
+                {isTicketSolved() ? (
+                  <Box sx={{ textAlign: "center" }}>
+                    <DoneAllIcon sx={{ fontSize: 80, color: "success.main", mb: 2 }} />
+                    <Typography variant="h6">Ticket Already Solved</Typography>
+                  </Box>
+                ) : isTicketClarificationRequired() ? (
+                  <Box sx={{ textAlign: "center" }}>
+                    <HelpOutlineIcon sx={{ fontSize: 80, color: "warning.main", mb: 2 }} />
+                    <Typography variant="h6">Clarification Required</Typography>
+                    <Typography color="text.secondary">Resolve clarification first.</Typography>
+                  </Box>
+                ) : (
+                  <>
+                    <Box sx={{ textAlign: "center", mb: 2 }}>
+                      <DoneAllIcon sx={{ fontSize: 64, color: "success.main" }} />
+                      <Typography variant="h6" gutterBottom textAlign="center" color="success.main">
+                        Mark as Solved
+                      </Typography>
+                    </Box>
+                    
+                    <Autocomplete
+                      options={resolutionTypes}
+                      getOptionLabel={(option) => option.label}
+                      value={selectedResolutionType}
+                      onChange={(e, newValue) => {
+                        setSelectedResolutionType(newValue);
+                        if (newValue) {
+                          setSolutionRemark(newValue.description + (solutionRemark ? "\n\n" + solutionRemark : ""));
+                        } else {
+                          setSolutionRemark("");
+                        }
+                      }}
+                      renderInput={(params) => (
+                        <TextField {...params} label="Type of Fix" size="small" variant="outlined" fullWidth sx={{"& .MuiOutlinedInput-root": { borderRadius: 3 }}}/>
+                      )}
+                      sx={{ mb: 3 }}
+                    />
+
+                    <TextField
+                      multiline
+                      rows={6}
+                      label="Remarks / Solution Details"
+                      placeholder="Add any additional details..."
+                      value={solutionRemark}
+                      onChange={(e) => setSolutionRemark(e.target.value)}
+                      variant="outlined"
+                      fullWidth
+                      sx={{ mb: 3, "& .MuiOutlinedInput-root": { borderRadius: 3 }, }}
+                      disabled={sendingSolution}
+                    />
+
+                    <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        size="large"
+                        startIcon={sendingSolution ? <CircularProgress size={20} /> : <DoneAllIcon />}
+                        onClick={handleSolutionSubmit}
+                        disabled={sendingSolution}
+                        sx={{ borderRadius: 3 }}
+                      >
+                        {sendingSolution ? "Submitting..." : "Confirm Solved"}
+                      </Button>
+                      <Button variant="outlined" sx={{ borderRadius: 3 }} onClick={() => setChatTab(0)} disabled={sendingSolution}>
+                        Cancel
+                      </Button>
+                    </Box>
+                  </>
+                )}
+              </Box>
+            )}
+            {/* {chatTab === 1 && (
+              <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", p: 4, gap: 2 }}>
                 {isTicketSolved() ? (
                   <>
                     <DoneAllIcon sx={{ fontSize: 64, color: "success.main" }} />
@@ -3123,25 +3273,54 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                     <Typography color="text.secondary">Cannot mark as solved until clarification is resolved.</Typography>
                   </>
                 ) : (
-                  <>
-                    <DoneAllIcon sx={{ fontSize: 64, color: "success.main" }} />
-                    <Typography variant="h6" fontWeight={600}>Mark Ticket as Solved</Typography>
-                    <Typography color="text.secondary" sx={{ mb: 3 }}>Confirm to mark as solved</Typography>
+                  <Box>
+                    <Box sx={{ textAlign: "center", mb: 2 }}>
+                      <DoneAllIcon sx={{ fontSize: 64, color: "success.main" }} />
+                      <Typography variant="h6" fontWeight={600}>Mark Ticket as Solved</Typography>
+                    </Box>
+                    
+                    <TextField
+                      multiline
+                      rows={4}
+                      placeholder="Please clarify the following..."
+                      value={slovedText}
+                      onChange={(e) => setSlovedText(e.target.value)}
+                      variant="outlined"
+                      fullWidth
+                      sx={{ mb: 3 }}
+                      disabled={sendingSloved}
+                    />
+                    
+                    <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
+                      <Button
+                        variant="contained"
+                        color="warning"
+                        size="large"
+                        startIcon={<DoneAllIcon />}
+                        onClick={handleSolutionSubmit}
+                        disabled={!clarificationText.trim() || sendingSloved}
+                      >
+                        {sendingSloved ? "Confirm" : "Confirm Solved"}
+                      </Button>
+                      <Button variant="outlined" onClick={() => {setChatTab(0); }} disabled={sendingClarification}>
+                        Cancel
+                      </Button>
+                    </Box>
                     <Button variant="contained" color="success" size="large" onClick={handleSolutionSubmit}>
                       Confirm Solved
                     </Button>
-                  </>
+                  </Box>
                 )}
                 <Button variant="outlined" onClick={() => setChatTab(0)}>Back</Button>
               </Box>
-            )}
+            )} */}
 
             {chatTab === 2 && (
-              <Box sx={{ display: "flex", flexDirection: "column", height: "100%", p: 3 }}>
+              <Box sx={{ display: "flex", flexDirection: "column", p: 3 }}>
                 {isTicketClarificationRequired() ? (
                   <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
                     <HelpOutlineIcon sx={{ fontSize: 80, color: "warning.main", mb: 2 }} />
-                    <Typography variant="h6" fontWeight={600}>Clarification Request Already Sent</Typography>
+                    <Typography variant="h6" fontWeight={600}>Clarification Required Already Sent</Typography>
                     <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
                       Waiting for requester to respond.
                     </Typography>
@@ -3161,7 +3340,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                   <>
                     <Box sx={{ textAlign: "center", mb: 3 }}>
                       <HelpOutlineIcon sx={{ fontSize: 60, color: "warning.main", mb: 2 }} />
-                      <Typography variant="h6" fontWeight={600}>Request Clarification</Typography>
+                      <Typography variant="h6" fontWeight={600}>Clarification Required</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                         Ask for more details if something is unclear.
                       </Typography>
