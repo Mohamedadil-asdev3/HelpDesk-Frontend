@@ -658,8 +658,8 @@ const Category = () => {
         { id: "entity", label: "Entity" },
         { id: "category", label: "Category" },
         { id: "subcategories", label: "Subcategories" },
-        { id: "assigned_to", label: "Assigned To" },
-        { id: "confidential", label: "Confidential" },
+        // { id: "assigned_to", label: "Assigned To" },
+        // { id: "confidential", label: "Confidential" },
         { id: "status", label: "Status" },
     ];
  
