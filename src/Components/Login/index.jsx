@@ -384,7 +384,7 @@ const Login = () => {
         return () => document.removeEventListener("keydown", handleEscape);
     }, []);
     return (
-        <Box sx={{ minHeight: "100vh", display: "flex", justifyContent: "center", alignItems: "center", position: "relative", overflow: "hidden" }}>
+        <Box sx={{ minHeight: "98vh", display: "flex", justifyContent: "center", alignItems: "center", position: "relative", overflow: "hidden" }}>
             <Box
                 sx={{
                     position: "absolute",

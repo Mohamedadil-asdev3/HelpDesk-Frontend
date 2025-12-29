@@ -1877,35 +1877,10 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useTheme } from "@mui/material/styles";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Grid,
-  TextField,
-  Button,
-  Table,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableBody,
-  TableContainer,
-  useMediaQuery,
-  Autocomplete,
-  Stack,
-  Pagination,
-  Tooltip,
-  CircularProgress,
-  IconButton,
-  Drawer,
-  Divider,
-  Chip,
-  Avatar,
-  Alert,
-  Tabs,
-  Tab,
-  Icon,
+import { 
+  Box, Card, CardContent, Typography, Grid, TextField, Button, Table, TableHead, TableRow, TableCell, TableBody, TableContainer,
+  useMediaQuery, Autocomplete, Stack, Pagination, Tooltip, CircularProgress, IconButton, Drawer, Divider, Chip, Avatar, Alert,
+  Tabs, Tab, Icon,
 } from "@mui/material";
 import NewReleasesIcon from "@mui/icons-material/NewReleases";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -1962,7 +1937,6 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
   const [sendingFollowUpMessage, setSendingFollowUpMessage] = useState(false);
   const [currentChatTicket, setCurrentChatTicket] = useState(null);
   const [chatRecipient, setChatRecipient] = useState(null);
-
   // Ticket data
   const [currentTicketData, setCurrentTicketData] = useState(null);
 
@@ -1978,6 +1952,10 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
   // Clarification states
   const [clarificationText, setClarificationText] = useState("");
   const [sendingClarification, setSendingClarification] = useState(false);
+
+  // Add this state near your other useStates
+  const [isConfidentialTicket, setIsConfidentialTicket] = useState(false);
+  const [myProtectedMessages, setMyProtectedMessages] = useState({});
 
   // Tab index
   const [chatTab, setChatTab] = useState(0);
@@ -2163,15 +2141,28 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
     { value: 8, label: "Integration Fix", description: "Resolve issues with third-party APIs, interfaces, or middleware." },
     { value: 9, label: "Third-Party dependencies", description: "Issue caused by or resolved via third-party library/service update." },
     { value: 10, label: "User Training / Documentation", description: "Provide guidance or update docs when the “issue” is a skill gap." },
+    { value: 11, label: "Other's", description: "" },
   ];
 
   const headingMap = {
-    new_assigned: "PENDING Tickets",
-    solved: "RESOLVED Tickets",
-    closed: "CLOSED Tickets",
-    clarification_required: "CLARIFICATION REQUIRED Tickets",
-    clarification_applied: "CLARIFICATION APPLIED Tickets",
+    new_assigned: "Pending Tickets",
+    solved: "Resolved Tickets",
+    closed: "Closed Tickets",
+    clarification_required: "Clarification Required Tickets",
+    clarification_applied: "Clarification Supplied Tickets",
   };
+
+  const TechTabelCol = [
+    { id: 1, title: <>Ticket ID</> },
+    { id: 2, title: <>Title</> },
+    { id: 3, title: <>Description</> },
+    { id: 4, title: <>Status<br />Priority</> },
+    { id: 5, title: <>Category<br />Subcategory</> },
+    { id: 6, title: <>Department<br />Location</> },
+    { id: 7, title: <>Requested By</> },
+    { id: 8, title: <>Open Date<br />Last Update</> },
+    { id: 9, title: <>Action</> },
+  ];
 
   const selectedTickets = tickets[selectedType] || [];
 
@@ -2259,15 +2250,11 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
     }
   };
 
-  const sendFollowUpMessageHandler = async (messageText) => {
-    if (!messageText.trim()) {
-      toast.error("Message cannot be empty");
-      return;
-    }
-    if (!currentChatTicket?.id || !chatRecipient?.id || !currentUserId) {
-      toast.error("Cannot send message");
-      return;
-    }
+  const sendFollowUpMessageHandler = async (text) => {
+    if (!text.trim()) return toast.error("Message cannot be empty");
+    if (!currentChatTicket?.id || !chatRecipient?.id || !currentUserId) return toast.error("Cannot send message");
+
+    const shouldProtect = isConfidentialTicket || isProtectedMode;
 
     setSendingFollowUpMessage(true);
     try {
@@ -2275,21 +2262,23 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
         sender: currentUserId,
         receiver: chatRecipient.id,
         ticket_no: currentChatTicket.id,
-        message: messageText.trim(),
-        protected: isProtectedMode,
+        message: text.trim(),
+        protected: shouldProtect,
       });
 
       const msgs = await fetchMessages();
-      const filtered = msgs.filter(
-        (m) =>
-          m.ticket_no == currentChatTicket.id &&
-          ((m.sender === currentUserId && m.receiver === chatRecipient.id) ||
-            (m.sender === chatRecipient.id && m.receiver === currentUserId))
+      const filtered = msgs.filter(m =>
+        m.ticket_no == currentChatTicket.id &&
+        ((m.sender === currentUserId && m.receiver === chatRecipient.id) ||
+         (m.sender === chatRecipient.id && m.receiver === currentUserId))
       );
+
       setFollowUpChats(filtered.sort((a, b) => new Date(a.createdon) - new Date(b.createdon)));
       setNewFollowUpMessage("");
-      setIsProtectedMode(false);
-      toast.success("Message sent successfully!");
+
+      if (!isConfidentialTicket) setIsProtectedMode(false);
+
+      toast.success(shouldProtect ? "Protected message sent!" : "Message sent!");
     } catch (err) {
       toast.error("Failed to send message");
     } finally {
@@ -2447,6 +2436,11 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
       setChatRecipient(data.requested_detail);
       setCurrentChatTicket({ id: ticketNo, title: data.title || ticket.title });
 
+      // Check for confidential ticket
+      const confidential = data.confidential === true || data.confidential === "true";
+      setIsConfidentialTicket(confidential);
+      setIsProtectedMode(confidential); // Force ON if confidential
+
       const recipientId = data.requested_detail?.id || data.requested_detail?.email;
       const msgs = await fetchTicketMessages(ticketNo, currentUserId, recipientId);
       setFollowUpChats(msgs.sort((a, b) => new Date(a.createdon) - new Date(b.createdon)));
@@ -2492,17 +2486,34 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
     );
   }
 
+  const priorityColors = {
+    "Critical": "#D32F2F",
+    "Very High": "#b43d3bff",
+    "High": "#FB8C00",
+    "Medium": "#FDD835",
+    "Low": "#43A047",
+    "Very Low": "#1E88E5",
+  };
+
+  const statusColors = {
+    "Pending": "#EF6C00",
+    "Approved": "#2E7D32",
+    "On Hold": "#1565C0",
+    "Rejected": "#C62828",
+    "SLA Breached": "#F9A825",
+  };
+
   return (
     <>
       <Box sx={{ width: "100%", mb:2 }}>
         <Grid container spacing={1} sx={{ mb: 2 }}>
           {statusCards.map((item) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} key={item.id}>
+            <Grid size={{ xs: 6, sm: 6, md: 4, lg: 2.4 }} key={item.id}>
               <Card
                 onClick={() => handleCardClick(item.id)}
                 sx={{
                   transition: "0.3s ease",
-                  maxWidth: 300,
+                  maxWidth: isMobile ? 500 : 300,
                   maxHeight: 110,
                   minHeight: 100,
                   borderRadius: 5,
@@ -2523,8 +2534,8 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                 >
                   <Box
                     sx={{
-                      width: { xs: 50, sm: 40, md: 50 },
-                      height: { xs: 50, sm: 40, md: 40 },
+                      width: { xs: 40, sm: 40, md: 40 },
+                      height: { xs: 40, sm: 40, md: 40 },
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
@@ -2563,7 +2574,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                   }}
                 >
                   <Typography variant="h5" fontWeight={700} sx={{ color: "#2D3748" }}>
-                    {headingMap[selectedType]} 
+                    {headingMap[selectedType] || "Tickets"} 
                   </Typography>
                   <Box
                     sx={{
@@ -2619,15 +2630,13 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                     </Button>
                   </Box>
                 </Box>
-
-                
-                  {isMobile ? (
-                    <Box sx={{ p: 2 }}>
-                      {filteredRows.length > 0 ? (
-                        filteredRows
-                          .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                          .map((t, index) => (
-                            <Card
+                {isMobile ? (
+                  <Box>
+                    {filteredRows.length > 0 ? (
+                      filteredRows
+                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                        .map((t, index) => (
+                          <Card
                               sx={{
                                 mb: 2,
                                 borderRadius: 2,
@@ -2637,29 +2646,73 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                             >
                               <CardContent>
                                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                                  <Typography fontWeight={700} color="#667eea">
-                                    #{t.ticket_no}
-                                  </Typography>
-                                  <Typography
-                                    fontSize={12}
-                                    fontWeight={600}
+                                  <Box sx={{display: "flex", gap: 1, alignItems: "center" }}>
+                                    <Typography fontWeight={700} color="#667eea">
+                                      #{t.ticket_no} - 
+                                    </Typography>
+                                    <Chip
+                                      label={t.priority_detail?.field_values || "-"}
+                                      size="small"
+                                      sx={{
+                                        fontWeight: 800,
+                                        borderRadius: 50,
+                                        background: priorityColors[t.priority_detail?.field_values] || "#666",
+                                        color: "white",
+                                        animation: t.priority_detail?.field_values === "Critical" ? "pulse 2s infinite" : "none",
+                                      }}
+                                    />
+                                  </Box>
+                                  <Chip
+                                    label={t.status_detail?.field_values}
+                                    size="small"
                                     sx={{
-                                      px: 1.5,
+                                      fontWeight: 700,
+                                      background: statusColors[t.status_detail?.field_values] || "#666",
+                                      color: "white",
+                                      borderRadius: 50,
                                       py: 0.5,
-                                      borderRadius: 2,
-                                      backgroundColor: "#eef2ff",
-                                      color: "#667eea",
+                                      px: 1,
+                                    }}
+                                  />
+                                </Box>
+                                <Tooltip
+                                  title={t.title}
+                                  arrow
+                                  placement="top"
+                                >
+                                  <Typography
+                                    sx={{
+                                      maxWidth: 200,
+                                      color: "text.secondary",
+                                      whiteSpace: "nowrap",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      cursor: "pointer",
+                                      mt: 0.5
                                     }}
                                   >
-                                    {getDisplayStatus(t.status_detail?.field_name || t.status || "-")}
+                                    {t.title}
                                   </Typography>
-                                </Box>
-                                <Typography fontWeight={600} mt={1} color="#2D3748">
-                                  {t.title}
-                                </Typography>
-                                <Typography fontSize={13} color="#718096" mt={0.5}>
-                                  Priority: {t.priority_detail?.field_name || "-"}
-                                </Typography>
+                                </Tooltip>
+                                <Tooltip
+                                  title={t.description || "No description"}
+                                  arrow
+                                  placement="top"
+                                >
+                                  <Typography
+                                    sx={{
+                                      maxWidth: 200,
+                                      color: "text.secondary",
+                                      whiteSpace: "nowrap",
+                                      overflow: "hidden",
+                                      textOverflow: "ellipsis",
+                                      cursor: "pointer",
+                                      mt: 0.5
+                                    }}
+                                  >
+                                    {t.description || "-"}
+                                  </Typography>
+                                </Tooltip>
                                 <Typography fontSize={13} mt={1.5}>
                                   <strong style={{ color: "#4A5568" }}>Category:</strong>{" "}
                                   <span style={{ color: "#2D3748" }}>
@@ -2682,20 +2735,15 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                       <ChatIcon />
                                     </IconButton>
                                   </Tooltip>
-                                  <Button
-                                    variant="contained"
-                                    onClick={() => handleTicketClick(t.ticket_no)}
-                                    sx={{
-                                      backgroundColor: "#667eea",
-                                      borderRadius: 2,
-                                      textTransform: "none",
-                                      fontSize: "0.85rem",
-                                      px: 2,
-                                      "&:hover": { backgroundColor: "#556cd6" },
-                                    }}
-                                  >
-                                    View Details
-                                  </Button>
+                                  <Tooltip title="View Details">
+                                    <IconButton
+                                      onClick={() => handleTicketClick(t.ticket_no)}
+                                      sx={{ color: "#667eea" }}
+                                      size="small"
+                                    >
+                                      <VisibilityIcon />
+                                    </IconButton>
+                                  </Tooltip>
                                 </Box>
                               </CardContent>
                             </Card>
@@ -2712,19 +2760,9 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                         <Table stickyHeader>
                           <TableHead>
                             <TableRow sx={{ backgroundColor: "#F7FAFC" }}>
-                              {[
-                                <>Ticket ID</>,
-                                <>Title</>,
-                                <>Description</>,
-                                <>Status<br />Priority</>,
-                                <>Category<br />Subcategory</>,
-                                <>Department<br />Location</>,
-                                <>Requested By</>,
-                                <>Open Date<br />Last Update</>,
-                                <>Action</>,
-                              ].map((title, i) => (
+                              {TechTabelCol.map((col) => (
                                 <TableCell
-                                  key={i}
+                                  key={col.id}
                                   sx={{
                                     fontWeight: 700,
                                     whiteSpace: "nowrap",
@@ -2734,7 +2772,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                     lineHeight: 1.2,
                                   }}
                                 >
-                                  {title}
+                                  {col.title}
                                 </TableCell>
                               ))}
                             </TableRow>
@@ -2768,7 +2806,6 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                             overflow: "hidden",
                                             textOverflow: "ellipsis",
                                             cursor: "pointer",
-                                            mt: 0.5
                                           }}
                                         >
                                           {t.title || "-"}
@@ -2791,7 +2828,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                       </Tooltip>
                                     </TableCell>
                                     <TableCell>
-                                      <Typography fontWeight={600} fontSize="0.85rem">
+                                      <Typography fontSize="0.85rem">
                                         {getDisplayStatus(t.status_detail?.field_name || t.status || "-")}
                                       </Typography>
                                       <Typography fontSize="0.85rem">
@@ -2814,7 +2851,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                         }
                                       >
                                         <Box sx={{ cursor: "pointer" }}>
-                                          <Typography fontWeight={600} fontSize="0.85rem">
+                                          <Typography fontSize="0.85rem">
                                             {t.category_detail?.category_name || "-"}
                                           </Typography>
                                           <Typography fontSize="0.85rem">
@@ -2824,7 +2861,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                       </Tooltip>
                                     </TableCell>
                                     <TableCell>
-                                      <Typography fontWeight={600} fontSize="0.85rem">
+                                      <Typography fontSize="0.85rem">
                                         {t.department_detail?.field_name || "-"}
                                       </Typography>
                                       <Typography fontSize="0.85rem">
@@ -2890,14 +2927,19 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                   )}
                   {filteredRows.length > 0 && (
                     <Stack
-                      direction="row"
+                      direction={isMobile ? "column" : "row"}
                       justifyContent="space-between"
                       alignItems="center"
                       sx={{ py: 2, px: 3, borderTop: "1px solid #E2E8F0" }}
                     >
-                      <Typography variant="body2" color="#718096">
+                      <Typography
+                        variant="body2"
+                        color="#718096"
+                        sx={{ fontSize: { xs: "13px", sm: "14px" } }}
+                      >
                         Showing {page * rowsPerPage + 1} to{" "}
-                        {Math.min((page + 1) * rowsPerPage, filteredRows.length)} of {filteredRows.length} tickets
+                        {Math.min((page + 1) * rowsPerPage, filteredRows.length)} of{" "}
+                        {filteredRows.length} tickets
                       </Typography>
                       <Pagination
                         count={Math.ceil(filteredRows.length / rowsPerPage)}
@@ -2909,18 +2951,25 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                         showLastButton
                         siblingCount={1}
                         boundaryCount={1}
+                        size={isMobile ? "small" : "medium"}
                         sx={{
                           "& .MuiPaginationItem-root": {
                             borderRadius: "8px",
                             borderColor: "#CBD5E0",
                             color: "#4A5568",
+                            fontSize: { xs: "12px", sm: "14px" },
+                            minWidth: { xs: 32, sm: 36 },
                             "&.Mui-selected": {
                               backgroundColor: "#667eea",
                               color: "#fff",
                               borderColor: "#667eea",
-                              "&:hover": { backgroundColor: "#556cd6" },
+                              "&:hover": {
+                                backgroundColor: "#556cd6",
+                              },
                             },
-                            "&:hover": { backgroundColor: "#F7FAFC" },
+                            "&:hover": {
+                              backgroundColor: "#F7FAFC",
+                            },
                           },
                         }}
                       />
@@ -2950,8 +2999,31 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
           <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
             <Tabs value={chatTab} onChange={(e, v) => setChatTab(v)} centered variant="fullWidth">
               <Tab label="Follow-up" icon={<ChatIcon />} iconPosition="start" />
-              <Tab label="Solution" icon={<DoneAllIcon />} iconPosition="start" disabled={isActionDisabled()} />
-              <Tab label="Clarification Required" icon={<HelpOutlineIcon />} iconPosition="start" disabled={isActionDisabled()} />
+              <Tab label="Clarification Required" icon={<HelpOutlineIcon />} iconPosition="start" disabled={isTicketSolved() || isTicketClarificationRequired()} />
+              <Tab label="Solution" icon={<DoneAllIcon />} iconPosition="start" disabled={isTicketSolved() || isTicketClarificationRequired()} />
+              {/* <Tab
+                label="Solution"
+                icon={<DoneAllIcon />}
+                iconPosition="start"
+                disabled={
+                  isTicketSolved() ||
+                  isTicketClarificationRequired() ||
+                  currentTicketData?.status_detail?.field_name === "Closed" ||
+                  selectedType === "clarification_applied" // When viewing clarification_applied tickets
+                }
+              /> */}
+              
+              {/* <Tab
+                label="Clarification Required"
+                icon={<HelpOutlineIcon />}
+                iconPosition="start"
+                disabled={
+                  isTicketSolved() ||
+                  isTicketClarificationRequired() ||
+                  currentTicketData?.status_detail?.field_name === "Closed"
+                }
+              /> */}
+               
             </Tabs>
           </Box>
 
@@ -2974,33 +3046,49 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                         <Divider sx={{ my: 3 }}>
                           <Chip label={group.date} size="small" sx={{ bgcolor: "grey.200" }} />
                         </Divider>
-                        {group.messages.map((msg) => {
+                        {group.messages.map((msg, index) => {
+                          const msgId = msg.id || `msg-${index}-${Date.now()}`;
                           const isMe = Number(msg.sender) === Number(currentUserId);
-                          const isProtected = msg.protected === true;
-                          const messageId = msg.id;
-                          const isRevealed = revealedMessages.has(messageId);
-                          const canViewDecrypted = Number(msg.sender) === Number(currentUserId) || Number(msg.receiver) === Number(currentUserId);
-                          const isClar = msg.message?.includes("[Clarification Required]");
+                          const isProtected = msg.protected === true || msg.protected === "true";
+                          const isRevealed = revealedMessages.has(msgId);
+                          const canReveal = Number(msg.sender) === Number(currentUserId) || Number(msg.receiver) === Number(currentUserId);
 
                           const toggleReveal = () => {
-                            if (!canViewDecrypted) return;
-                            setRevealedMessages((prev) => {
+                            if (!canReveal) return;
+                            setRevealedMessages(prev => {
                               const newSet = new Set(prev);
-                              newSet.has(messageId) ? newSet.delete(messageId) : newSet.add(messageId);
+                              if (newSet.has(msgId)) {
+                                newSet.delete(msgId);
+                              } else {
+                                newSet.add(msgId);
+                              }
                               return newSet;
                             });
                           };
 
-                          const getDisplayedText = () => {
-                            if (!isProtected) return msg.message || "";
-                            if (!canViewDecrypted) return "*** PROTECTED MESSAGE - VISIBLE ONLY TO PARTICIPANTS ***";
-                            const decrypted = msg.decrypted_message || msg.message;
-                            return isRevealed ? decrypted : " Protected Message (Click eye to reveal)";
+                          // Exact behavior you requested
+                          const getDisplayedMessage = () => {
+                            if (!isProtected) {
+                              return msg.message || "";
+                            }
+
+                            if (!canReveal) {
+                              return "*** PROTECTED MESSAGE - VISIBLE ONLY TO PARTICIPANTS ***";
+                            }
+
+                            // If user can reveal
+                            if (isRevealed) {
+                              // Show real decrypted content
+                              return msg.decrypted_message || msg.message || "(No content)";
+                            }
+
+                            // Default for protected: show masked text + eye
+                            return "*** PROTECTED MESSAGE - VISIBLE ONLY TO PARTICIPANTS ***";
                           };
 
                           return (
                             <Box
-                              key={msg.id}
+                              key={msgId}
                               sx={{
                                 display: "flex",
                                 justifyContent: isMe ? "flex-end" : "flex-start",
@@ -3009,20 +3097,20 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                             >
                               {!isMe ? (
                                 <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1, maxWidth: "85%" }}>
-                                  <Avatar sx={{ width: 36, height: 36, bgcolor: "grey.400", fontSize: "0.9rem" }}>
-                                    {getInitials(chatRecipient?.name)}
+                                  <Avatar sx={{ width: 36, height: 36, bgcolor: "grey.400" }}>
+                                    {getInitials(chatRecipient?.name || "R")}
                                   </Avatar>
                                   <Box
                                     sx={{
                                       position: "relative",
-                                      bgcolor: isClar ? "warning.light" : "grey.100",
+                                      bgcolor: "grey.100",
                                       color: "text.primary",
                                       p: 1.5,
                                       borderRadius: 2,
-                                      border: isClar ? "1px solid warning.main" : "none",
                                       boxShadow: 1,
                                     }}
                                   >
+                                    {/* Shield icon for protected messages */}
                                     {isProtected && (
                                       <SecurityIcon
                                         sx={{
@@ -3034,16 +3122,17 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                           color: "white",
                                           borderRadius: "50%",
                                           p: 0.4,
+                                          boxShadow: 2,
                                         }}
                                       />
                                     )}
+
                                     <Typography variant="body2" sx={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
-                                      {getDisplayedText()}
+                                      {getDisplayedMessage()}
                                     </Typography>
 
-                                    {isClar && <Chip label="Clarification Required" size="small" color="primary" sx={{ mt: 1 }} />}
-
-                                    {isProtected && canViewDecrypted && (
+                                    {/* Eye icon: only for protected messages and authorized users */}
+                                    {isProtected && canReveal && (
                                       <IconButton
                                         size="small"
                                         onClick={toggleReveal}
@@ -3059,9 +3148,11 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                       </IconButton>
                                     )}
 
-                                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.5 }}>
+                                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
                                       <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.65rem" }}>
-                                        {new Date(msg.createdon).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                                        {msg.createdon
+                                          ? new Date(msg.createdon).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+                                          : "—"}
                                       </Typography>
                                       <Typography variant="caption" sx={{ fontSize: "0.7rem", ml: 1 }}>
                                         {chatRecipient?.name || "Requester"}
@@ -3071,7 +3162,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                 </Box>
                               ) : (
                                 <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1, flexDirection: "row-reverse", maxWidth: "85%" }}>
-                                  <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", color: "white", fontSize: "0.9rem" }}>
+                                  <Avatar sx={{ width: 36, height: 36, bgcolor: "primary.main", color: "white" }}>
                                     {getInitials(currentUserName)}
                                   </Avatar>
                                   <Box
@@ -3095,14 +3186,16 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                           color: "white",
                                           borderRadius: "50%",
                                           p: 0.4,
+                                          boxShadow: 2,
                                         }}
                                       />
                                     )}
+
                                     <Typography variant="body2" sx={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
-                                      {getDisplayedText()}
+                                      {getDisplayedMessage()}
                                     </Typography>
 
-                                    {isProtected && canViewDecrypted && (
+                                    {isProtected && canReveal && (
                                       <IconButton
                                         size="small"
                                         onClick={toggleReveal}
@@ -3119,9 +3212,11 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                                       </IconButton>
                                     )}
 
-                                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.5 }}>
+                                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
                                       <Typography variant="caption" sx={{ opacity: 0.8, fontSize: "0.65rem" }}>
-                                        {new Date(msg.createdon).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}
+                                        {msg.createdon
+                                          ? new Date(msg.createdon).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+                                          : "—"}
                                       </Typography>
                                       <Typography variant="caption" sx={{ fontSize: "0.7rem", ml: 1 }}>
                                         You
@@ -3156,17 +3251,20 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                       maxRows={4}
                       disabled={sendingFollowUpMessage}
                     />
-                    <Tooltip title={isProtectedMode ? "Protected Message Enabled" : "Send Protected Message"}>
-                      <IconButton
-                        color={isProtectedMode ? "success" : "default"}
-                        onClick={() => setIsProtectedMode(!isProtectedMode)}
-                        sx={{
-                          bgcolor: isProtectedMode ? "success.light" : "grey.200",
-                          "&:hover": { bgcolor: isProtectedMode ? "success.main" : "grey.300" },
-                        }}
-                      >
-                        <SecurityIcon />
-                      </IconButton>
+                    <Tooltip title={isConfidentialTicket ? "All messages protected (Confidential)" : isProtectedMode ? "Protected ON" : "Send protected"}>
+                      <span>
+                        <IconButton
+                          onClick={() => !isConfidentialTicket && setIsProtectedMode(!isProtectedMode)}
+                          disabled={isConfidentialTicket}
+                          sx={{
+                            color: isProtectedMode || isConfidentialTicket ? "white" : "default",
+                            bgcolor: isProtectedMode || isConfidentialTicket ? "success.main" : "grey.200",
+                            "&:hover": { bgcolor: isProtectedMode || isConfidentialTicket ? "success.dark" : "grey.300" },
+                          }}
+                        >
+                          <SecurityIcon />
+                        </IconButton>
+                      </span>
                     </Tooltip>
                     <IconButton
                       onClick={() => sendFollowUpMessageHandler(newFollowUpMessage)}
@@ -3176,9 +3274,10 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
                       {sendingFollowUpMessage ? <CircularProgress size={20} /> : <SendIcon />}
                     </IconButton>
                   </Box>
-                  {isProtectedMode && (
-                    <Typography variant="caption" color="success.main" sx={{ ml: 1, mt: 0.5, display: "block" }}>
-                      Protected message mode enabled
+                  {(isProtectedMode || isConfidentialTicket) && (
+                    <Typography variant="caption" color="success.main" sx={{ mt: 1, textAlign: "center", display: "block" }}>
+                      <SecurityIcon fontSize="small" sx={{ verticalAlign: "middle", mr: 0.5 }} />
+                      {isConfidentialTicket ? "All messages are protected" : "This message will be protected"}
                     </Typography>
                   )}
                 </Box>
@@ -3186,6 +3285,69 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
             )}
 
             {chatTab === 1 && (
+              <Box sx={{ display: "flex", flexDirection: "column", p: 3 }}>
+                {isTicketClarificationRequired() ? (
+                  <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                    <HelpOutlineIcon sx={{ fontSize: 80, color: "warning.main", mb: 2 }} />
+                    <Typography variant="h6" fontWeight={600}>Clarification Required Already Sent</Typography>
+                    <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
+                      Waiting for requester to respond.
+                    </Typography>
+                    <Button variant="outlined" onClick={() => setChatTab(0)}>
+                      Back to Follow-up
+                    </Button>
+                  </Box>
+                ) : isTicketSolved() ? (
+                  <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                    <DoneAllIcon sx={{ fontSize: 80, color: "success.main", mb: 2 }} />
+                    <Typography variant="h6" fontWeight={600}>Ticket Already Solved</Typography>
+                    <Typography color="text.secondary" sx={{ mt: 1 }}>
+                      Cannot request clarification on solved tickets.
+                    </Typography>
+                  </Box>
+                ) : (
+                  <>
+                    <Box sx={{ textAlign: "center", mb: 3 }}>
+                      <HelpOutlineIcon sx={{ fontSize: 60, color: "warning.main", mb: 2 }} />
+                      <Typography variant="h6" fontWeight={600}>Clarification Required</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        Ask for more details if something is unclear.
+                      </Typography>
+                    </Box>
+
+                    <TextField
+                      multiline
+                      rows={6}
+                      placeholder="Please clarify the following..."
+                      value={clarificationText}
+                      onChange={(e) => setClarificationText(e.target.value)}
+                      variant="outlined"
+                      fullWidth
+                      sx={{ mb: 3 }}
+                      disabled={sendingClarification}
+                    />
+
+                    <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
+                      <Button
+                        variant="contained"
+                        color="warning"
+                        size="large"
+                        startIcon={<QuestionAnswerIcon />}
+                        onClick={handleSendClarification}
+                        disabled={!clarificationText.trim() || sendingClarification}
+                      >
+                        {sendingClarification ? <CircularProgress size={20} /> : "Send Request"}
+                      </Button>
+                      <Button variant="outlined" onClick={() => { setClarificationText(""); setChatTab(0); }} disabled={sendingClarification}>
+                        Cancel
+                      </Button>
+                    </Box>
+                  </>
+                )}
+              </Box>
+            )}
+
+            {chatTab === 2 && (
               <Box sx={{ p: 4 }}>
                 {isTicketSolved() ? (
                   <Box sx={{ textAlign: "center" }}>
@@ -3315,68 +3477,7 @@ const ApproverTabs = ({ approverStatus: propUserStatus }) => {
               </Box>
             )} */}
 
-            {chatTab === 2 && (
-              <Box sx={{ display: "flex", flexDirection: "column", p: 3 }}>
-                {isTicketClarificationRequired() ? (
-                  <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                    <HelpOutlineIcon sx={{ fontSize: 80, color: "warning.main", mb: 2 }} />
-                    <Typography variant="h6" fontWeight={600}>Clarification Required Already Sent</Typography>
-                    <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
-                      Waiting for requester to respond.
-                    </Typography>
-                    <Button variant="outlined" onClick={() => setChatTab(0)}>
-                      Back to Follow-up
-                    </Button>
-                  </Box>
-                ) : isTicketSolved() ? (
-                  <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                    <DoneAllIcon sx={{ fontSize: 80, color: "success.main", mb: 2 }} />
-                    <Typography variant="h6" fontWeight={600}>Ticket Already Solved</Typography>
-                    <Typography color="text.secondary" sx={{ mt: 1 }}>
-                      Cannot request clarification on solved tickets.
-                    </Typography>
-                  </Box>
-                ) : (
-                  <>
-                    <Box sx={{ textAlign: "center", mb: 3 }}>
-                      <HelpOutlineIcon sx={{ fontSize: 60, color: "warning.main", mb: 2 }} />
-                      <Typography variant="h6" fontWeight={600}>Clarification Required</Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                        Ask for more details if something is unclear.
-                      </Typography>
-                    </Box>
-
-                    <TextField
-                      multiline
-                      rows={6}
-                      placeholder="Please clarify the following..."
-                      value={clarificationText}
-                      onChange={(e) => setClarificationText(e.target.value)}
-                      variant="outlined"
-                      fullWidth
-                      sx={{ mb: 3 }}
-                      disabled={sendingClarification}
-                    />
-
-                    <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
-                      <Button
-                        variant="contained"
-                        color="warning"
-                        size="large"
-                        startIcon={<QuestionAnswerIcon />}
-                        onClick={handleSendClarification}
-                        disabled={!clarificationText.trim() || sendingClarification}
-                      >
-                        {sendingClarification ? <CircularProgress size={20} /> : "Send Request"}
-                      </Button>
-                      <Button variant="outlined" onClick={() => { setClarificationText(""); setChatTab(0); }} disabled={sendingClarification}>
-                        Cancel
-                      </Button>
-                    </Box>
-                  </>
-                )}
-              </Box>
-            )}
+            
           </Box>
         </Box>
       </Drawer>

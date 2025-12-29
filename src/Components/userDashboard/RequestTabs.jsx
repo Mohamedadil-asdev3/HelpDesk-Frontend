@@ -1891,6 +1891,7 @@ const RequestTabs = ({ userStatus }) => {
     const [clarificationText, setClarificationText] = useState("");
     const [clarificationSent, setClarificationSent] = useState(false);
     const [sendingClarification, setSendingClarification] = useState(false);
+    const [isConfidentialTicket, setIsConfidentialTicket] = useState(false);
     
     // useEffect(() => {
     //     if (userStatus) {
@@ -2039,11 +2040,11 @@ const RequestTabs = ({ userStatus }) => {
 
     // Headings for New Assigned, Solved, Closed
     const headingMap = {
-        new_assigned: "NEW ASSIGNED TICKETS",
-        pending: "PENDING TICKETS",
-        solved: "SOLVED TICKETS",
-        cancel: "CANCELLED TICKETS",
-        closed: "CLOSED TICKETS",
+        new_assigned: "New Assigned Tickets",
+        pending: "Pending Tickets",
+        solved: "Resolved Tickets",
+        cancel: "Cancelled Tickets",
+        closed: "Closed Tickets",
         clarification_applied : "Clarification Supplied Ticket",
         clarification_required : "Clarification Required Ticket"
     };
@@ -2176,57 +2177,51 @@ const RequestTabs = ({ userStatus }) => {
     //     }
     // };
 
-
     const sendFollowUpMessageHandler = async (text) => {
-        if (!text.trim()) {
-            toast.error("Message cannot be empty");
-            return;
-        }
-        if (!assignee?.id || !currentChatTicket?.id || !currentUserId) {
-            toast.error("Cannot send message: missing details");
-            return;
-        }
+    if (!text.trim()) {
+      toast.error("Message cannot be empty");
+      return;
+    }
+    if (!assignee?.id || !currentChatTicket?.id || !currentUserId) {
+      toast.error("Cannot send message: missing details");
+      return;
+    }
 
-        const receiverId = assignee.id;
-        
-        setSendingFollowUpMessage(true);
+    const receiverId = assignee.id;
+    const shouldProtect = isConfidentialTicket || isProtected;
 
-        try {
-            await sendMessage({
-                receiver: receiverId,
-                ticket_no: currentChatTicket.id,
-                message: text.trim(),
-                protected: isProtected,
-            });
-            
-            
-            const message = await fetchMessages();
-            const ticketMsgs = message.filter(
-                m =>
-                    m.ticket_no == currentChatTicket.id &&
-                    ((m.sender === currentUserId && m.receiver === receiverId) ||
-                    (m.sender === receiverId && m.receiver === currentUserId))
-            );
-            setFollowUpChats(ticketMsgs.sort((a, b) => new Date(a.createdon) - new Date(b.createdon)));
+    setSendingFollowUpMessage(true);
+    try {
+      await sendMessage({
+        receiver: receiverId,
+        ticket_no: currentChatTicket.id,
+        message: text.trim(),
+        protected: shouldProtect,
+      });
 
-            setNewFollowUpMessage("");
-            toast.success(isProtected ? "Protected message sent!" : "Message sent!");
-        } catch (err) {
-            console.error("Send error:", err);
-            toast.error("Failed to send message");
+      const messages = await fetchMessages();
+      const ticketMsgs = messages.filter(m =>
+        m.ticket_no == currentChatTicket.id &&
+        ((m.sender === currentUserId && m.receiver === receiverId) ||
+         (m.sender === receiverId && m.receiver === currentUserId))
+      );
 
-            if (newMessageId) {
-                setFollowUpChats(prev => prev.filter(m => m.id !== newMessageId));
-                setMyProtectedMessages(prev => {
-                    const copy = { ...prev };
-                    delete copy[newMessageId];
-                    return copy;
-                });
-            }
-        } finally {
-            setSendingFollowUpMessage(false);
-        }
-    };
+      setFollowUpChats(ticketMsgs.sort((a, b) => new Date(a.createdon) - new Date(b.createdon)));
+      setNewFollowUpMessage("");
+
+      // Only reset manual toggle if not forced by confidential ticket
+      if (!isConfidentialTicket) {
+        setIsProtected(false);
+      }
+
+      toast.success(shouldProtect ? "Protected message sent!" : "Message sent!");
+    } catch (err) {
+      console.error("Send error:", err);
+      toast.error("Failed to send message");
+    } finally {
+      setSendingFollowUpMessage(false);
+    }
+  };
 
     const handleResolveSolution = async () => {
         if (!currentChatTicket?.id) {
@@ -2519,6 +2514,28 @@ const RequestTabs = ({ userStatus }) => {
                 description: ticketData.description || ticket.description || "",
 
             });
+            // CONFIDENTIAL LOGIC
+            const confidential = ticketData.confidential === true || ticketData.confidential === "true";
+            setIsConfidentialTicket(confidential);
+            setIsProtected(confidential); // Force on if confidential
+
+            // Check if this is a SOLVED ticket
+            const isCurrentlySolved = selectedType === "solved" || ticketData.status_detail?.field_values === "Solved" || ticketData.status === "Solved";
+
+            if (isCurrentlySolved) {
+                setIsSolvedTicket(true);
+                setSolutionText(ticketData.solution_text || ticketData.resolution_text || "No solution details provided.");
+                // Automatically switch to Solution tab
+                setChatTab(2); // 0 = Follow-up, 1 = Clarification, 2 = Solution
+            }
+
+            // Force protected mode if ticket is confidential
+            if (ticketData.confidential === true || ticketData.confidential === "true") {
+                setIsProtected(true);
+            } else {
+                setIsProtected(false); // or keep current value, or reset to false
+            }
+
             // Check if solved ticket and set solution data (for ticket creator view)
             if (selectedType === "solved") {
                 setIsSolvedTicket(true);
@@ -2592,7 +2609,7 @@ const RequestTabs = ({ userStatus }) => {
 
         setSendingClarification(true);
         try {
-            // Step 1: Update ticket status to "57" - Clarification Required
+            // Step 1: Update ticket status to Clarification Required (157)
             let currentTicketData = {};
             try {
                 const ticketDetails = await getTicketDetails(currentChatTicket.id);
@@ -2602,79 +2619,162 @@ const RequestTabs = ({ userStatus }) => {
                 return;
             }
 
-        const ticketNoStr = String(currentChatTicket.id);
-        const assignedUsers = currentTicketData.assignees_detail || currentTicketData.assigned_users || [];
-        const assignedGroups = currentTicketData.assigned_groups_detail || currentTicketData.assigned_groups || [];
+            const ticketNoStr = String(currentChatTicket.id);
+            const assignedUsers = currentTicketData.assignees_detail || currentTicketData.assigned_users || [];
+            const assignedGroups = currentTicketData.assigned_groups_detail || currentTicketData.assigned_groups || [];
 
-        const formData = new FormData();
-        formData.append("title", currentTicketData.title || "");
-        formData.append("description", currentTicketData.description || "");
-        formData.append("category", currentTicketData.category || currentTicketData.category_detail?.id || "");
-        formData.append("status", "157"); // ← Clarification Required
+            const formData = new FormData();
+            formData.append("title", currentTicketData.title || "");
+            formData.append("description", currentTicketData.description || "");
+            formData.append("category", currentTicketData.category || currentTicketData.category_detail?.id || "");
+            formData.append("status", "157"); // Clarification Required
 
-        let assignedTypeIndex = 0;
-        assignedUsers.forEach((user, index) => {
-            if (user?.email) {
-                formData.append(`assignee[${index}]`, user.email);
-            }
-        });
-        if (assignedUsers.length > 0) {
-            formData.append(`assigned_to_type[${assignedTypeIndex}]`, "user");
-            assignedTypeIndex++;
-        }
+            let assignedTypeIndex = 0;
+            assignedUsers.forEach((user, index) => {
+                if (user?.email) formData.append(`assignee[${index}]`, user.email);
+            });
+            if (assignedUsers.length > 0) formData.append(`assigned_to_type[${assignedTypeIndex++}]`, "user");
 
-        assignedGroups.forEach((group, index) => {
-            if (group?.id) {
-                formData.append(`assigned_group[${index}]`, group.id);
-            }
-        });
-        if (assignedGroups.length > 0) {
-            formData.append(`assigned_to_type[${assignedTypeIndex}]`, "group");
-        }
+            assignedGroups.forEach((group, index) => {
+                if (group?.id) formData.append(`assigned_group[${index}]`, group.id);
+            });
+            if (assignedGroups.length > 0) formData.append(`assigned_to_type[${assignedTypeIndex}]`, "group");
 
-        const result = await updateTicket(ticketNoStr, formData);
-        if (!result.success) {
-            throw new Error(result.error || "Failed to update ticket status");
-        }
+            const result = await updateTicket(ticketNoStr, formData);
+            if (!result.success) throw new Error(result.error || "Failed to update ticket status");
 
-        // Step 2: Send clarification message in chat
-        const clarificationMessage = `[Clarification Supplied]\n\n${clarificationText.trim()}`;
-        await sendMessage({
-            receiver: assignee?.id,
-            ticket_no: currentChatTicket.id,
-            message: clarificationMessage,
-            protected: false,
-        });
+            // Step 2: Send ONE clarification message (only once)
+            const clarificationMessage = `[Clarification Supplied]\n\n${clarificationText.trim()}`;
+            await sendMessage({
+                receiver: assignee?.id,
+                ticket_no: currentChatTicket.id,
+                message: clarificationMessage,
+                protected: false,
+            });
 
-        // Optional: Also add to visible chat
-        await sendFollowUpMessageHandler(clarificationMessage);
+            // Refetch messages to show the new one (no duplicate call to sendFollowUpMessageHandler)
+            const messages = await fetchMessages();
+            const ticketMsgs = messages.filter(m =>
+                m.ticket_no == currentChatTicket.id &&
+                ((m.sender === currentUserId && m.receiver === assignee?.id) ||
+                (m.sender === assignee?.id && m.receiver === currentUserId))
+            );
+            setFollowUpChats(ticketMsgs.sort((a, b) => new Date(a.createdon) - new Date(b.createdon)));
 
-        toast.success("Clarification Supplied sent and ticket status updated!");
-        setClarificationText("");
-        setChatTab(0); // Switch back to chat
+            toast.success("Clarification Supplied sent and ticket status updated!");
 
-        // Update local tickets list: move to clarification_required
-        setTickets(prev => {
-            const ticket = prev[selectedType]?.find(t => t.ticket_no == currentChatTicket.id);
-            if (ticket) {
-                ticket.status_detail = { field_values: "Clarification Required" };
-                return {
-                    ...prev,
-                    [selectedType]: prev[selectedType].filter(t => t.ticket_no != currentChatTicket.id),
-                    clarification_required: [ticket, ...(prev.clarification_required || [])]
-                };
-            }
-            return prev;
-        });
+            setClarificationText("");
+            setChatTab(0);
 
-        setSelectedType("clarification_required");
-    } catch (err) {
-        console.error("Error requesting clarification:", err);
-        toast.error("Failed to send clarification request");
-    } finally {
+            // Optional: Force parent to refresh counts (if you pass a callback)
+            // if (props.onRefresh) props.onRefresh();
+
+            // Quick fix: Reload page to update counts
+            window.location.reload();
+
+        } catch (err) {
+            console.error("Error requesting clarification:", err);
+            toast.error("Failed to send clarification request");
+        } finally {
         setSendingClarification(false);
-    }
-};
+        }
+    };
+
+//     const handleRequestClarification = async () => {
+//         if (!clarificationText.trim()) {
+//             toast.error("Please enter clarification details");
+//             return;
+//         }
+//         if (!currentChatTicket?.id) {
+//             toast.error("No ticket selected");
+//             return;
+//         }
+
+//         setSendingClarification(true);
+//         try {
+//             // Step 1: Update ticket status to "57" - Clarification Required
+//             let currentTicketData = {};
+//             try {
+//                 const ticketDetails = await getTicketDetails(currentChatTicket.id);
+//                 currentTicketData = ticketDetails.ticket || ticketDetails;
+//             } catch (err) {
+//                 toast.error("Could not fetch ticket details");
+//                 return;
+//             }
+
+//         const ticketNoStr = String(currentChatTicket.id);
+//         const assignedUsers = currentTicketData.assignees_detail || currentTicketData.assigned_users || [];
+//         const assignedGroups = currentTicketData.assigned_groups_detail || currentTicketData.assigned_groups || [];
+
+//         const formData = new FormData();
+//         formData.append("title", currentTicketData.title || "");
+//         formData.append("description", currentTicketData.description || "");
+//         formData.append("category", currentTicketData.category || currentTicketData.category_detail?.id || "");
+//         formData.append("status", "157"); // ← Clarification Required
+
+//         let assignedTypeIndex = 0;
+//         assignedUsers.forEach((user, index) => {
+//             if (user?.email) {
+//                 formData.append(`assignee[${index}]`, user.email);
+//             }
+//         });
+//         if (assignedUsers.length > 0) {
+//             formData.append(`assigned_to_type[${assignedTypeIndex}]`, "user");
+//             assignedTypeIndex++;
+//         }
+
+//         assignedGroups.forEach((group, index) => {
+//             if (group?.id) {
+//                 formData.append(`assigned_group[${index}]`, group.id);
+//             }
+//         });
+//         if (assignedGroups.length > 0) {
+//             formData.append(`assigned_to_type[${assignedTypeIndex}]`, "group");
+//         }
+
+//         const result = await updateTicket(ticketNoStr, formData);
+//         if (!result.success) {
+//             throw new Error(result.error || "Failed to update ticket status");
+//         }
+
+//         // Step 2: Send clarification message in chat
+//         const clarificationMessage = `[Clarification Supplied]\n\n${clarificationText.trim()}`;
+//         await sendMessage({
+//             receiver: assignee?.id,
+//             ticket_no: currentChatTicket.id,
+//             message: clarificationMessage,
+//             protected: false,
+//         });
+
+//         // Optional: Also add to visible chat
+//         await sendFollowUpMessageHandler(clarificationMessage);
+
+//         toast.success("Clarification Supplied sent and ticket status updated!");
+//         setClarificationText("");
+//         setChatTab(0); // Switch back to chat
+
+//         // Update local tickets list: move to clarification_required
+//         setTickets(prev => {
+//             const ticket = prev[selectedType]?.find(t => t.ticket_no == currentChatTicket.id);
+//             if (ticket) {
+//                 ticket.status_detail = { field_values: "Clarification Required" };
+//                 return {
+//                     ...prev,
+//                     [selectedType]: prev[selectedType].filter(t => t.ticket_no != currentChatTicket.id),
+//                     clarification_required: [ticket, ...(prev.clarification_required || [])]
+//                 };
+//             }
+//             return prev;
+//         });
+
+//         setSelectedType("clarification_required");
+//     } catch (err) {
+//         console.error("Error requesting clarification:", err);
+//         toast.error("Failed to send clarification request");
+//     } finally {
+//         setSendingClarification(false);
+//     }
+// };
 
     const handleChatDrawerClose = () => {
         setShowFollowUpChat(false);
@@ -2815,14 +2915,14 @@ const filteredRows = useMemo(() => {
 
     return (
         <Box sx={{ width: "100%", mb:2 }}>
-            <Grid container spacing={1} sx={{ mb: 4 }}>
+            <Grid container spacing={1} sx={{ mb: 2 }}>
                 {statusCards.map((item) => (
-                    <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} key={item.id}>
+                    <Grid size={{ xs: 6, sm: 6, md: 4, lg: 2 }} key={item.id}>
                         <Card
                             onClick={() => handleCardClick(item.id)}
                             sx={{
                                 transition: "0.3s ease",
-                                maxWidth: 300,
+                                maxWidth: isMobile ? 500 : 300,
                                 maxHeight: 110,
                                 minHeight: 100,
                                 borderRadius: 5,
@@ -2834,7 +2934,7 @@ const filteredRows = useMemo(() => {
                             }}
                         >
                             <CardContent 
-                            sx={{
+                                sx={{
                                     "&:last-child": { pt: 1 },
                                     display: "flex",
                                     gap: 2,
@@ -2992,9 +3092,25 @@ const filteredRows = useMemo(() => {
                                                                 }}
                                                             />
                                                         </Box>
-                                                        <Typography fontWeight={600} mt={1} color="#2D3748">
-                                                            {t.title}
-                                                        </Typography>
+                                                        <Tooltip
+                                                            title={t.title}
+                                                            arrow
+                                                            placement="top"
+                                                        >
+                                                            <Typography
+                                                                sx={{
+                                                                    maxWidth: 200,
+                                                                    color: "text.secondary",
+                                                                    whiteSpace: "nowrap",
+                                                                    overflow: "hidden",
+                                                                    textOverflow: "ellipsis",
+                                                                    cursor: "pointer",
+                                                                    mt: 0.5
+                                                                }}
+                                                            >
+                                                                {t.title}
+                                                            </Typography>
+                                                        </Tooltip>
                                                         <Tooltip
                                                             title={t.description || "No description"}
                                                             arrow
@@ -3051,7 +3167,6 @@ const filteredRows = useMemo(() => {
                                                                     <VisibilityIcon />
                                                                 </IconButton>
                                                             </Tooltip>
-
                                                         </Box>
                                                     </CardContent>
                                                 </Card>
@@ -3135,7 +3250,6 @@ const filteredRows = useMemo(() => {
                                                                                 overflow: "hidden",
                                                                                 textOverflow: "ellipsis",
                                                                                 cursor: "pointer",
-                                                                                //color: "#4A5568"
                                                                             }}
                                                                         >
                                                                             {t.description || "-"}
@@ -3143,7 +3257,7 @@ const filteredRows = useMemo(() => {
                                                                     </Tooltip>
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Typography fontWeight={500} >
+                                                                    <Typography  fontSize="0.85rem">
                                                                         {t.status_detail?.field_values}
                                                                     </Typography>
                                                                     <Typography fontSize="0.85rem" >
@@ -3162,31 +3276,33 @@ const filteredRows = useMemo(() => {
                                                                         }
                                                                     >
                                                                         <Box sx={{ cursor: "pointer" }}>
-                                                                            <Typography fontWeight={500} >
+                                                                            <Typography fontSize="0.85rem">
                                                                                 {t.category_detail?.category_name || "-"}
                                                                             </Typography>
-                                                                            <Typography fontSize="0.85rem" >
+                                                                            <Typography fontSize="0.85rem">
                                                                                 {t.subcategory_detail?.subcategory_name || "-"}
                                                                             </Typography>
                                                                         </Box>
                                                                     </Tooltip>
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Typography fontWeight={500}>
+                                                                    <Typography fontSize="0.85rem">
                                                                         {t.department_detail?.field_name}
                                                                     </Typography>
                                                                     <Typography fontSize="0.85rem">
                                                                         {t.location_detail?.field_name}
                                                                     </Typography>
                                                                 </TableCell>
-                                                                <TableCell >
-                                                                    {t.requested_detail?.email}
+                                                                <TableCell>
+                                                                    <Typography fontSize="0.85rem">
+                                                                        {t.requested_detail?.email}
+                                                                    </Typography>
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Typography fontSize="0.9rem">
+                                                                    <Typography fontSize="0.85rem">
                                                                         {new Date(t.created_date).toLocaleDateString()}
                                                                     </Typography>
-                                                                    <Typography fontSize="0.8rem">
+                                                                    <Typography fontSize="0.85rem">
                                                                         {new Date(t.updated_date).toLocaleDateString()}
                                                                     </Typography>
                                                                 </TableCell>
@@ -3314,8 +3430,29 @@ const filteredRows = useMemo(() => {
                     <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                         <Tabs value={chatTab} onChange={(e, v) => setChatTab(v)} centered>
                             <Tab label="Follow-up" icon={<ChatIcon />} />
-                            <Tab label="Solution" icon={<DoneAllIcon />} disabled={!isSolvedTicket} />
-                            <Tab label="Clarification Supplied" icon={<HelpOutlineIcon />} disabled={isSolvedTicket} />
+                            <Tab
+                                label="Clarification Supplied"
+                                icon={<QuestionAnswerIcon />}
+                                disabled={
+                                    isSolvedTicket || // Can't request on solved
+                                    selectedType === "closed" ||
+                                    selectedType === "Cancelled" ||
+                                    selectedType === "clarification_applied" // Already supplied → disable re-supply
+                                }
+                            />
+                            <Tab
+                                label="Solution"
+                                icon={<DoneAllIcon />}
+                                disabled={
+                                    !isSolvedTicket || // Only show on solved tickets
+                                    selectedType === "closed" ||
+                                    selectedType === "Cancelled" ||
+                                    selectedType === "clarification_applied" ||
+                                    selectedType === "clarification_required"
+                                }
+                            />
+                            {/* <Tab label="Solution" icon={<DoneAllIcon />} disabled={!isSolvedTicket} /> */}
+                            {/* <Tab label="Clarification Supplied" icon={<HelpOutlineIcon />} disabled={isSolvedTicket} /> */}
                         </Tabs>
                     </Box>
                     {/* Tab Content */}
@@ -3363,186 +3500,77 @@ const filteredRows = useMemo(() => {
                                                     />
                                                 </Divider>
                                                 {group.messages.map((msg, index) => {
+                                                    const msgId = msg.id || `msg-${index}`;
                                                     const isMe = Number(msg.sender) === Number(currentUserId);
-                                                    const isProtected = msg.protected === true;
-                                                    const messageId = msg.id;
-                                                    const isRevealed = revealedMessages.has(messageId);
-                                                    const canViewDecrypted = Number(msg.sender) === Number(currentUserId) || Number(msg.receiver) === Number(currentUserId);
+                                                    const isProtectedMsg = msg.protected === true;
+                                                    const isRevealed = revealedMessages.has(msgId);
+                                                    const canReveal = Number(msg.sender) === Number(currentUserId) || Number(msg.receiver) === Number(currentUserId);
 
                                                     const toggleReveal = () => {
-                                                        if (!canViewDecrypted) return;
+                                                        if (!canReveal) return;
                                                         setRevealedMessages(prev => {
-                                                            const newSet = new Set(prev);
-                                                            if (newSet.has(messageId)) {
-                                                                newSet.delete(messageId);
-                                                            } else {
-                                                                newSet.add(messageId);
-                                                            }
-                                                            return newSet;
+                                                        const newSet = new Set(prev);
+                                                        newSet.has(msgId) ? newSet.delete(msgId) : newSet.add(msgId);
+                                                        return newSet;
                                                         });
                                                     };
 
+                                                    const getText = () => {
+                                                        if (!isProtectedMsg) return msg.message || "";
+                                                        if (!canReveal) return "*** PROTECTED MESSAGE - VISIBLE ONLY TO PARTICIPANTS ***";
+                                                        const real = msg.decrypted_message || msg.message;
+                                                        return isRevealed ? real : "Protected Message (click eye to reveal)";
+                                                    };
+
                                                     return (
-                                                        <Box
-                                                            key={msg.id || index}
-                                                            sx={{
-                                                                display: "flex",
-                                                                justifyContent: isMe ? "flex-end" : "flex-start",
-                                                                mb: 2
-                                                            }}
-                                                        >
-                                                            {!isMe ? (
-                                                                <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}>
-                                                                    <Avatar sx={{ width: 40, height: 40, bgcolor: "grey.300" }}>
-                                                                        {getInitials(assignee?.name)}
-                                                                    </Avatar>
-                                                                    <Box
-                                                                        sx={{
-                                                                            maxWidth: "80%",
-                                                                            p: 2,
-                                                                            bgcolor: "grey.100",
-                                                                            color: "text.primary",
-                                                                            borderRadius: 2,
-                                                                            borderTopLeftRadius: 4,
-                                                                            borderTopRightRadius: 12,
-                                                                            borderBottomLeftRadius: 4,
-                                                                            borderBottomRightRadius: 12,
-                                                                            boxShadow: 1,
-                                                                            position: "relative",
-                                                                        }}
-                                                                    >
-                                                                        {isProtected && (
-                                                                            <SecurityIcon
-                                                                                sx={{
-                                                                                    position: "absolute",
-                                                                                    top: -10,
-                                                                                    right: -10,
-                                                                                    fontSize: 20,
-                                                                                    bgcolor: "#4CAF50",
-                                                                                    color: "white",
-                                                                                    borderRadius: "50%",
-                                                                                    p: 0.5,
-                                                                                    boxShadow: 2,
-                                                                                }}
-                                                                            />
-                                                                        )}
-                                                                        <Typography variant="body1" sx={{ wordBreak: "break-word" }}>
-                                                                            {(() => {
-                                                                                if (!msg.protected) {
-                                                                                    return msg.message; // Normal message
-                                                                                }
-
-                                                                                const isSender = Number(msg.sender) === Number(currentUserId);
-                                                                                const isReceiver = Number(msg.receiver) === Number(currentUserId);
-                                                                                const canDecrypt = isSender || isReceiver;
-
-                                                                                if (!canDecrypt) {
-                                                                                    return "*** PROTECTED MESSAGE - VISIBLE ONLY TO RECEIVER ***";
-                                                                                }
-
-                                                                                // Show real text if revealed AND we have it (from local or server)
-                                                                                const realText = isSender 
-                                                                                    ? myProtectedMessages[msg.id] 
-                                                                                    : msg.decrypted_message; // Receiver relies on backend
-
-                                                                                if (isRevealed && realText) {
-                                                                                    return realText;
-                                                                                }
-
-                                                                                // Default: show masked
-                                                                                return msg.message || "*** PROTECTED MESSAGE - VISIBLE ONLY TO RECEIVER ***";
-                                                                            })()}
-                                                                        </Typography>
-                                                                        {/* Eye Toggle - Only for protected messages and authorized users */}
-                                                                        {msg.protected && (Number(msg.sender) === Number(currentUserId) || Number(msg.receiver) === Number(currentUserId)) && (
-                                                                            <IconButton
-                                                                                size="small"
-                                                                                onClick={toggleReveal}
-                                                                                sx={{
-                                                                                    position: "absolute",
-                                                                                    bottom: 6,
-                                                                                    right: 8,
-                                                                                    color: isMe ? "white" : "inherit",
-                                                                                    opacity: 0.8,
-                                                                                    bgcolor: isMe ? "rgba(255,255,255,0.2)" : "rgba(0,0,0,0.1)",
-                                                                                    '&:hover': {
-                                                                                        bgcolor: isMe ? "rgba(255,255,255,0.3)" : "rgba(0,0,0,0.2)"
-                                                                                    }
-                                                                                }}
-                                                                            >
-                                                                                {isRevealed ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-                                                                            </IconButton>
-                                                                        )}
-
-                                                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
-                                                                            <Typography variant="caption" sx={{ color: "text.secondary", fontSize: "0.7rem" }}>
-                                                                                {new Date(msg.createdon).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                                                                            </Typography>
-                                                                            <Typography variant="caption" sx={{ ml: 1, color: "text.primary", fontSize: "0.75rem", fontWeight: "bold" }}>
-                                                                                {assignee?.name || "Assignee"}
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    </Box>
-                                                                </Box>
-                                                            ) : (
-                                                                <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1, flexDirection: "row-reverse" }}>
-                                                                    <Box
-                                                                        sx={{
-                                                                            maxWidth: "80%",
-                                                                            p: 2,
-                                                                            bgcolor: "primary.main",
-                                                                            color: "white",
-                                                                            borderRadius: 2,
-                                                                            borderTopLeftRadius: 12,
-                                                                            borderTopRightRadius: 4,
-                                                                            borderBottomLeftRadius: 12,
-                                                                            borderBottomRightRadius: 4,
-                                                                            boxShadow: 1,
-                                                                            position: "relative",
-                                                                        }}
-                                                                    >
-                                                                        <Typography variant="body1" sx={{ wordBreak: "break-word" }}>
-                                                                            {isProtected && canViewDecrypted && isRevealed && msg.decrypted_message
-                                                                                ? msg.decrypted_message
-                                                                                : msg.message
-                                                                            }
-                                                                        </Typography>
-
-                                                                        {/* Eye Toggle for Sender */}
-                                                                        {isProtected && canViewDecrypted && (
-                                                                            <IconButton
-                                                                                size="small"
-                                                                                onClick={toggleReveal}
-                                                                                sx={{
-                                                                                    position: "absolute",
-                                                                                    bottom: 6,
-                                                                                    right: 8,
-                                                                                    color: "white",
-                                                                                    opacity: 0.8,
-                                                                                    bgcolor: "rgba(255,255,255,0.2)",
-                                                                                    '&:hover': { bgcolor: "rgba(255,255,255,0.3)" }
-                                                                                }}
-                                                                            >
-                                                                                {isRevealed ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-                                                                            </IconButton>
-                                                                        )}
-
-                                                                        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1 }}>
-                                                                            <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.8)", fontSize: "0.7rem" }}>
-                                                                                {new Date(msg.createdon).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                                                                            </Typography>
-                                                                            <Typography variant="caption" sx={{ mr: 1, color: "white", fontSize: "0.75rem", fontWeight: "bold" }}>
-                                                                                You
-                                                                            </Typography>
-                                                                        </Box>
-                                                                    </Box>
-                                                                    <Avatar sx={{ width: 40, height: 40, bgcolor: "primary.main", color: "white" }}>
-                                                                        {getInitials(currentUserName)}
-                                                                    </Avatar>
-                                                                </Box>
-                                                            )}
-                                                        </Box>
-                                                    );
+                            <Box key={msgId} sx={{ display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", mb: 2 }}>
+                              {!isMe ? (
+                                <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1, maxWidth: "80%" }}>
+                                  <Avatar sx={{ width: 40, height: 40, bgcolor: "grey.300" }}>
+                                    {getInitials(assignee?.name)}
+                                  </Avatar>
+                                  <Box sx={{ position: "relative", bgcolor: "grey.100", p: 2, borderRadius: 2, boxShadow: 1 }}>
+                                    {isProtectedMsg && (
+                                      <SecurityIcon sx={{ position: "absolute", top: -10, right: -10, fontSize: 20, bgcolor: "#4CAF50", color: "white", borderRadius: "50%", p: 0.5 }} />
+                                    )}
+                                    <Typography variant="body1" sx={{ wordBreak: "break-word" }}>
+                                      {getText()}
+                                    </Typography>
+                                    {isProtectedMsg && canReveal && (
+                                      <IconButton size="small" onClick={toggleReveal} sx={{ position: "absolute", bottom: 6, right: 8 }}>
+                                        {isRevealed ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                                      </IconButton>
+                                    )}
+                                    <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
+                                      {new Date(msg.createdon).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {assignee?.name || "Assignee"}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              ) : (
+                                <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1, flexDirection: "row-reverse", maxWidth: "80%" }}>
+                                  <Avatar sx={{ width: 40, height: 40, bgcolor: "primary.main", color: "white" }}>
+                                    {getInitials(currentUserName)}
+                                  </Avatar>
+                                  <Box sx={{ position: "relative", bgcolor: "primary.main", color: "white", p: 2, borderRadius: 2, boxShadow: 1 }}>
+                                    {isProtectedMsg && (
+                                      <SecurityIcon sx={{ position: "absolute", top: -10, left: -10, fontSize: 20, bgcolor: "#4CAF50", color: "white", borderRadius: "50%", p: 0.5 }} />
+                                    )}
+                                    <Typography variant="body1" sx={{ wordBreak: "break-word" }}>
+                                      {getText()}
+                                    </Typography>
+                                    {isProtectedMsg && canReveal && (
+                                      <IconButton size="small" onClick={toggleReveal} sx={{ position: "absolute", bottom: 6, right: 8, color: "white", bgcolor: "rgba(255,255,255,0.2)" }}>
+                                        {isRevealed ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                                      </IconButton>
+                                    )}
+                                    <Typography variant="caption" sx={{ display: "block", mt: 1, opacity: 0.8 }}>
+                                      {new Date(msg.createdon).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • You
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              )}
+                            </Box>
+                          );
                                                 })}
                                                 
                                             </Box>
@@ -3573,7 +3601,37 @@ const filteredRows = useMemo(() => {
                                             multiline
                                             maxRows={4}
                                         />
-                                        <Tooltip title={isProtected ? "Protected mode ON" : "Send protected message"}>
+                                        <Tooltip 
+                                            title={
+                                                isConfidentialTicket 
+                                                    ? "All messages are protected (Confidential Ticket)" 
+                                                    : isProtected 
+                                                        ? "Protected mode ON" 
+                                                        : "Click to send this message protected"
+                                            }
+                                        >
+                                            <span> {/* Wrap in span to allow tooltip on disabled button */}
+                                                <IconButton
+                                                    onClick={() => {
+                                                        if (!isConfidentialTicket) {
+                                                            setIsProtected(!isProtected);
+                                                        }
+                                                    }}
+                                                    disabled={isConfidentialTicket} // Can't turn off if ticket is confidential
+                                                    sx={{
+                                                        color: isProtected || isConfidentialTicket ? "white" : "success.main",
+                                                        bgcolor: isProtected || isConfidentialTicket ? "success.main" : "transparent",
+                                                        border: "1px solid",
+                                                        "&:hover": {
+                                                            bgcolor: isProtected || isConfidentialTicket ? "success.dark" : "success.light",
+                                                        },
+                                                    }}
+                                                >
+                                                    <SecurityIcon />
+                                                </IconButton>
+                                            </span>
+                                        </Tooltip>
+                                        {/* <Tooltip title={isProtected ? "Protected mode ON" : "Send protected message"}>
                                             <IconButton
                                                 onClick={() => setIsProtected(true)}
                                                 sx={{
@@ -3587,7 +3645,7 @@ const filteredRows = useMemo(() => {
                                             >
                                                 <SecurityIcon />
                                             </IconButton>
-                                        </Tooltip>
+                                        </Tooltip> */}
                                         {/* <Tooltip title={isProtected ? "Protected mode ON" : "Send protected message"}>
                                             <IconButton
                                                 onClick={() => setIsProtected(!isProtected)}
@@ -3613,126 +3671,20 @@ const filteredRows = useMemo(() => {
                                         </IconButton>
                                         
                                     </Box>
-                                    {isProtected && (
+                                    {(isProtected || isConfidentialTicket) && (
                                         <Typography variant="caption" color="success.main" sx={{ mt: 1, display: "block", textAlign: "center" }}>
                                             <SecurityIcon fontSize="small" sx={{ verticalAlign: "middle", mr: 0.5 }} />
-                                            This message will be sent as protected
+                                            {isConfidentialTicket 
+                                                ? "All messages are protected (Confidential Ticket)" 
+                                                : "This message will be sent as protected"
+                                            }
                                         </Typography>
                                     )}
                                 </Box>
                             </Box>
                         )}
-                        {chatTab === 1 && isSolvedTicket && (
-                            <Box 
-                                sx={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    justifyContent: "center",
-                                    alignItems: "center",
-                                    height: "100%",
-                                    p: 4,
-                                    gap: 2,
-                                    textAlign: "center"
-                                }}
-                            >
-                                <DoneAllIcon sx={{ fontSize: 64, color: "success.main" }} />
-                                <Typography variant="h6" fontWeight={600} color="text.primary">
-                                    Solution Provided
-                                </Typography>           
-                                <Typography variant="body1" sx={{ mb: 3, wordBreak: "break-word", color: "text.primary" }}>
-                                    {solutionText}
-                                </Typography>
-                                <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
-                                    <Button
-                                        variant={isResolved ? "contained" : "outlined"}
-                                        color="error"
-                                        onClick={handleResolveSolution}
-                                        disabled={isResolved}
-                                        size="small"
-                                    >
-                                        {isResolved ? "Resolved" : "Resolve Solution"}
-                                    </Button>
-                                    <Button
-                                        variant={isApproved ? "contained" : "outlined"}
-                                        color="success"
-                                        onClick={handleApproveSolution}
-                                        disabled={isApproved}
-                                        size="small"
-                                    >
-                                        {isApproved ? "Approved" : "Approve Solution"}
-                                    </Button>
-                                </Box>
-                                <Button
-                                    variant="outlined"
-                                    onClick={() => setChatTab(0)}
-                                    sx={{ mt: 1 }}
-                                >
-                                    Back to Follow-up
-                                </Button>
-                            </Box>
-                        )}
-                        {/* {chatTab === 2 && !isSolvedTicket && (
-                            <Box sx={{ display: "flex", flexDirection: "column", height: "100%", p: 3 }}>
-                                {isTicketClarificationRequired() ? (
-                                    <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                                        <HelpOutlineIcon sx={{ fontSize: 80, color: "warning.main", mb: 2 }} />
-                                        <Typography variant="h6" fontWeight={600}>Clarification Request Already Sent</Typography>
-                                        <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
-                                            Waiting for requester to respond.
-                                        </Typography>
-                                        <Button variant="outlined" onClick={() => setChatTab(0)}>
-                                            Back to Follow-up
-                                        </Button>
-                                        </Box>
-                                ) : isTicketSolved() ? (
-                                    <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                                        <DoneAllIcon sx={{ fontSize: 80, color: "success.main", mb: 2 }} />
-                                        <Typography variant="h6" fontWeight={600}>Ticket Already Solved</Typography>
-                                        <Typography color="text.secondary" sx={{ mt: 1 }}>
-                                            Cannot request clarification on solved tickets.
-                                        </Typography>
-                                    </Box>
-                                ) : (
-                                        <>
-                                            <Box sx={{ textAlign: "center", mb: 3 }}>
-                                                <HelpOutlineIcon sx={{ fontSize: 60, color: "warning.main", mb: 2 }} />
-                                                <Typography variant="h6" fontWeight={600}>Request Clarification</Typography>
-                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                                                    Ask for more details if something is unclear.
-                                                </Typography>
-                                            </Box>
-                                            <TextField
-                                                multiline
-                                                rows={6}
-                                                placeholder="Please clarify the following..."
-                                                value={clarificationText}
-                                                onChange={(e) => setClarificationText(e.target.value)}
-                                                variant="outlined"
-                                                fullWidth
-                                                sx={{ mb: 3 }}
-                                                disabled={sendingClarification}
-                                            />
-                                            <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
-                                                <Button
-                                                    variant="contained"
-                                                    color="warning"
-                                                    size="large"
-                                                    startIcon={<QuestionAnswerIcon />}
-                                                    onClick={handleRequestClarification}
-                                                    disabled={!clarificationText.trim() || sendingClarification}
-                                                >
-                                                    {sendingClarification ? <CircularProgress size={20} /> : "Send Request"}
-                                                </Button>
-                                                <Button variant="outlined" onClick={() => { setClarificationText(""); setChatTab(0); }} disabled={sendingClarification}>
-                                                    Cancel
-                                                </Button>
-                                            </Box>
-                                        </>
-                                    )}
-                            </Box>
-                        )} */}
-                        {chatTab === 2 && (
-                            <Box sx={{ display: "flex", flexDirection: "column", height: "100%", p: 3 }}>
+                        {chatTab === 1 && (
+                            <Box sx={{ display: "flex", flexDirection: "column", p: 3 }}>
                                 {clarificationRequested ? (
                                     // Already requested clarification
                                     <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
@@ -3804,6 +3756,115 @@ const filteredRows = useMemo(() => {
                                 )}
                             </Box>
                         )}
+                        {chatTab === 2 && isSolvedTicket && (
+                            <Box 
+                                sx={{
+                                    display: "flex",
+                                    flexDirection: "column",
+                                    justifyContent: "center",
+                                    alignItems: "center",
+                                    p: 4,
+                                    gap: 2,
+                                    textAlign: "center"
+                                }}
+                            >
+                                <DoneAllIcon sx={{ fontSize: 64, color: "success.main" }} />
+                                <Typography variant="h6" fontWeight={600} color="text.primary">
+                                    Solution Provided
+                                </Typography>           
+                                <Typography variant="body1" sx={{ mb: 3, wordBreak: "break-word", color: "text.primary" }}>
+                                    {solutionText}
+                                </Typography>
+                                <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+                                    <Button
+                                        variant={isResolved ? "contained" : "outlined"}
+                                        color="error"
+                                        onClick={handleResolveSolution}
+                                        disabled={isResolved}
+                                        size="small"
+                                    >
+                                        {isResolved ? "Rejected" : "Rejected"}
+                                    </Button>
+                                    <Button
+                                        variant={isApproved ? "contained" : "outlined"}
+                                        color="success"
+                                        onClick={handleApproveSolution}
+                                        disabled={isApproved}
+                                        size="small"
+                                    >
+                                        {isApproved ? "Accepted" : "Accepted"}
+                                    </Button>
+                                </Box>
+                                <Button
+                                    variant="outlined"
+                                    onClick={() => setChatTab(0)}
+                                    sx={{ mt: 1 }}
+                                >
+                                    Back
+                                </Button>
+                            </Box>
+                        )}
+                        {/* {chatTab === 2 && !isSolvedTicket && (
+                            <Box sx={{ display: "flex", flexDirection: "column", height: "100%", p: 3 }}>
+                                {isTicketClarificationRequired() ? (
+                                    <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                        <HelpOutlineIcon sx={{ fontSize: 80, color: "warning.main", mb: 2 }} />
+                                        <Typography variant="h6" fontWeight={600}>Clarification Request Already Sent</Typography>
+                                        <Typography color="text.secondary" sx={{ mt: 1, mb: 3 }}>
+                                            Waiting for requester to respond.
+                                        </Typography>
+                                        <Button variant="outlined" onClick={() => setChatTab(0)}>
+                                            Back to Follow-up
+                                        </Button>
+                                        </Box>
+                                ) : isTicketSolved() ? (
+                                    <Box sx={{ textAlign: "center", flex: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                                        <DoneAllIcon sx={{ fontSize: 80, color: "success.main", mb: 2 }} />
+                                        <Typography variant="h6" fontWeight={600}>Ticket Already Solved</Typography>
+                                        <Typography color="text.secondary" sx={{ mt: 1 }}>
+                                            Cannot request clarification on solved tickets.
+                                        </Typography>
+                                    </Box>
+                                ) : (
+                                        <>
+                                            <Box sx={{ textAlign: "center", mb: 3 }}>
+                                                <HelpOutlineIcon sx={{ fontSize: 60, color: "warning.main", mb: 2 }} />
+                                                <Typography variant="h6" fontWeight={600}>Request Clarification</Typography>
+                                                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                                                    Ask for more details if something is unclear.
+                                                </Typography>
+                                            </Box>
+                                            <TextField
+                                                multiline
+                                                rows={6}
+                                                placeholder="Please clarify the following..."
+                                                value={clarificationText}
+                                                onChange={(e) => setClarificationText(e.target.value)}
+                                                variant="outlined"
+                                                fullWidth
+                                                sx={{ mb: 3 }}
+                                                disabled={sendingClarification}
+                                            />
+                                            <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
+                                                <Button
+                                                    variant="contained"
+                                                    color="warning"
+                                                    size="large"
+                                                    startIcon={<QuestionAnswerIcon />}
+                                                    onClick={handleRequestClarification}
+                                                    disabled={!clarificationText.trim() || sendingClarification}
+                                                >
+                                                    {sendingClarification ? <CircularProgress size={20} /> : "Send Request"}
+                                                </Button>
+                                                <Button variant="outlined" onClick={() => { setClarificationText(""); setChatTab(0); }} disabled={sendingClarification}>
+                                                    Cancel
+                                                </Button>
+                                            </Box>
+                                        </>
+                                    )}
+                            </Box>
+                        )} */}
+                        
                         
                     </Box>
                 </Box>
