@@ -1357,7 +1357,7 @@ export const fetchAdminMessages = async (ticketId) => {
         if (!token) {
             throw new Error("No access token found");
         }
-
+ 
         if (!ticketId) {
             throw new Error("ticketId is required");
         }
@@ -1376,6 +1376,7 @@ export const fetchAdminMessages = async (ticketId) => {
         throw err;
     }
 };
+
 // export const fetchAdminMessages = async (ticket_no, user) => {
 //     try {
 //         const response = await fetch(`tickets/${user}/ticket/${ticket_no}/`);

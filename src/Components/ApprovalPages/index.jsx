@@ -58,6 +58,7 @@ const ApprovalPage = () => {
   const [loadingFollowUpChats, setLoadingFollowUpChats] = useState(false);
   const [newFollowUpMessage, setNewFollowUpMessage] = useState("");
   const [sendingFollowUpMessage, setSendingFollowUpMessage] = useState(false);
+  
   // Load users
   useEffect(() => {
     const loadUsers = async () => {

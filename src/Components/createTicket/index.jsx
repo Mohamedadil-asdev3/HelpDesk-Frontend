@@ -1092,11 +1092,11 @@
 //   fetchConfigurations, fetchTicketCategories, fetchSubcategories,
 //   createTicket, fetchPlatforms, updateTicket, getTicketDetails,fetchWatcherGroups
 // } from "../../Api";
- 
+
 // const TicketForm = () => {
 //   const userEntity = JSON.parse(localStorage.getItem("userEntity"));
 //   const currentUser = JSON.parse(localStorage.getItem("user_data")); // Get current logged-in user data
- 
+
 //   const [categoryId, setCategoryId] = useState("");
 //   const [subcategoryId, setSubcategoryId] = useState("");
 //   const [description, setDescription] = useState("");
@@ -1115,26 +1115,26 @@
 //   const [configs, setConfigs] = useState([]);
 //   const [allUsers, setAllUsers] = useState([]);
 //   const [watcherGroups, setWatcherGroups] = useState([]);
- 
+
 //   const [platforms, setPlatforms] = useState([]);
 //   const [selectedPlatform, setSelectedPlatform] = useState(null);
- 
+
 //   // Assignment state
 //   const [selectionTypes, setSelectionTypes] = useState([]); // array of 'user' or 'group'
 //   const [selectedUsers, setSelectedUsers] = useState([]);
 //   const [selectedGroups, setSelectedGroups] = useState([]);
 //   const [selectedWatchers, setSelectedWatchers] = useState([]);
- 
+
 //   const [editMode, setEditMode] = useState(false);
 //   const [editTicketId, setEditTicketId] = useState(null);
- 
+
 //   const [selectedDepartment, setSelectedDepartment] = useState(null);
 //   const [selectedLocation, setSelectedLocation] = useState(null);
- 
+
 //   const [requestedUser, setRequestedUser] = useState(null); // Display requested user info
- 
+
 //   const editInitRef = useRef(false);
- 
+
 //   // Check for edit mode
 //   useEffect(() => {
 //     const id = localStorage.getItem("editTicketId");
@@ -1143,7 +1143,7 @@
 //       setEditTicketId(id);
 //     }
 //   }, []);
- 
+
 //   // Load initial data
 // useEffect(() => {
 //   const fetchData = async () => {
@@ -1224,7 +1224,7 @@
 //       loadTicketForEdit(editTicketId);
 //     }
 //   }, [configs, departments, locations, platforms, allUsers, watcherGroups, editMode, editTicketId]);
- 
+
 //   // Load subcategories
 //   useEffect(() => {
 //     if (categoryId) {
@@ -1246,14 +1246,14 @@
 //       setSubcategoryId("");
 //     }
 //   }, [categoryId]);
- 
+
 //   // Update watchers based on selected users/groups
 //   const updateWatchers = () => {
 //     const userIds = selectedUsers.map(u => u.id) || [];
 //     const groupMemberIds = selectedGroups.flatMap(g => g.users?.map(u => u.id) || []) || [];
 //     setSelectedWatchers([...new Set([...userIds, ...groupMemberIds])]);
 //   };
- 
+
 //   // Handle types selection (multiple)
 //   const handleTypesSelection = (_, newValue) => {
 //     const types = newValue.map(v => v.type);
@@ -1268,7 +1268,7 @@
 //     setSelectedWatchers([]);
 //     updateWatchers();
 //   };
- 
+
 //   // Handle users selection (multiple)
 //   const handleUsersSelection = (_, newValue) => {
 //     setSelectedUsers(newValue);
@@ -1277,7 +1277,7 @@
 //       toast.success(`${newValue.length} user(s) selected`);
 //     }
 //   };
- 
+
 //   // Handle groups selection (multiple)
 //   const handleGroupsSelection = (_, newValue) => {
 //     setSelectedGroups(newValue);
@@ -1286,7 +1286,7 @@
 //       toast.success(`${newValue.length} group(s) selected`);
 //     }
 //   };
- 
+
 //   // Handle file changes
 //   const handleFileChange = (e) => {
 //     const newFiles = Array.from(e.target.files || []).filter(f =>
@@ -1296,9 +1296,9 @@
 //       !prev.some(pf => pf.name === f.name && pf.size === f.size)
 //     )]);
 //   };
- 
+
 //   const removeFile = (i) => setFiles(prev => prev.filter((_, idx) => idx !== i));
- 
+
 //   // Load ticket for edit
 //   const loadTicketForEdit = async (ticketNo) => {
 //     try {
@@ -1306,7 +1306,7 @@
 //       const response = await getTicketDetails(ticketNo);
 //       const ticketData = response?.data?.ticket || response?.ticket || response;
 //       if (!ticketData) throw new Error("No ticket data");
-     
+
 //       // Set form fields
 //       setTicketType(configs.find(c => c.id === ticketData.type && c.field_type === "TicketType")?.field_name || "Incident");
 //       // setSelectedDepartment(departments.find(d => d.id === ticketData.department) || null);
@@ -1320,7 +1320,7 @@
 //       setSubcategoryId(ticketData.subcategory || "");
 //       setTitle(ticketData.title || "");
 //       setDescription(ticketData.description || "");
- 
+
 //       // Set requested user for display (read-only)
 //       if (ticketData.requested_detail) {
 //         setRequestedUser({
@@ -1329,12 +1329,12 @@
 //           email: ticketData.requested_detail.email
 //         });
 //       }
- 
+
 //       // Parse assignment data from backend - handle multiple
 //       const selectionTypesLocal = [];
 //       const selectedUsersLocal = [];
 //       const selectedGroupsLocal = [];
- 
+
 //       // Users
 //       if (ticketData.assignees_detail && ticketData.assignees_detail.length > 0) {
 //         selectionTypesLocal.push('user');
@@ -1343,7 +1343,7 @@
 //         const missingUsers = ticketData.assignees_detail.filter(u => !allUsers.some(au => au.email === u.email));
 //         selectedUsersLocal.push(...missingUsers.map(u => ({ id: u.id, name: u.name, email: u.email })));
 //       }
- 
+
 //       // Groups
 //       if (ticketData.assigned_groups_detail && ticketData.assigned_groups_detail.length > 0) {
 //         selectionTypesLocal.push('group');
@@ -1352,14 +1352,14 @@
 //         const missingGroups = ticketData.assigned_groups_detail.filter(g => !watcherGroups.some(wg => wg.id === g.id));
 //         selectedGroupsLocal.push(...missingGroups.map(g => ({ id: g.id, name: g.name, users: g.users || [] })));
 //       }
- 
+
 //       setSelectionTypes(selectionTypesLocal);
 //       setSelectedUsers(selectedUsersLocal);
 //       setSelectedGroups(selectedGroupsLocal);
- 
+
 //       // Update watchers
 //       updateWatchers();
-     
+
 //       toast.success(`Editing Ticket #${ticketData.ticket_no}`);
 //     } catch (err) {
 //       toast.error("Failed to load ticket details");
@@ -1393,11 +1393,11 @@
 //   }, [currentUser, departments, locations]);
 
 
- 
+
 // const handleCreateTicket = async (e) => {
 //   e.preventDefault();
 //   setLoading(true);
- 
+
 //   try {
 //     // Validation
 //     if (!ticketType) {
@@ -1455,18 +1455,18 @@
 //       setLoading(false);
 //       return;
 //     }
-   
+
 //     // Get IDs from configs
 //     const typeObj = ticketTypes.find(t => t.field_name === ticketType);
 //     const typeId = typeObj ? typeObj.id : null;
-   
+
 //     const departmentId = selectedDepartment ? selectedDepartment.id : null;
 //     const locationId = selectedLocation ? selectedLocation.id : null;
 //     const platformId = selectedPlatform ? selectedPlatform.id : null;
-   
+
 //     const priorityObj = priorities.find(p => p.field_name === priority);
 //     const priorityId = priorityObj ? priorityObj.id : null;
- 
+
 //     // CRITICAL: Make sure all required IDs are available
 //     if (!typeId) {
 //       toast.error("Please select a valid ticket type");
@@ -1493,10 +1493,10 @@
 //       setLoading(false);
 //       return;
 //     }
- 
+
 //     // Prepare data according to backend serializer structure
 //     const formData = new FormData();
-   
+
 //     // Basic fields
 //     formData.append("type", typeId);
 //     formData.append("department", departmentId);
@@ -1504,15 +1504,15 @@
 //     formData.append("platform", platformId);
 //     formData.append("priority", priorityId);
 //     formData.append("category", categoryId);  // REQUIRED - use 'category' not 'category_id'
-   
+
 //     // Only append subcategory if it exists and is selected
 //     if (subcategoryId && subcategories.length > 0) {
 //       formData.append("subcategory", subcategoryId);  // 'subcategory' not 'subcategory_id'
 //     }
-   
+
 //     formData.append("title", title.trim());
 //     formData.append("description", description);
-   
+
 //     // Set requested to current logged-in user ID
 //     const requestedId = currentUser?.id;
 //     if (requestedId) {
@@ -1522,12 +1522,12 @@
 //       setLoading(false);
 //       return;
 //     }
-   
+
 //     // Assignment fields (support multiple types and assignees)
 //     selectionTypes.forEach(type => {
 //       formData.append("assigned_to_type", type);
 //     });
-   
+
 //     if (selectionTypes.includes('user') && selectedUsers.length > 0) {
 //       selectedUsers.forEach(user => {
 //         formData.append("assignee", user.email);
@@ -1538,34 +1538,34 @@
 //         formData.append("assigned_group", group.id);
 //       });
 //     }
-   
+
 //     // Watchers (CC)
 //     selectedWatchers.forEach(id => {
 //       formData.append("watchers", id);
 //     });
-   
+
 //     // Files
 //     files.forEach(file => {
 //       if (file instanceof File) {
 //         formData.append("documents", file);
 //       }
 //     });
- 
+
 //     // Create ticket
 //     const result = await createTicket(formData);
-   
+
 //     if (result?.success || result?.ticket_no || result?.id) {
 //       const ticketNo = result.ticket_no || result.data?.ticket_no || result.id;
 //       toast.success(`Ticket #${ticketNo} created successfully!`);
 //       resetForm();
-     
+
 //       // Optional: Clear edit mode if it was set
 //       if (editMode) {
 //         localStorage.removeItem("editTicketId");
 //         setEditMode(false);
 //         setEditTicketId(null);
 //       }
-     
+
 //       // // Redirect to ticket history
 //       // setTimeout(() => {
 //       //   window.location.href = "/tickethistory";
@@ -1580,7 +1580,7 @@
 //     }
 //   } catch (err) {
 //     console.error("Ticket creation error:", err);
-   
+
 //     // More user-friendly error messages
 //     if (err.message.includes("category")) {
 //       toast.error("Category error: " + err.message);
@@ -1595,11 +1595,11 @@
 //     setLoading(false);
 //   }
 // };
- 
+
 // const handleUpdateTicket = async (e) => {
 //   e.preventDefault();
 //   setLoading(true);
- 
+
 //   try {
 //     // Similar validation as create
 //     if (!ticketType) {
@@ -1657,24 +1657,24 @@
 //       setLoading(false);
 //       return;
 //     }
-   
+
 //     // Get IDs
 //     const typeObj = ticketTypes.find(t => t.field_name === ticketType);
 //     const typeId = typeObj ? typeObj.id : null;
-   
+
 //     const departmentId = selectedDepartment ? selectedDepartment.id : null;
 //     const locationId = selectedLocation ? selectedLocation.id : null;
 //     const platformId = selectedPlatform?.id;
-   
+
 //     const priorityObj = priorities.find(p => p.field_name === priority);
 //     const priorityId = priorityObj ? priorityObj.id : null;
- 
+
 //     if (!typeId || !departmentId || !locationId || !platformId || !priorityId || !categoryId) {
 //       toast.error("Please fill all required fields");
 //       setLoading(false);
 //       return;
 //     }
- 
+
 //     const formData = new FormData();
 //     formData.append("type", typeId);
 //     formData.append("department", departmentId);
@@ -1682,27 +1682,27 @@
 //     formData.append("platform", platformId);
 //     formData.append("priority", priorityId);
 //     formData.append("category", categoryId);
-   
+
 //     // Only append subcategory if it exists and is selected
 //     if (subcategoryId && subcategories.length > 0) {
 //       formData.append("subcategory", subcategoryId);
 //     }
-   
+
 //     formData.append("title", title.trim());
 //     formData.append("description", description);
-   
+
 //     // For update, do not override requested unless explicitly needed (keep original)
 //     // If you want to update it, uncomment below:
 //     // const requestedId = currentUser?.id;
 //     // if (requestedId) {
 //     //   formData.append("requested", requestedId);
 //     // }
-   
+
 //     // Assignment fields (support multiple types and assignees)
 //     selectionTypes.forEach(type => {
 //       formData.append("assigned_to_type", type);
 //     });
-   
+
 //     if (selectionTypes.includes('user') && selectedUsers.length > 0) {
 //       selectedUsers.forEach(user => {
 //         formData.append("assignee", user.email);
@@ -1713,29 +1713,29 @@
 //         formData.append("assigned_group", group.id);
 //       });
 //     }
-   
+
 //     // Watchers
 //     selectedWatchers.forEach(id => {
 //       formData.append("watchers", id);
 //     });
-   
+
 //     // Files
 //     files.forEach(file => {
 //       if (file instanceof File) {
 //         formData.append("documents", file);
 //       }
 //     });
- 
+
 //     const result = await updateTicket(editTicketId, formData);
-   
+
 //     if (result?.success || result?.message?.includes("success")) {
 //       toast.success("Ticket updated successfully!");
-     
+
 //       // Clear edit mode
 //       localStorage.removeItem("editTicketId");
 //       setEditMode(false);
 //       setEditTicketId(null);
-     
+
 //       // Redirect after a short delay
 //       // setTimeout(() => {
 //       //   window.location.href = "/tickethistory";
@@ -1750,7 +1750,7 @@
 //     setLoading(false);
 //   }
 // };
- 
+
 //   const resetForm = () => {
 //     setTitle("");
 //     setDescription("");
@@ -1768,23 +1768,23 @@
 //     setSelectedPlatform(null);
 //     setRequestedUser(null);
 //   };
- 
+
 //   const handleCancel = () => {
 //     resetForm();
 //     localStorage.removeItem("editTicketId");
 //     toast.info("Form cancelled.");
 //   };
- 
+
 //   const handleDescriptionChange = (e) => {
 //     if (e.target.value.length <= 5000) setDescription(e.target.value);
 //   };
- 
+
 //   // Check if subcategory should be shown
 //   const shouldShowSubcategory = subcategories.length > 0;
- 
+
 //   // Filter ticketTypes to only "Incident"
 //   const incidentType = ticketTypes.find(t => t.field_name === "Incident");
- 
+
 //   return (
 //     <Box sx={{ p: 3, display: "flex", justifyContent: "center" }}>
 //       <Card sx={{ width: "100%", maxWidth: "1200px", borderRadius: 4, p: 3, boxShadow: 3 }}>
@@ -1805,7 +1805,7 @@
 //               </Box>
 //             )} */}
 //           </Box>
- 
+
 //           <Grid container spacing={3}>
 //             {/* Ticket Type - Only show Incident */}
 //             <Grid size={{xs:12,sm:6,md:3}}>
@@ -1825,7 +1825,7 @@
 //                 )}
 //               </TextField>
 //             </Grid>
- 
+
 //             {/* Department */}
 //             <Grid size={{xs:12,sm:6,md:3}}>
 //               <Typography fontSize={15} fontWeight={600}>Department *</Typography>
@@ -1841,7 +1841,7 @@
 //               />
 
 //             </Grid>
- 
+
 //             {/* Location */}
 //             <Grid size={{xs:12,sm:6,md:3}}>
 //               <Typography fontSize={15} fontWeight={600}>Location *</Typography>
@@ -1857,7 +1857,7 @@
 //               />
 
 //             </Grid>
- 
+
 //             {/* Priority */}
 //             <Grid size={{xs:12,sm:6,md:3}}>
 //               <Typography fontWeight={600}>Priority *</Typography>
@@ -1870,7 +1870,7 @@
 //                 </Select>
 //               </FormControl>
 //             </Grid>
- 
+
 //             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
 //   <Typography fontSize={15} fontWeight={600}>Platform *</Typography>
 //   <Autocomplete
@@ -1891,7 +1891,7 @@
 //   />
 // </Grid>
 
- 
+
 //             {/* Category */}
 //             <Grid size={{xs:12,sm:6,md:3}}>
 //               <Typography fontSize={15} fontWeight={600}>Category *</Typography>
@@ -1909,7 +1909,7 @@
 //                 )}
 //               />
 //             </Grid>
- 
+
 //             {/* Subcategory - Only show if subcategories exist */}
 //             {shouldShowSubcategory && (
 //               <Grid size={{xs:12,sm:6,md:3}}>
@@ -1925,7 +1925,7 @@
 //                 />
 //               </Grid>
 //             )}
- 
+
 //             {/* Assignment Type (User/Group) - Multiple */}
 //             <Grid size={{xs:12,sm:6,md:3}}>
 //               <Typography fontSize={15} fontWeight={600}>Assign To *</Typography>
@@ -1940,7 +1940,7 @@
 //                 )}
 //               />
 //             </Grid>
- 
+
 //             {/* Users Dropdown (shown when 'user' is selected) */}
 //             {selectionTypes.includes('user') && (
 //               <Grid size={{xs:12,sm:6,md:3}}>
@@ -1957,7 +1957,7 @@
 //                 />
 //               </Grid>
 //             )}
- 
+
 //             {/* Groups Dropdown (shown when 'group' is selected) */}
 //             {selectionTypes.includes('group') && (
 //               <Grid size={{xs:12,sm:6,md:3}}>
@@ -1975,7 +1975,7 @@
 //               </Grid>
 //             )}
 //           </Grid>
- 
+
 //           {/* Title */}
 //           <Grid size={12}>
 //             <Box sx={{ mt: 3 }}>
@@ -1990,7 +1990,7 @@
 //               />
 //             </Box>
 //           </Grid>
- 
+
 //           {/* Description */}
 //           <Grid size={12}>
 //             <Box sx={{ mt: 3 }}>
@@ -2009,7 +2009,7 @@
 //               </Typography>
 //             </Box>
 //           </Grid>
- 
+
 //           {/* Files Upload */}
 //           <Grid size={12}>
 //             <Box sx={{ mt: 3 }}>
@@ -2035,7 +2035,7 @@
 //               )}
 //             </Box>
 //           </Grid>
- 
+
 //           {/* Action Buttons */}
 //           <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
 //             <Button
@@ -2059,7 +2059,7 @@
 //     </Box>
 //   );
 // };
- 
+
 // export default TicketForm;
 // import { useEffect, useState } from "react";
 // import {
@@ -2355,12 +2355,26 @@
 // export default TicketForm;
 
 import { useState, useEffect, useRef } from "react";
-import { Box, Grid, Card, CardContent, TextField, Typography, MenuItem, Button, Autocomplete, Chip, Avatar, FormControl, Select, InputLabel, } from "@mui/material";
+import { Box, Grid, Card, CardContent, TextField, Typography, MenuItem, Button, Autocomplete, Chip, Avatar, FormControl, Select, InputLabel, IconButton, } from "@mui/material";
 import { toast } from "react-toastify";
 import { fetchConfigurations, fetchTicketCategories, fetchSubcategories, createTicket, fetchPlatforms, updateTicket, getTicketDetails, fetchWatcherGroups, fetchCategorySLA } from "../../Api";
+import BulletList from "@tiptap/extension-bullet-list";
+import OrderedList from "@tiptap/extension-ordered-list";
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import FormatListNumberedIcon from "@mui/icons-material/FormatListNumbered";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import TextAlign from "@tiptap/extension-text-align";
+import FormatBoldIcon from '@mui/icons-material/FormatBold';
+import FormatItalicIcon from '@mui/icons-material/FormatItalic';
+import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
+import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
+import FormatAlignRightIcon from '@mui/icons-material/FormatAlignRight';
+import CloseIcon from '@mui/icons-material/Close';
+import ListItem from "@tiptap/extension-list-item";
 
 const TicketForm = () => {
-  
+
   const userEntity = JSON.parse(localStorage.getItem("userEntity"));
   const currentUser = JSON.parse(localStorage.getItem("user_data")); // Get current logged-in user data
   const [categoryId, setCategoryId] = useState("");
@@ -2396,7 +2410,29 @@ const TicketForm = () => {
   const [selectedLocation, setSelectedLocation] = useState(null);
   const [requestedUser, setRequestedUser] = useState(null); // Display requested user info
   const editInitRef = useRef(false);
-  
+  const fileInputRef = useRef(null);
+
+  const MAX_FILES = 5;
+  const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      BulletList,
+      OrderedList,
+      ListItem,
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+      }),
+    ],
+    content: description,
+    onUpdate: ({ editor }) => {
+      handleDescriptionChange({
+        target: { value: editor.getText() }
+      });
+    },
+  });
+
   // Check for edit mode
   useEffect(() => {
     const id = localStorage.getItem("editTicketId");
@@ -2410,56 +2446,18 @@ const TicketForm = () => {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-    try {
-      // Configurations
-      let configData = [];
       try {
-        configData = await fetchConfigurations();
-        setConfigs(configData);
-        setTicketTypes(configData.filter(c => c.field_type === "TicketType"));
-        setDepartments(configData.filter(c => c.field_type === "Department"));
-        setLocations(configData.filter(c => c.field_type === "Location"));
-        setPriorities(configData.filter(c => c.field_type === "Priority"));
-      } catch (err) {
-        console.error("Failed to fetch configurations", err);
-      }
-      // Categories - Backend handles filtering based on role and entity
-      // try {
-      //   const roles = currentUser?.roles?.map(r => r.name.toLowerCase()) || [];
-      //   const isSuperOrAdmin = roles.includes('superadmin') || roles.includes('admin');
-      //   const currentEntityId = userEntity?.entity_data?.id;
-      //   const entityIdToFetch = isSuperOrAdmin ? null : currentEntityId;
-      //   const slaDataRaw = await fetchCategorySLA(entityIdToFetch);
-      //   const userEntitiesIds = currentUser?.entities_ids || [];
-      //   const accessibleEntities = isSuperOrAdmin ? userEntitiesIds : [currentEntityId];
-      //   const slaData = Array.isArray(slaDataRaw) ? slaDataRaw.filter(cat => accessibleEntities.includes(cat.entity_id)) : [];
-      //   setCategories(slaData.filter(cat => cat.is_active === 'Y'));
-      // } catch (err) {
-      //   console.error("Failed to fetch category SLA", err);
-      //   setCategories([]);
-      // }
-      try {
-  const currentEntityId = userEntity?.entity_data?.id;
-
-  // Fetch SLA categories for entity
-  const slaDataRaw = await fetchCategorySLA(currentEntityId);
-
-  const slaData = Array.isArray(slaDataRaw)
-    ? slaDataRaw.filter(cat => cat.is_active === 'Y')
-    : [];
-
-  setCategories(slaData);
-} catch (err) {
-  console.error("Failed to fetch category SLA", err);
-  setCategories([]);
-}
-
-      // Users
-      try {
-        const token = localStorage.getItem("access_token");
-        if (!token) {
-          console.warn("No access token found");
-          return;
+        // Configurations
+        let configData = [];
+        try {
+          configData = await fetchConfigurations();
+          setConfigs(configData);
+          setTicketTypes(configData.filter(c => c.field_type === "TicketType"));
+          setDepartments(configData.filter(c => c.field_type === "Department"));
+          setLocations(configData.filter(c => c.field_type === "Location"));
+          setPriorities(configData.filter(c => c.field_type === "Priority"));
+        } catch (err) {
+          console.error("Failed to fetch configurations", err);
         }
         //const usersRes = await fetch("http://192.168.60.118:8000/api/tickets/watcher-users/", {
         const usersRes = await fetch("http://172.22.32.1:8000/api/tickets/watcher-users/", {
@@ -2474,34 +2472,55 @@ const TicketForm = () => {
         } else {
           console.error("Failed to fetch users:", usersRes.status);
         }
-      } catch (err) {
-        console.error("Failed to fetch users", err);
+
+        // Users
+        try {
+          const token = localStorage.getItem("access_token");
+          if (!token) {
+            console.warn("No access token found");
+            return;
+          }
+          //const usersRes = await fetch("http://192.168.60.118:8000/api/tickets/watcher-users/", {
+          const usersRes = await fetch("http://192.168.60.163:8000/api/tickets/watcher-users/", {
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          });
+          if (usersRes.ok) {
+            const usersData = await usersRes.json();
+            setAllUsers(Array.isArray(usersData) ? usersData : []);
+          } else {
+            console.error("Failed to fetch users:", usersRes.status);
+          }
+        } catch (err) {
+          console.error("Failed to fetch users", err);
+        }
+        // Groups
+        try {
+          const groupsRes = await fetchWatcherGroups();
+          if (Array.isArray(groupsRes)) setWatcherGroups(groupsRes);
+        } catch (err) {
+          console.error("Failed to fetch watcher groups", err);
+        }
+        // Platforms
+        try {
+          const platformRes = await fetchPlatforms();
+          const platformList = platformRes?.data || platformRes || [];
+          const validPlatforms = Array.isArray(platformList) ? platformList : [];
+          setPlatforms(validPlatforms);
+          // ✅ Set General as default
+          const generalPlatform = validPlatforms.find(p => p.field_name === "General");
+          if (generalPlatform) setSelectedPlatform(generalPlatform);
+        } catch (err) {
+          console.error("Failed to fetch platforms", err);
+        }
+      } finally {
+        setLoading(false);
       }
-      // Groups
-      try {
-        const groupsRes = await fetchWatcherGroups();
-        if (Array.isArray(groupsRes)) setWatcherGroups(groupsRes);
-      } catch (err) {
-        console.error("Failed to fetch watcher groups", err);
-      }
-      // Platforms
-      try {
-        const platformRes = await fetchPlatforms();
-        const platformList = platformRes?.data || platformRes || [];
-        const validPlatforms = Array.isArray(platformList) ? platformList : [];
-        setPlatforms(validPlatforms);
-        // ✅ Set General as default
-        const generalPlatform = validPlatforms.find(p => p.field_name === "General");
-        if (generalPlatform) setSelectedPlatform(generalPlatform);
-      } catch (err) {
-        console.error("Failed to fetch platforms", err);
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchData();
-}, []);
+    };
+    fetchData();
+  }, []);
 
   // Load ticket for edit after data is loaded
   useEffect(() => {
@@ -2588,7 +2607,7 @@ const TicketForm = () => {
       const response = await getTicketDetails(ticketNo);
       const ticketData = response?.data?.ticket || response?.ticket || response;
       if (!ticketData) throw new Error("No ticket data");
-   
+
       // Set form fields
       setTicketType(configs.find(c => c.id === ticketData.type && c.field_type === "TicketType")?.field_name || "Incident");
       setSelectedDepartment(departments.find(d => d.id === ticketData.department_detail?.id) || null);
@@ -2632,7 +2651,7 @@ const TicketForm = () => {
       setSelectedGroups(selectedGroupsLocal);
       // Update watchers
       updateWatchers();
-   
+
       toast.success(`Editing Ticket #${ticketData.ticket_no}`);
     } catch (err) {
       toast.error("Failed to load ticket details");
@@ -2641,11 +2660,11 @@ const TicketForm = () => {
     }
   };
   const getId = (value) => {
-  if (!value) return null;
-  if (typeof value === "number") return value;
-  if (typeof value === "object" && value.id) return value.id;
-  return null;
-};
+    if (!value) return null;
+    if (typeof value === "number") return value;
+    if (typeof value === "object" && value.id) return value.id;
+    return null;
+  };
   useEffect(() => {
     if (initializedRef.current) return;
     if (!currentUser || departments.length === 0 || locations.length === 0) return;
@@ -2710,15 +2729,15 @@ const TicketForm = () => {
         setLoading(false);
         return;
       }
-  
+
       // Get IDs from configs
       const typeObj = ticketTypes.find(t => t.field_name === ticketType);
       const typeId = typeObj ? typeObj.id : null;
-  
+
       const departmentId = selectedDepartment ? selectedDepartment.id : null;
       const locationId = selectedLocation ? selectedLocation.id : null;
       const platformId = selectedPlatform ? selectedPlatform.id : null;
-  
+
       const priorityObj = priorities.find(p => p.field_name === priority);
       const priorityId = priorityObj ? priorityObj.id : null;
       // CRITICAL: Make sure all required IDs are available
@@ -2749,7 +2768,7 @@ const TicketForm = () => {
       }
       // Prepare data according to backend serializer structure
       const formData = new FormData();
-  
+
       // Basic fields
       formData.append("entity_id", userEntity?.id || "");
       formData.append("type", typeId);
@@ -2758,7 +2777,7 @@ const TicketForm = () => {
       formData.append("platform", platformId);
       formData.append("priority", priorityId);
       formData.append("category", categoryId); // REQUIRED - use 'category' not 'category_id'
-  
+
       // Only append subcategory if it exists and is selected
       if (subcategoryId && subcategories.length > 0) {
         formData.append("subcategory", subcategoryId);
@@ -2766,10 +2785,10 @@ const TicketForm = () => {
 
       // ADD CONFIDENTIAL FIELD
       formData.append("confidential", isConfidential ? "true" : "false");
-  
+
       formData.append("title", title.trim());
       formData.append("description", description);
-  
+
       // Set requested to current logged-in user ID
       const requestedId = currentUser?.id;
       if (requestedId) {
@@ -2779,12 +2798,12 @@ const TicketForm = () => {
         setLoading(false);
         return;
       }
-  
+
       // Assignment fields (support multiple types and assignees)
       selectionTypes.forEach(type => {
         formData.append("assigned_to_type", type);
       });
-  
+
       if (selectionTypes.includes('user') && selectedUsers.length > 0) {
         selectedUsers.forEach(user => {
           formData.append("assignee", user.email);
@@ -2795,12 +2814,12 @@ const TicketForm = () => {
           formData.append("assigned_group", group.id);
         });
       }
-  
+
       // Watchers (CC)
       selectedWatchers.forEach(id => {
         formData.append("watchers", id);
       });
-  
+
       // Files
       files.forEach(file => {
         if (file instanceof File) {
@@ -2809,19 +2828,19 @@ const TicketForm = () => {
       });
       // Create ticket
       const result = await createTicket(formData);
-  
+
       if (result?.success || result?.ticket_no || result?.id) {
         const ticketNo = result.ticket_no || result.data?.ticket_no || result.id;
         toast.success(`Ticket #${ticketNo} created successfully!`);
         resetForm();
-    
+
         // Optional: Clear edit mode if it was set
         if (editMode) {
           localStorage.removeItem("editTicketId");
           setEditMode(false);
           setEditTicketId(null);
         }
-    
+
         // // Redirect to ticket history
         // setTimeout(() => {
         // window.location.href = "/tickethistory";
@@ -2829,14 +2848,14 @@ const TicketForm = () => {
       } else {
         // Handle different error response formats
         const errorMsg = result?.error ||
-                        result?.message ||
-                        result?.detail ||
-                        "Failed to create ticket";
+          result?.message ||
+          result?.detail ||
+          "Failed to create ticket";
         throw new Error(errorMsg);
       }
     } catch (err) {
       console.error("Ticket creation error:", err);
-  
+
       // More user-friendly error messages
       if (err.message.includes("category")) {
         toast.error("Category error: " + err.message);
@@ -2912,15 +2931,15 @@ const TicketForm = () => {
         setLoading(false);
         return;
       }
-  
+
       // Get IDs
       const typeObj = ticketTypes.find(t => t.field_name === ticketType);
       const typeId = typeObj ? typeObj.id : null;
-  
+
       const departmentId = selectedDepartment ? selectedDepartment.id : null;
       const locationId = selectedLocation ? selectedLocation.id : null;
       const platformId = selectedPlatform?.id;
-  
+
       const priorityObj = priorities.find(p => p.field_name === priority);
       const priorityId = priorityObj ? priorityObj.id : null;
       if (!typeId || !departmentId || !locationId || !platformId || !priorityId || !categoryId) {
@@ -2936,7 +2955,7 @@ const TicketForm = () => {
       formData.append("platform", platformId);
       formData.append("priority", priorityId);
       formData.append("category", categoryId);
-  
+
       // Only append subcategory if it exists and is selected
       if (subcategoryId && subcategories.length > 0) {
         formData.append("subcategory", subcategoryId);
@@ -2944,22 +2963,22 @@ const TicketForm = () => {
 
       // ADD CONFIDENTIAL FIELD ON UPDATE TOO
       formData.append("confidential", isConfidential ? "true" : "false");
-  
+
       formData.append("title", title.trim());
       formData.append("description", description);
-  
+
       // For update, do not override requested unless explicitly needed (keep original)
       // If you want to update it, uncomment below:
       // const requestedId = currentUser?.id;
       // if (requestedId) {
       // formData.append("requested", requestedId);
       // }
-  
+
       // Assignment fields (support multiple types and assignees)
       selectionTypes.forEach(type => {
         formData.append("assigned_to_type", type);
       });
-  
+
       if (selectionTypes.includes('user') && selectedUsers.length > 0) {
         selectedUsers.forEach(user => {
           formData.append("assignee", user.email);
@@ -2970,12 +2989,12 @@ const TicketForm = () => {
           formData.append("assigned_group", group.id);
         });
       }
-  
+
       // Watchers
       selectedWatchers.forEach(id => {
         formData.append("watchers", id);
       });
-  
+
       // Files
       files.forEach(file => {
         if (file instanceof File) {
@@ -2983,15 +3002,15 @@ const TicketForm = () => {
         }
       });
       const result = await updateTicket(editTicketId, formData);
-  
+
       if (result?.success || result?.message?.includes("success")) {
         toast.success("Ticket updated successfully!");
-    
+
         // Clear edit mode
         localStorage.removeItem("editTicketId");
         setEditMode(false);
         setEditTicketId(null);
-    
+
         // Redirect after a short delay
         // setTimeout(() => {
         // window.location.href = "/tickethistory";
@@ -3006,7 +3025,7 @@ const TicketForm = () => {
       setLoading(false);
     }
   };
-  
+
   const resetForm = () => {
     setTitle("");
     setDescription("");
@@ -3025,13 +3044,13 @@ const TicketForm = () => {
     setSelectedPlatform(null);
     setRequestedUser(null);
   };
-  
+
   const handleCancel = () => {
     resetForm();
     localStorage.removeItem("editTicketId");
     toast.info("Form cancelled.");
   };
-  
+
   const handleDescriptionChange = (e) => {
     if (e.target.value.length <= 5000) setDescription(e.target.value);
   };
@@ -3040,10 +3059,10 @@ const TicketForm = () => {
   // Filter ticketTypes to only "Incident"
   const incidentType = ticketTypes.find(t => t.field_name === "Incident");
   return (
-    <Box sx={{ p: 3, display: "flex", justifyContent: "center" }}>
-      <Card sx={{ width: "100%", maxWidth: "1200px", borderRadius: 4, p: 3, boxShadow: 3 }}>
+    <Box sx={{ p: { xs: 1, md: 2 }, display: "flex", justifyContent: "center" }}>
+      <Card sx={{ width: "100%", maxWidth: "1400px", borderRadius: 4, p: 3, }}>
         <CardContent>
-          <Box sx={{ mb: 3 }}>
+          <Box sx={{ mt: 1 }}>
             <Typography fontSize={30} fontWeight={700}>
               {editMode ? `Edit Ticket #${editTicketId}` : "Create New Ticket"}
             </Typography>
@@ -3054,10 +3073,12 @@ const TicketForm = () => {
               </Box>
             )}
           </Box>
-          <Grid container spacing={3}>
+          <Grid container spacing={1}>
             {/* Ticket Type - Only show Incident */}
-            <Grid size={{xs:12,sm:6,md:3}}>
-              <Typography fontSize={15} fontWeight={600}>Type *</Typography>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography fontSize={15} fontWeight={600}>
+                Type <span style={{ color: "red" }}>*</span>
+              </Typography>
               <TextField
                 select
                 fullWidth
@@ -3065,7 +3086,7 @@ const TicketForm = () => {
                 value={ticketType}
                 onChange={(e) => setTicketType(e.target.value)}
                 label="Select Type"
-                sx={{ mt: 1 }}
+                sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
                 disabled={editMode} // Disable in edit mode if needed
               >
                 {incidentType && (
@@ -3074,8 +3095,10 @@ const TicketForm = () => {
               </TextField>
             </Grid>
             {/* Department */}
-            <Grid size={{xs:12,sm:6,md:3}}>
-              <Typography fontSize={15} fontWeight={600}>Department *</Typography>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography fontSize={15} fontWeight={600}>
+                Department <span style={{ color: "red" }}>*</span>
+              </Typography>
               <Autocomplete
                 value={selectedDepartment}
                 options={departments}
@@ -3083,13 +3106,15 @@ const TicketForm = () => {
                 isOptionEqualToValue={(option, value) => option.id === value?.id}
                 onChange={(_, value) => setSelectedDepartment(value)}
                 renderInput={(params) => (
-                  <TextField {...params} label="Department" size="small" sx={{ mt: 1 }} />
+                  <TextField {...params} label="Department" size="small" sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }} />
                 )}
               />
             </Grid>
             {/* Location */}
-            <Grid size={{xs:12,sm:6,md:3}}>
-              <Typography fontSize={15} fontWeight={600}>Location *</Typography>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography fontSize={15} fontWeight={600}>
+                Location <span style={{ color: "red" }}>*</span>
+              </Typography>
               <Autocomplete
                 value={selectedLocation}
                 options={locations}
@@ -3097,14 +3122,16 @@ const TicketForm = () => {
                 isOptionEqualToValue={(option, value) => option.id === value?.id}
                 onChange={(_, value) => setSelectedLocation(value)}
                 renderInput={(params) => (
-                  <TextField {...params} label="Location" size="small" sx={{ mt: 1 }} />
+                  <TextField {...params} label="Location" size="small" sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }} />
                 )}
               />
             </Grid>
             {/* Priority */}
-            <Grid size={{xs:12,sm:6,md:3}}>
-              <Typography fontWeight={600}>Priority *</Typography>
-              <FormControl fullWidth size="small" sx={{ mt: 1 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography fontWeight={600}>
+                Priority <span style={{ color: "red" }}>*</span>
+              </Typography>
+              <FormControl fullWidth size="small" sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }}>
                 <InputLabel>Select Priority</InputLabel>
                 <Select value={priority} label="Priority" onChange={(e) => setPriority(e.target.value)}>
                   {priorities.map((p) => (
@@ -3114,7 +3141,9 @@ const TicketForm = () => {
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-              <Typography fontSize={15} fontWeight={600}>Platform *</Typography>
+              <Typography fontSize={15} fontWeight={600}>
+                Platform <span style={{ color: "red" }}>*</span>
+              </Typography>
               <Autocomplete
                 value={selectedPlatform}
                 onChange={(_, v) => setSelectedPlatform(v)}
@@ -3133,8 +3162,10 @@ const TicketForm = () => {
               />
             </Grid>
             {/* Category */}
-            <Grid size={{xs:12,sm:6,md:3}}>
-              <Typography fontSize={15} fontWeight={600}>Category *</Typography>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography fontSize={15} fontWeight={600}>
+                Category <span style={{ color: "red" }}>*</span>
+              </Typography>
               <Autocomplete
                 options={categories}
                 getOptionLabel={(o) => o.category_name || ""}
@@ -3190,13 +3221,13 @@ const TicketForm = () => {
                 //   }
                 // }}
                 renderInput={(params) => (
-                  <TextField {...params} label="Select Category" size="small" required sx={{ mt: 1 }} />
+                  <TextField {...params} label="Select Category" size="small" required sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }} />
                 )}
               />
             </Grid>
             {/* Subcategory - Only show if subcategories exist */}
             {shouldShowSubcategory && (
-              <Grid size={{xs:12,sm:6,md:3}}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Typography fontSize={15} fontWeight={600}>Subcategory</Typography>
                 <Autocomplete
                   options={subcategories}
@@ -3295,8 +3326,8 @@ const TicketForm = () => {
               </Grid>
             )}
             {/* Assignment Type (User/Group) - Multiple */}
-            <Grid size={{xs:12,sm:6,md:3}}>
-              <Typography fontSize={15} fontWeight={600}>Assign To *</Typography>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <Typography fontSize={15} fontWeight={600}>Assign To</Typography>
               <Autocomplete
                 multiple
                 options={[{ label: 'User', type: 'user' }, { label: 'Group', type: 'group' }]}
@@ -3304,14 +3335,16 @@ const TicketForm = () => {
                 value={selectionTypes.map(type => ({ label: type === 'user' ? 'User' : 'Group', type }))}
                 onChange={handleTypesSelection}
                 renderInput={(params) => (
-                  <TextField {...params} placeholder="Select User and/or Group" size="small" required sx={{ mt: 1 }} />
+                  <TextField {...params} placeholder="Select User and/or Group" size="small" required sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }} />
                 )}
               />
             </Grid>
             {/* Users Dropdown (shown when 'user' is selected) */}
             {selectionTypes.includes('user') && (
-              <Grid size={{xs:12,sm:6,md:3}}>
-                <Typography fontSize={15} fontWeight={600}>Select Users *</Typography>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Typography fontSize={15} fontWeight={600}>
+                  Select Users <span style={{ color: "red" }}>*</span>
+                </Typography>
                 <Autocomplete
                   multiple
                   options={allUsers}
@@ -3319,15 +3352,17 @@ const TicketForm = () => {
                   value={selectedUsers}
                   onChange={handleUsersSelection}
                   renderInput={(params) => (
-                    <TextField {...params} placeholder="Select Users" size="small" required sx={{ mt: 1 }} />
+                    <TextField {...params} placeholder="Select Users" size="small" required sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }} />
                   )}
                 />
               </Grid>
             )}
             {/* Groups Dropdown (shown when 'group' is selected) */}
             {selectionTypes.includes('group') && (
-              <Grid size={{xs:12,sm:6,md:3}}>
-                <Typography fontSize={15} fontWeight={600}>Select Groups *</Typography>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Typography fontSize={15} fontWeight={600}>
+                  Select Groups <span style={{ color: "red" }}>*</span>
+                </Typography>
                 <Autocomplete
                   multiple
                   options={watcherGroups}
@@ -3335,7 +3370,7 @@ const TicketForm = () => {
                   value={selectedGroups}
                   onChange={handleGroupsSelection}
                   renderInput={(params) => (
-                    <TextField {...params} placeholder="Select Groups" size="small" required sx={{ mt: 1 }} />
+                    <TextField {...params} placeholder="Select Groups" size="small" required sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }} />
                   )}
                 />
               </Grid>
@@ -3343,83 +3378,198 @@ const TicketForm = () => {
           </Grid>
           {/* Title */}
           <Grid size={12}>
-            <Box sx={{ mt: 3 }}>
-              <Typography fontSize={15} fontWeight={600}>Title *</Typography>
+            <Box sx={{ mt: 1 }}>
+              <Typography fontSize={15} fontWeight={600}>
+                Title <span style={{ color: "red" }}>*</span>
+              </Typography>
               <TextField
                 fullWidth
                 size="small"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Enter ticket title"
-                sx={{ mt: 1 }}
+                sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
               />
             </Box>
           </Grid>
           {/* Description */}
           <Grid size={12}>
-            <Box sx={{ mt: 3 }}>
-              <Typography fontSize={15} fontWeight={600}>Description *</Typography>
-              <TextField
-                fullWidth
-                multiline
-                rows={4}
-                value={description}
-                onChange={handleDescriptionChange}
-                placeholder="Enter ticket description (max 5000 characters)"
-                sx={{ mt: 1 }}
-              />
-              <Typography textAlign="right" sx={{ mt: 0.5 }} color="text.secondary">
-                {description.length}/5000 characters
+            <Box sx={{ mt: 1 }}>
+              <Typography fontSize={15} fontWeight={600}>
+                Description <span style={{ color: "red" }}>*</span>
               </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: { xs: 0.5, sm: 1 },
+                  mt: 1,
+                  mb: 1,
+                  background: "#f4f4f4",
+                  borderRadius: 2,
+                  p: { xs: 0.5, sm: 1 },
+                }}
+              >
+                <IconButton onClick={() => editor.chain().focus().toggleBold().run()}>
+                  <FormatBoldIcon />
+                </IconButton>
+                <IconButton onClick={() => editor.chain().focus().toggleItalic().run()}>
+                  <FormatItalicIcon />
+                </IconButton>
+                <IconButton onClick={() => editor.chain().focus().setTextAlign("left").run()}>
+                  <FormatAlignLeftIcon />
+                </IconButton>
+                <IconButton onClick={() => editor.chain().focus().setTextAlign("center").run()}>
+                  <FormatAlignCenterIcon />
+                </IconButton>
+                <IconButton onClick={() => editor.chain().focus().setTextAlign("right").run()}>
+                  <FormatAlignRightIcon />
+                </IconButton>
+                <IconButton onClick={() => editor.chain().focus().toggleBulletList().run()}>
+                  <FormatListBulletedIcon />
+                </IconButton>
+                <IconButton onClick={() => editor.chain().focus().toggleOrderedList().run()}>
+                  <FormatListNumberedIcon />
+                </IconButton>
+              </Box>
+              <Box
+                sx={{
+                  border: "1px solid #cfcfcf",
+                  borderRadius: 3,
+                  p: 2,
+                  minHeight: 150,
+                }}
+              >
+                <EditorContent editor={editor} className="editor-area" />
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <Typography fontWeight={600}>Attachments (Max 5 file & 5 Mb)</Typography>
+                <Typography textAlign="right" sx={{ mt: 0.5 }} color="text.secondary">
+                  {editor?.getText().length || 0}/5000 characters
+                </Typography>
+              </Box>
             </Box>
           </Grid>
           {/* Files Upload */}
           <Grid size={12}>
-            <Box sx={{ mt: 3 }}>
-              <Typography fontSize={15} fontWeight={600}>Attachments</Typography>
-              <input
-                type="file"
-                multiple
-                onChange={handleFileChange}
-                accept=".pdf,.png,.jpg,.jpeg"
-                style={{ marginTop: '8px' }}
-              />
-              {files.length > 0 && (
-                <Box sx={{ mt: 2 }}>
-                  {files.map((file, index) => (
-                    <Chip
-                      key={index}
-                      label={file.name}
-                      onDelete={() => removeFile(index)}
-                      sx={{ mr: 1, mb: 1 }}
-                    />
-                  ))}
-                </Box>
-              )}
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 1.5 }}>
+              <Box>
+                <Button variant="contained" component="label" disabled={files.length >= MAX_FILES} sx={{ px: 4, py: 1, borderRadius: "10px", fontWeight: 600, background: "linear-gradient(135deg, #667eea, #764ba2)", opacity: files.length >= MAX_FILES ? 0.6 : 1 }}>
+                  Choose Files ({files.length})
+                  <input ref={fileInputRef} type="file" hidden multiple accept=".pdf,.png,.jpg,.jpeg" onChange={handleFileChange} />
+                </Button>
+              </Box>
+              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2, alignItems: "center" }}>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={handleCancel}
+                  size="small"
+                  sx={{ px: 5, "&:hover": { backgroundColor: "#e41010ff" } }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="contained"
+                  size="small"
+                  onClick={editMode ? handleUpdateTicket : handleCreateTicket}
+                  disabled={loading}
+                  sx={{ px: 5, backgroundColor: "#22c55e", "&:hover": { backgroundColor: "#16a34a" } }}
+                >
+                  {loading ? "Saving..." : editMode ? "Update" : "Create"}
+                </Button>
+              </Box> 
             </Box>
+            {files.length > 0 && (
+              <Box
+                sx={{
+                  mt: 2,
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 2,
+                }}
+              >
+                {files.map((file, index) => {
+                  const isImage = file.type.startsWith("image/");
+                  const previewUrl = URL.createObjectURL(file);
+
+                  return (
+                    <Box
+                      key={index}
+                      sx={{
+                        width: 120,
+                        border: "1px solid #E2E8F0",
+                        borderRadius: 2,
+                        p: 1,
+                        textAlign: "center",
+                        position: "relative",
+                      }}
+                    >
+                      <IconButton
+                        size="small"
+                        onClick={() => removeFile(index)}
+                        sx={{
+                          position: "absolute",
+                          top: -8,
+                          right: -8,
+                          color: "red",
+                          bgcolor: "white",
+                          boxShadow: 1,
+                        }}
+                      >
+                        <CloseIcon />
+                      </IconButton>
+
+                      {isImage ? (
+                        <Box
+                          component="img"
+                          src={previewUrl}
+                          alt={file.name}
+                          sx={{
+                            width: "100%",
+                            height: 80,
+                            objectFit: "cover",
+                            borderRadius: 1,
+                          }}
+                        />
+                      ) : (
+                        <Box
+                          sx={{
+                            height: 80,
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            bgcolor: "#EDF2F7",
+                            borderRadius: 1,
+                            fontWeight: 600,
+                            color: "#4A5568",
+                          }}
+                        >
+                          PDF
+                        </Box>
+                      )}
+
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          mt: 0.5,
+                          display: "block",
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {file.name}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
           </Grid>
-          {/* Action Buttons */}
-          <Box sx={{ mt: 4, display: "flex", justifyContent: "flex-end", gap: 2 }}>
-            <Button
-              variant="contained"
-              onClick={handleCancel}
-              sx={{ px: 5, backgroundColor: "#6b7280", "&:hover": { backgroundColor: "#4b5563" } }}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="contained"
-              onClick={editMode ? handleUpdateTicket : handleCreateTicket}
-              disabled={loading}
-              sx={{ px: 5, backgroundColor: "#22c55e", "&:hover": { backgroundColor: "#16a34a" } }}
-            >
-              {loading ? "Saving..." : editMode ? "Update Ticket" : "Create Ticket"}
-            </Button>
-          </Box>
         </CardContent>
       </Card>
-    </Box>
+    </Box >
   );
 };
 export default TicketForm;
- 
