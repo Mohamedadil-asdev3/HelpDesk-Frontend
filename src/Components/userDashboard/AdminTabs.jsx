@@ -1968,13 +1968,1123 @@
 
 // export default AdminTabs;
 
+// import { useEffect, useMemo, useState } from "react";
+// import { useTheme } from "@mui/material/styles";
+// import {
+//   Box, Card, CardContent, Typography, Grid, TextField, Button,
+//   Table, TableHead, TableRow, TableCell, TableBody, TableContainer,
+//   useMediaQuery, Autocomplete, Stack, CircularProgress, IconButton,
+//   Drawer, Divider, Chip, Avatar, Icon, Tooltip, Pagination, Tabs, Tab
+// } from "@mui/material";
+// import NewReleasesIcon from '@mui/icons-material/NewReleases';
+// import DoneAllIcon from '@mui/icons-material/DoneAll';
+// import LockIcon from '@mui/icons-material/Lock';
+// import VisibilityIcon from '@mui/icons-material/Visibility';
+// import ChatIcon from '@mui/icons-material/Chat';
+// import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+// import SendIcon from '@mui/icons-material/Send';
+// import SecurityIcon from "@mui/icons-material/Security";
+// import CancelIcon from '@mui/icons-material/Cancel';
+// import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
+// import CloseIcon from '@mui/icons-material/Close';
+// import { useNavigate } from "react-router-dom";
+// import { toast } from "react-toastify";
+// import { fetchAdminMessages, sendMessage, fetchAdminTickets, updateTicket } from "../../Api";
+
+// const AdminTabs = () => {
+//   const theme = useTheme();
+//   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+//   const isTablet = useMediaQuery(theme.breakpoints.between("sm", "md"));
+//   const navigate = useNavigate();
+
+//   const [selectedType, setSelectedType] = useState("new_assigned");
+//   const [search, setSearch] = useState("");
+//   const [department, setDepartment] = useState("");
+//   const [adminData, setAdminData] = useState(null);
+//   const [loading, setLoading] = useState(true);
+
+//   // Chat states
+//   const [showFollowUpChat, setShowFollowUpChat] = useState(false);
+//   const [followUpChats, setFollowUpChats] = useState([]);
+//   const [loadingFollowUpChats, setLoadingFollowUpChats] = useState(false);
+//   const [newFollowUpMessage, setNewFollowUpMessage] = useState("");
+//   const [sendingFollowUpMessage, setSendingFollowUpMessage] = useState(false);
+//   const [currentChatTicket, setCurrentChatTicket] = useState(null);
+//   const [assignee, setAssignee] = useState(null);
+//   const [currentUserId, setCurrentUserId] = useState(null);
+//   const [currentUserName, setCurrentUserName] = useState("You");
+//   const [currentEntityId, setCurrentEntityId] = useState(null);
+
+//   const [page, setPage] = useState(0);
+//   const [rowsPerPage] = useState(5);
+//   const [chatTab, setChatTab] = useState(0);
+
+//   // Ticket data
+//   const [currentTicketData, setCurrentTicketData] = useState(null);
+
+//   // Protected message
+//   const [isProtectedMode, setIsProtectedMode] = useState(false);
+//   const [revealedMessages, setRevealedMessages] = useState(new Set());
+
+//   // Clarification states
+//   const [clarificationText, setClarificationText] = useState("");
+//   const [sendingClarification, setSendingClarification] = useState(false);
+
+//   // Load current user
+//   useEffect(() => {
+//     const userStr = localStorage.getItem("user");
+//     if (userStr) {
+//       const user = JSON.parse(userStr);
+//       setCurrentUserId(user?.id);
+//       setCurrentUserName(user?.name || user?.username || "You");
+//       setCurrentEntityId(user?.entity_id || null);
+//     }
+//   }, []);
+
+//   // Fetch admin data
+//   useEffect(() => {
+//     const loadAdminData = async () => {
+//       setLoading(true);
+//       try {
+//         const response = await fetchAdminTickets();
+//         setAdminData(response || {});
+//       } catch (err) {
+//         console.error("Failed to load admin data:", err);
+//         toast.error("Failed to load dashboard data");
+//         setAdminData({});
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+//     loadAdminData();
+//   }, []);
+
+//     const RequestTabelCol = [
+//         { id: 1, title: <>Ticket ID</> },
+//         { id: 2, title: <>Title</> },
+//         { id: 3, title: <>Description</> },
+//         { id: 4, title: <>Status<br />Priority</> },
+//         { id: 5, title: <>Category<br />Subcategory</> },
+//         { id: 6, title: <>Department<br />Location</> },
+//         { id: 7, title: <>Requested By</> },
+//         { id: 8, title: <>Open Date<br />Last Update</> },
+//         { id: 9, title: <>Action</> },
+//     ];
+
+//     // Status cards - using exact keys from your API
+//     const statusCards = [
+//         { id: "new_assigned", label: "New", color: "warning", icon: <NewReleasesIcon />, count: adminData?.admin_stats?.new_assigned || 0 },
+//         { id: "solved", label: "Solved", color: "success", icon: <DoneAllIcon />, count: adminData?.admin_stats?.solved || 0 },
+//         { id: "closed", label: "Closed", color: "info", icon: <LockIcon />, count: adminData?.admin_stats?.closed || 0 },
+//         { id: "cancelled", label: "Cancelled", color: "error", icon: <CancelIcon />, count: adminData?.admin_stats?.cancelled || 0 },
+//         { id: "clarification_applied", label: "Clar. Supplied", color: "primary", icon: <QuestionAnswerIcon />, count: adminData?.admin_stats?.clarification_applied || 0 },
+//         { id: "clarification_required", label: "Clar. Required", color: "error", icon: <HelpOutlineIcon />, count: adminData?.admin_stats?.clarification_required || 0 },
+//     ];
+
+//   const selectedTickets = useMemo(() => {
+//     if (!adminData) return [];
+//     const ticketMap = {
+//       new_assigned: adminData?.admin_stats?.new_assigned_tickets || [],
+//       solved: adminData?.admin_stats?.solved_tickets || [],
+//       closed: adminData?.admin_stats?.closed_tickets || [],
+//       cancelled: adminData?.admin_stats?.cancelled_tickets || [],
+//       clarification_applied: adminData?.admin_stats?.clarification_applied_tickets || [],
+//       clarification_required: adminData?.admin_stats?.clarification_required_tickets || [],
+//     };
+//     return ticketMap[selectedType] || [];
+//   }, [adminData, selectedType]);
+
+//   const departmentList = useMemo(() => {
+//     return [...new Set(selectedTickets.map(t => t.department_detail?.field_name).filter(Boolean))];
+//   }, [selectedTickets]);
+
+//   const filteredTickets = useMemo(() => {
+//     let list = selectedTickets;
+//     if (department) {
+//       list = list.filter(t => t.department_detail?.field_name === department);
+//     }
+//     if (search.trim()) {
+//       const term = search.toLowerCase().trim();
+//       list = list.filter(t =>
+//         String(t.ticket_no || "").toLowerCase().includes(term) ||
+//         (t.title || "").toLowerCase().includes(term) ||
+//         (t.description || "").toLowerCase().includes(term) ||
+//         (t.status_detail?.field_values || "").toLowerCase().includes(term) ||
+//         (t.priority_detail?.field_values || "").toLowerCase().includes(term) ||
+//         (t.requested_detail?.email || "").toLowerCase().includes(term) ||
+//         (t.category_detail?.category_name || "").toLowerCase().includes(term)
+//       );
+//     }
+//     return list;
+//   }, [selectedTickets, search, department]);
+
+//   const getInitials = (name) => {
+//     if (!name) return "U";
+//     return name.split(' ').map(n => n[0]?.toUpperCase() || '').join('').substring(0, 2);
+//   };
+
+//   const groupedChats = useMemo(() => {
+//     const groups = {};
+//     followUpChats.forEach(msg => {
+//       const date = new Date(msg.createdon).toLocaleDateString();
+//       if (!groups[date]) groups[date] = [];
+//       groups[date].push(msg);
+//     });
+//     return Object.entries(groups)
+//       .map(([date, msgs]) => ({ date, messages: msgs }))
+//       .sort((a, b) => new Date(a.date) - new Date(b.date));
+//   }, [followUpChats]);
+
+//   const handleTicketClick = (ticketNo) => {
+//     localStorage.setItem('selectedTicketId', ticketNo);
+//     navigate('/Approval');
+//   };
+
+//   // FIXED: Pass the ticket's primary key (t.id) to fetchAdminMessages
+//   const handleChatDrawerOpen = async (ticket) => {
+//     if (!ticket || !currentUserId) {
+//       toast.error("Missing ticket or user info");
+//       return;
+//     }
+
+//     const assignees = ticket.assigned_users || ticket.assignees || [];
+//     setAssignee(assignees.length > 0 ? assignees[0] : null);
+//     setCurrentChatTicket({ id: ticket.ticket_no, title: ticket.title });
+//     setCurrentTicketData(ticket);
+//     setShowFollowUpChat(true);
+//     setLoadingFollowUpChats(true);
+//     setFollowUpChats([]);
+
+//     try {
+//       // ← CORRECT: Use ticket.id (primary key, e.g. 407)
+//       const messages = await fetchAdminMessages(ticket.id);
+
+//       const sortedMessages = messages.sort((a, b) => new Date(a.createdon) - new Date(b.createdon));
+//       setFollowUpChats(sortedMessages);
+//     } catch (err) {
+//       console.error("Failed to load messages:", err);
+//       toast.error("Failed to load messages");
+//       setFollowUpChats([]);
+//     } finally {
+//       setLoadingFollowUpChats(false);
+//     }
+//   };
+
+//   const sendFollowUpMessageHandler = async (text) => {
+//     if (!text.trim() || !assignee || !currentChatTicket?.id) {
+//       toast.error("Cannot send message");
+//       return;
+//     }
+
+//     setSendingFollowUpMessage(true);
+//     try {
+//       await sendMessage({
+//         receiver: assignee.id,
+//         ticket_no: currentChatTicket.id,
+//         message: text.trim(),
+//         protected: isProtectedMode,
+//       });
+
+//       // Refetch using currentTicketData.id (primary key)
+//       const messages = await fetchAdminMessages(currentTicketData.id);
+//       setFollowUpChats(messages.sort((a, b) => new Date(a.createdon) - new Date(b.createdon)));
+
+//       setNewFollowUpMessage("");
+//       setIsProtectedMode(false);
+//       toast.success("Message sent!");
+//     } catch (err) {
+//       toast.error("Failed to send message");
+//     } finally {
+//       setSendingFollowUpMessage(false);
+//     }
+//   };
+
+//   const handleSolutionSubmit = async () => {
+//     if (!currentChatTicket?.id || !currentTicketData) {
+//       toast.error("Ticket not loaded");
+//       return;
+//     }
+
+//     if (!currentEntityId) {
+//       toast.error("Your entity is not configured. Contact admin.");
+//       return;
+//     }
+
+//     try {
+//       const formData = new FormData();
+//       formData.append("title", currentTicketData.title || "");
+//       formData.append("description", currentTicketData.description || "");
+//       formData.append("category", currentTicketData.category || currentTicketData.category_detail?.id || "");
+//       formData.append("status", "156");
+//       formData.append("entity_id", String(currentEntityId));
+
+//       const assignedUsers = currentTicketData.assignees_detail || currentTicketData.assigned_users || [];
+//       const assignedGroups = currentTicketData.assigned_groups_detail || currentTicketData.assigned_groups || [];
+
+//       let assignedTypeIndex = 0;
+//       assignedUsers.forEach((user, index) => {
+//         if (user?.email) formData.append(`assignee[${index}]`, user.email);
+//       });
+//       if (assignedUsers.length > 0) formData.append(`assigned_to_type[${assignedTypeIndex++}]`, "user");
+
+//       assignedGroups.forEach((group, index) => {
+//         if (group?.id) formData.append(`assigned_group[${index}]`, group.id);
+//       });
+//       if (assignedGroups.length > 0) formData.append(`assigned_to_type[${assignedTypeIndex}]`, "group");
+
+//       const result = await updateTicket(currentTicketData.id, formData);
+//       if (!result.success) throw new Error(result.error || "Failed");
+
+//       toast.success("Ticket marked as Solved successfully!");
+//       setShowFollowUpChat(false);
+
+//       const refreshed = await fetchAdminTickets();
+//       setAdminData(refreshed);
+//       setSelectedType("solved");
+//     } catch (err) {
+//       console.error(err);
+//       toast.error("Failed to mark as solved");
+//     }
+//   };
+
+//   const handleSendClarification = async () => {
+//     if (!clarificationText.trim()) {
+//       toast.error("Please enter a clarification message");
+//       return;
+//     }
+//     if (!currentChatTicket?.id || !currentTicketData || !currentEntityId) {
+//       toast.error("Missing required data");
+//       return;
+//     }
+
+//     setSendingClarification(true);
+//     try {
+//       const clarificationMessage = `[CLARIFICATION REQUEST]\n\n${clarificationText.trim()}`;
+//       await sendFollowUpMessageHandler(clarificationMessage);
+
+//       const formData = new FormData();
+//       formData.append("status", "157");
+//       formData.append("entity_id", String(currentEntityId));
+
+//       await updateTicket(currentTicketData.id, formData);
+
+//       toast.success("Clarification request sent!");
+//       setClarificationText("");
+//       setChatTab(0);
+
+//       const messages = await fetchAdminMessages(currentTicketData.id);
+//       setFollowUpChats(messages.sort((a, b) => new Date(a.createdon) - new Date(b.createdon)));
+//     } catch (err) {
+//       toast.error("Failed to send clarification");
+//     } finally {
+//       setSendingClarification(false);
+//     }
+//   };
+
+//   const headingMap = {
+//     new_assigned: "NEW TICKETS",
+//     solved: "SOLVED TICKETS",
+//     closed: "CLOSED TICKETS",
+//     cancelled: "CANCEL TICKETS",
+//     clarification_applied: "CLARIFICATION APPLIED",
+//     clarification_required: "CLARIFICATION REQUIRED",
+//   };
+
+//   const handleCardClick = (type) => {
+//     setSelectedType(type);
+//     setSearch("");
+//     setDepartment("");
+//     setPage(0);
+//   };
+
+//   const clearFilters = () => {
+//     setSearch("");
+//     setDepartment("");
+//     setPage(0);
+//   };
+
+//   const priorityColors = {
+//     "Critical": "#D32F2F",
+//     "Very High": "#b43d3bff",
+//     "High": "#FB8C00",
+//     "Medium": "#FDD835",
+//     "Low": "#43A047",
+//     "Very Low": "#1E88E5",
+//   };
+
+//   const statusColors = {
+//     "Pending": "#EF6C00",
+//     "Approved": "#2E7D32",
+//     "On Hold": "#1565C0",
+//     "Rejected": "#C62828",
+//     "SLA Breached": "#F9A825",
+//   };
+
+//   if (loading) {
+//     return (
+//       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "70vh" }}>
+//         <CircularProgress />
+//         <Typography sx={{ mt: 2 }}>Loading admin dashboard...</Typography>
+//       </Box>
+//     );
+//   }
+
+//   if (!adminData || Object.keys(adminData).length === 0) {
+//     return (
+//       <Box sx={{ p: 4, textAlign: "center" }}>
+//         <Typography color="error" variant="h6">No data available</Typography>
+//         <Typography color="text.secondary">Please check your connection or permissions.</Typography>
+//       </Box>
+//     );
+//   }
+
+//     return (
+//         <Box sx={{ width: "100%", mb: 2 }}>
+//             <Grid container spacing={1} sx={{ mb: 2 }}>
+//                 {statusCards.map((card) => (
+//                     <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }} key={card.id}>
+//                         <Card
+//                             onClick={() => handleCardClick(card.id)}
+//                             sx={{
+//                                 transition: "0.3s ease",
+//                                 maxWidth: 300,
+//                                 maxHeight: 110,
+//                                 minHeight: 100,
+//                                 borderRadius: 5,
+//                                 "&:hover": {
+//                                     background: "linear-gradient(135deg, #667eea, #764ba2)",
+//                                     color: "#fff",
+//                                     transform: "scale(1.03)",
+//                                 }
+//                             }}
+//                         >
+//                             <CardContent sx={{ display: "flex", gap: 2, alignItems: "center" }}>
+//                                 <Box
+//                                     sx={{
+//                                         width: { xs: 50, sm: 40, md: 50 },
+//                                         height: { xs: 50, sm: 40, md: 50 },
+//                                         display: "flex",
+//                                         alignItems: "center",
+//                                         justifyContent: "center",
+//                                         borderRadius: 2,
+//                                         bgcolor: `${card.color}.main`,
+//                                         color: "white"
+//                                     }}
+//                                 >
+//                                     <Icon sx={{ fontSize: { xs: 25, sm: 18, md: 25 } }}>{card.icon}</Icon>
+//                                 </Box>
+//                                 <Box>
+//                                     <Typography fontSize={{ xs: 25, sm: 20, md: 25 }} fontWeight={600}>{card.count}</Typography>
+//                                     <Typography fontSize={{ xs: 20, sm: 14, md: 20 }} fontWeight={550}>{card.label}</Typography>
+//                                 </Box>
+//                             </CardContent>
+//                         </Card>
+//                     </Grid>
+//                 ))}
+//             </Grid>
+//             <Card sx={{ borderRadius: 3, boxShadow: 3 }}>
+//                 <CardContent>
+//                     {selectedType && (
+//                         <Box>
+//                             <Box
+//                                 sx={{
+//                                     display: "flex",
+//                                     flexDirection: isMobile || isTablet ? "column" : "row",
+//                                     justifyContent: !isMobile || !isTablet ? "space-between" : undefined,
+//                                     alignItems: isMobile ? "flex-start" : "center",
+//                                     mb: 4,
+//                                     gap: isMobile ? 2 : 0,
+//                                 }}
+//                             >
+//                                 <Typography
+//                                     variant="h5"
+//                                     fontWeight={700}
+//                                     sx={{
+//                                         color: "#2D3748",
+//                                         width: isMobile || isTablet ? "100%" : "auto",
+//                                     }}
+//                                 >
+//                                     {headingMap[selectedType] || "Tickets"}
+//                                 </Typography>
+//                                 <Box
+//                                     sx={{
+//                                         display: "flex",
+//                                         flexDirection: isMobile ? "column" : "row",
+//                                         flexWrap: isTablet ? "wrap" : "nowrap",
+//                                         gap: 2,
+//                                         width: isMobile || isTablet ? "100%" : "auto",
+//                                         justifyContent: isTablet ? "flex-start" : "flex-end",
+//                                         mt: isTablet ? 1.5 : 0
+//                                     }}
+//                                 >
+//                                     <Autocomplete
+//                                         options={departmentList}
+//                                         value={department}
+//                                         onChange={(e, newValue) => setDepartment(newValue)}
+//                                         sx={{
+//                                             width: { xs: "100%", sm: 300, md: 200 },
+//                                             "& .MuiOutlinedInput-root": {
+//                                                 borderRadius: 2,
+//                                             }
+//                                         }}
+//                                         renderInput={(params) => (
+//                                             <TextField {...params} label="Department" size="small" variant="outlined" />
+//                                         )}
+//                                     />
+//                                     <TextField
+//                                         size="small"
+//                                         label="Search"
+//                                         value={search}
+//                                         onChange={(e) => setSearch(e.target.value)}
+//                                         variant="outlined"
+//                                         sx={{
+//                                             width: { xs: "100%", sm: 300, md: 200 },
+//                                             "& .MuiOutlinedInput-root": {
+//                                                 borderRadius: 2,
+//                                             }
+//                                         }}
+//                                     />
+//                                     <Button
+//                                         variant="outlined"
+//                                         fullWidth={isMobile}
+//                                         onClick={clearFilters}
+//                                         sx={{
+//                                             borderRadius: 2,
+//                                             color: "info",
+//                                             "&:hover": {
+//                                                 borderColor: "#667eea",
+//                                                 backgroundColor: "#667eea10"
+//                                             }
+//                                         }}
+//                                     >
+//                                         Clear
+//                                     </Button>
+//                                 </Box>
+//                             </Box>
+//                             {isMobile ? (
+//                                 <Box>
+//                                     {filteredTickets.length > 0 ? (
+//                                         filteredTickets
+//                                             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+//                                             .map((t) => (
+//                                                 <Card
+//                                                     sx={{ mb: 2, borderRadius: 2 }}
+//                                                     key={t.id}
+//                                                 >
+//                                                     <CardContent>
+//                                                         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+//                                                             <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+//                                                                 <Typography fontWeight={700} color="#667eea">
+//                                                                     #{t.ticket_no} -
+//                                                                 </Typography>
+//                                                                 <Chip
+//                                                                     label={t.priority_detail?.field_values || "-"}
+//                                                                     size="small"
+//                                                                     sx={{
+//                                                                         fontWeight: 800,
+//                                                                         borderRadius: 50,
+//                                                                         background: priorityColors[t.priority_detail?.field_values] || "#666",
+//                                                                         color: "white",
+//                                                                         animation: t.priority_detail?.field_values === "Critical" ? "pulse 2s infinite" : "none",
+//                                                                     }}
+//                                                                 />
+//                                                             </Box>
+//                                                             <Chip
+//                                                                 label={t.status_detail?.field_values}
+//                                                                 size="small"
+//                                                                 sx={{
+//                                                                     fontWeight: 700,
+//                                                                     background: statusColors[t.status_detail?.field_values] || "#666",
+//                                                                     color: "white",
+//                                                                     borderRadius: 50,
+//                                                                     py: 0.5,
+//                                                                     px: 1,
+//                                                                 }}
+//                                                             />
+//                                                         </Box>
+//                                                         <Tooltip
+//                                                             title={t.title}
+//                                                             arrow
+//                                                             placement="top"
+//                                                         >
+//                                                             <Typography
+//                                                                 sx={{
+//                                                                     maxWidth: 200,
+//                                                                     color: "text.secondary",
+//                                                                     whiteSpace: "nowrap",
+//                                                                     overflow: "hidden",
+//                                                                     textOverflow: "ellipsis",
+//                                                                     cursor: "pointer",
+//                                                                     mt: 0.5
+//                                                                 }}
+//                                                             >
+//                                                                 {t.title}
+//                                                             </Typography>
+//                                                         </Tooltip>
+//                                                         <Tooltip
+//                                                             title={t.description || "No description"}
+//                                                             arrow
+//                                                             placement="top"
+//                                                         >
+//                                                             <Typography
+//                                                                 sx={{
+//                                                                     maxWidth: 200,
+//                                                                     color: "text.secondary",
+//                                                                     whiteSpace: "nowrap",
+//                                                                     overflow: "hidden",
+//                                                                     textOverflow: "ellipsis",
+//                                                                     cursor: "pointer",
+//                                                                     mt: 0.5
+//                                                                 }}
+//                                                             >
+//                                                                 {t.description || "-"}
+//                                                             </Typography>
+//                                                         </Tooltip>
+//                                                         <Typography fontSize={13} mt={1.5}>
+//                                                             <strong style={{ color: "#4A5568" }}>Category:</strong>{" "}
+//                                                             <span style={{ color: "#2D3748" }}>
+//                                                                 {t.category_detail?.category_name || "-"} /{" "}
+//                                                                 {t.subcategory_detail?.subcategory_name || "-"}
+//                                                             </span>
+//                                                         </Typography>
+//                                                         <Typography fontSize={13} mt={1}>
+//                                                             <strong style={{ color: "#4A5568" }}>Dept | Loc:</strong>{" "}
+//                                                             <span style={{ color: "#2D3748" }}>
+//                                                                 {t.department_detail?.field_name || "-"} |{" "}
+//                                                                 {t.location_detail?.field_name || "-"}
+//                                                             </span>
+//                                                         </Typography>
+//                                                         <Typography fontSize={12} color="#718096" mt={1.5}>
+//                                                             Open: {new Date(t.created_date).toLocaleDateString()} <br />
+//                                                             Update: {new Date(t.updated_date).toLocaleDateString()}
+//                                                         </Typography>
+//                                                         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}>
+//                                                             <Tooltip title="Follow-up Chat">
+//                                                                 <IconButton
+//                                                                     onClick={() => handleChatDrawerOpen(t.ticket_no)}
+//                                                                     size="small"
+//                                                                     sx={{ color: "#667eea" }}
+//                                                                 >
+//                                                                     <ChatIcon />
+//                                                                 </IconButton>
+//                                                             </Tooltip>
+//                                                             <Tooltip title="View Details">
+//                                                                 <IconButton
+//                                                                     onClick={() => handleTicketClick(t.ticket_no)}
+//                                                                     sx={{ color: "#667eea" }}
+//                                                                     size="small"
+//                                                                 >
+//                                                                     <VisibilityIcon />
+//                                                                 </IconButton>
+//                                                             </Tooltip>
+
+//                                                         </Box>
+//                                                     </CardContent>
+//                                                 </Card>
+//                                             ))
+//                                     ) : (
+//                                         <Typography align="center" py={4} color="#718096">
+//                                             No tickets found.
+//                                         </Typography>
+//                                     )}
+//                                 </Box>
+//                             ) : (
+//                                 <Card sx={{ borderRadius: 3, boxShadow: 2, overflow: "hidden" }}>
+//                                     <TableContainer>
+//                                         <Table stickyHeader>
+//                                             <TableHead>
+//                                                 <TableRow sx={{ backgroundColor: "#F7FAFC" }}>
+//                                                     {RequestTabelCol.map((col) => (
+//                                                         <TableCell
+//                                                             key={col.id}
+//                                                             sx={{
+//                                                                 fontWeight: 700,
+//                                                                 whiteSpace: "nowrap",
+//                                                                 color: "#2D3748",
+//                                                                 borderBottom: "2px solid #E2E8F0",
+//                                                                 py: 2
+//                                                             }}
+//                                                         >
+//                                                             {col.title}
+//                                                         </TableCell>
+//                                                     ))}
+//                                                 </TableRow>
+//                                             </TableHead>
+//                                             <TableBody>
+//                                                 {filteredTickets.length > 0 ? (
+//                                                     filteredTickets
+//                                                         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+//                                                         .map((t) => (
+//                                                             <TableRow
+//                                                                 key={t.id}
+//                                                                 hover
+//                                                                 sx={{
+//                                                                     '&:hover': { backgroundColor: '#F7FAFC' },
+//                                                                     '&:last-child td': { borderBottom: 0 }
+//                                                                 }}
+//                                                             >
+//                                                                 <TableCell sx={{ color: "#667eea", fontWeight: 600 }}>
+//                                                                     #{t.ticket_no}
+//                                                                 </TableCell>
+//                                                                 <TableCell>
+//                                                                     <Tooltip
+//                                                                         title={t.title}
+//                                                                         arrow
+//                                                                         placement="top"
+//                                                                     >
+//                                                                         <Typography
+//                                                                             sx={{
+//                                                                                 maxWidth: 150,
+//                                                                                 whiteSpace: "nowrap",
+//                                                                                 overflow: "hidden",
+//                                                                                 textOverflow: "ellipsis",
+//                                                                                 cursor: "pointer",
+//                                                                                 mt: 0.5
+//                                                                             }}
+//                                                                         >
+//                                                                             {t.title}
+//                                                                         </Typography>
+//                                                                     </Tooltip>
+//                                                                 </TableCell>
+
+//                                                                 <TableCell>
+//                                                                     <Tooltip
+//                                                                         title={t.description || "No description"}
+//                                                                         arrow
+//                                                                         placement="top"
+//                                                                     >
+//                                                                         <Typography
+//                                                                             sx={{
+//                                                                                 maxWidth: 150,
+//                                                                                 whiteSpace: "nowrap",
+//                                                                                 overflow: "hidden",
+//                                                                                 textOverflow: "ellipsis",
+//                                                                                 cursor: "pointer",
+//                                                                                 //color: "#4A5568"
+//                                                                             }}
+//                                                                         >
+//                                                                             {t.description || "-"}
+//                                                                         </Typography>
+//                                                                     </Tooltip>
+//                                                                 </TableCell>
+//                                                                 <TableCell>
+//                                                                     <Typography fontWeight={500} >
+//                                                                         {t.status_detail?.field_values}
+//                                                                     </Typography>
+//                                                                     <Typography fontSize="0.85rem" >
+//                                                                         {t.priority_detail?.field_values}
+//                                                                     </Typography>
+//                                                                 </TableCell>
+//                                                                 <TableCell>
+//                                                                     <Tooltip
+//                                                                         arrow
+//                                                                         placement="top"
+//                                                                         title={
+//                                                                             <Box>
+//                                                                                 <div><strong>Category:</strong> {t.category_detail?.category_name || "-"}</div>
+//                                                                                 <div><strong>Subcategory:</strong> {t.subcategory_detail?.subcategory_name || "-"}</div>
+//                                                                             </Box>
+//                                                                         }
+//                                                                     >
+//                                                                         <Box sx={{ cursor: "pointer" }}>
+//                                                                             <Typography fontWeight={500} >
+//                                                                                 {t.category_detail?.category_name || "-"}
+//                                                                             </Typography>
+//                                                                             <Typography fontSize="0.85rem" >
+//                                                                                 {t.subcategory_detail?.subcategory_name || "-"}
+//                                                                             </Typography>
+//                                                                         </Box>
+//                                                                     </Tooltip>
+//                                                                 </TableCell>
+//                                                                 <TableCell>
+//                                                                     <Typography fontWeight={500}>
+//                                                                         {t.department_detail?.field_name}
+//                                                                     </Typography>
+//                                                                     <Typography fontSize="0.85rem">
+//                                                                         {t.location_detail?.field_name}
+//                                                                     </Typography>
+//                                                                 </TableCell>
+//                                                                 <TableCell >
+//                                                                     {t.requested_detail?.email}
+//                                                                 </TableCell>
+//                                                                 <TableCell>
+//                                                                     <Typography fontSize="0.9rem">
+//                                                                         {new Date(t.created_date).toLocaleDateString()}
+//                                                                     </Typography>
+//                                                                     <Typography fontSize="0.8rem">
+//                                                                         {new Date(t.updated_date).toLocaleDateString()}
+//                                                                     </Typography>
+//                                                                 </TableCell>
+//                                                                 <TableCell>
+//                                                                     <Box sx={{ display: "flex", gap: 1 }}>
+//                                                                         <Tooltip title="Follow-up Chat">
+//                                                                             <IconButton
+//                                                                                 onClick={() => handleChatDrawerOpen(t.ticket_no)}
+//                                                                                 size="small"
+//                                                                                 sx={{ color: "#667eea" }}
+//                                                                             >
+//                                                                                 <ChatIcon />
+//                                                                             </IconButton>
+//                                                                         </Tooltip>
+//                                                                         <Tooltip>
+//                                                                             <IconButton
+//                                                                                 onClick={() => handleTicketClick(t.ticket_no)}
+//                                                                                 size="small"
+//                                                                                 sx={{ color: "#667eea" }}
+//                                                                             >
+//                                                                                 <VisibilityIcon />
+//                                                                             </IconButton>
+//                                                                         </Tooltip>
+//                                                                     </Box>
+//                                                                 </TableCell>
+//                                                             </TableRow>
+//                                                         ))
+//                                                 ) : (
+//                                                     <TableRow>
+//                                                         <TableCell colSpan={9} align="center" sx={{ py: 4, color: "#718096" }}>
+//                                                             No tickets found.
+//                                                         </TableCell>
+//                                                     </TableRow>
+//                                                 )}
+//                                             </TableBody>
+//                                         </Table>
+//                                     </TableContainer>
+//                                 </Card>
+//                             )}
+//                             {filteredTickets.length > 0 && (
+//                                 <Stack
+//                                     direction={isMobile ? "column" : "row"}
+//                                     justifyContent="space-between"
+//                                     alignItems="center"
+//                                     spacing={isMobile ? 1.5 : 0}
+//                                     sx={{
+//                                         py: 2,
+//                                         px: { xs: 0, sm: 3 },
+//                                         borderTop: "1px solid #E2E8F0",
+//                                         textAlign: isMobile ? "center" : "left",
+//                                     }}
+//                                 >
+//                                     <Typography
+//                                         variant="body2"
+//                                         color="#718096"
+//                                         sx={{ fontSize: { xs: "13px", sm: "14px" } }}
+//                                     >
+//                                         Showing {page * rowsPerPage + 1} to{" "}
+//                                         {Math.min((page + 1) * rowsPerPage, filteredTickets.length)} of{" "}
+//                                         {filteredTickets.length} tickets
+//                                     </Typography>
+//                                     <Pagination
+//                                         count={Math.ceil(filteredTickets.length / rowsPerPage)}
+//                                         page={page + 1}
+//                                         onChange={(e, value) => setPage(value - 1)}
+//                                         variant="outlined"
+//                                         shape="rounded"
+//                                         showFirstButton
+//                                         showLastButton
+//                                         siblingCount={1}
+//                                         boundaryCount={1}
+//                                         size={isMobile ? "small" : "medium"}
+//                                         sx={{
+//                                             "& .MuiPaginationItem-root": {
+//                                                 borderRadius: "8px",
+//                                                 borderColor: "#CBD5E0",
+//                                                 color: "#4A5568",
+//                                                 fontSize: { xs: "12px", sm: "14px" },
+//                                                 minWidth: { xs: 32, sm: 36 },
+//                                                 "&.Mui-selected": {
+//                                                     backgroundColor: "#667eea",
+//                                                     color: "#fff",
+//                                                     borderColor: "#667eea",
+//                                                     "&:hover": {
+//                                                         backgroundColor: "#556cd6",
+//                                                     },
+//                                                 },
+//                                                 "&:hover": {
+//                                                     backgroundColor: "#F7FAFC",
+//                                                 },
+//                                             },
+//                                         }}
+//                                     />
+//                                 </Stack>
+//                             )}
+//                         </Box>
+//                     )}
+//                 </CardContent>
+//             </Card>
+
+//       {/* Chat Drawer */}
+//       <Drawer anchor="right" open={showFollowUpChat} onClose={() => setShowFollowUpChat(false)} PaperProps={{ sx: { width: { xs: "100%", sm: 500 } } }}>
+//         <Box sx={{ display: "flex", flexDirection: "column", height: "100%", bgcolor: "background.paper" }}>
+//           <Box sx={{ p: 2, bgcolor: "primary.main", color: "white", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+//             <Box>
+//               <Typography variant="body2">Ticket #{currentChatTicket?.id}</Typography>
+//               <Typography variant="body2">{currentChatTicket?.title || "Loading..."}</Typography>
+//               <Typography variant="caption" sx={{ color: "white" }}>{currentTicketData?.description || ""}</Typography>
+//             </Box>
+//             <IconButton onClick={() => setShowFollowUpChat(false)} sx={{ color: "white" }}>
+//               <CloseIcon />
+//             </IconButton>
+//           </Box>
+
+//           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+//             <Tabs value={chatTab} onChange={(e, newValue) => setChatTab(newValue)} centered>
+//               <Tab label="Follow-up" icon={<ChatIcon />} />
+//               <Tab label="Solution" icon={<DoneAllIcon />} disabled={currentTicketData?.status_detail?.field_values === "Solved"} />
+//               <Tab label="Clarification Required" icon={<HelpOutlineIcon />} />
+//             </Tabs>
+//           </Box>
+
+//                     <Box sx={{ flex: 1 }}>
+//                         {chatTab === 0 && (
+//                             <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+//                                 <Box sx={{ flex: 1, overflowY: "auto", p: 2, display: "flex", flexDirection: "column", gap: 2 }}>
+//                                     {loadingFollowUpChats ? (
+//                                         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%" }}>
+//                                             <CircularProgress />
+//                                         </Box>
+//                                     ) : groupedChats.length === 0 ? (
+//                                         <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100%", color: "text.secondary" }}>
+//                                             <ChatIcon sx={{ fontSize: 60, mb: 2, opacity: 0.5 }} />
+//                                             <Typography>No messages yet</Typography>
+//                                         </Box>
+//                                     ) : (
+//                                         groupedChats.map((group) => (
+//                                             <Box key={group.date} sx={{mb:4}}>
+//                                                 <Divider sx={{ my: 3 }}>
+//                                                     <Chip label={group.date} size="small" sx={{ bgcolor: "grey.200" }} />
+//                                                 </Divider>
+//                                                 {group.messages.map((msg) => {
+//                                                     const isMe = Number(msg.sender) === Number(currentUserId);
+//                                                     const isProtected = msg.protected === true;
+//                                                     const messageId = msg.id;
+//                                                     const isRevealed = revealedMessages.has(messageId);
+//                                                     const canViewDecrypted = Number(msg.sender) === Number(currentUserId) || Number(msg.receiver) === Number(currentUserId);
+//                                                     const isClar = msg.message?.includes("[Clarification Required]");
+    
+//                                                     const toggleReveal = () => {
+//                                                         if (!canViewDecrypted) return;
+//                                                         setRevealedMessages((prev) => {
+//                                                         const newSet = new Set(prev);
+//                                                         newSet.has(messageId) ? newSet.delete(messageId) : newSet.add(messageId);
+//                                                         return newSet;
+//                                                         });
+//                                                     };
+
+//                           const getDisplayedText = () => {
+//                             if (!isProtected) return msg.message || "";
+//                             if (!canViewDecrypted) return "*** PROTECTED MESSAGE - VISIBLE ONLY TO PARTICIPANTS ***";
+//                             const decrypted = msg.decrypted_message || msg.message;
+//                             return isRevealed ? decrypted : "🔒 Protected Message (Click eye to reveal)";
+//                           };
+
+//                           return (
+//                             <Box key={msg.id} sx={{ display: "flex", justifyContent: isMe ? "flex-end" : "flex-start", mb: 2 }}>
+//                               {!isMe ? (
+//                                 <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1 }}>
+//                                   <Avatar sx={{ width: 40, height: 40, bgcolor: "grey.300" }}>
+//                                     {getInitials(assignee?.name || "User")}
+//                                   </Avatar>
+//                                   <Box
+//                                     sx={{
+//                                       maxWidth: "80%",
+//                                       p: 2,
+//                                       bgcolor: isClar ? "warning.light" : "grey.100",
+//                                       color: "text.primary",
+//                                       borderRadius: 2,
+//                                       boxShadow: 1,
+//                                       position: "relative",
+//                                     }}
+//                                   >
+//                                     {isProtected && (
+//                                       <SecurityIcon
+//                                         sx={{
+//                                           position: "absolute",
+//                                           top: -10,
+//                                           right: -10,
+//                                           fontSize: 20,
+//                                           bgcolor: "#4CAF50",
+//                                           color: "white",
+//                                           borderRadius: "50%",
+//                                           p: 0.5,
+//                                         }}
+//                                       />
+//                                     )}
+//                                     <Typography variant="body1" sx={{ wordBreak: "break-word" }}>
+//                                       {getDisplayedText()}
+//                                     </Typography>
+//                                     {isClar && <Chip label="CLARIFICATION REQUEST" size="small" color="warning" sx={{ mt: 1 }} />}
+//                                     {isProtected && canViewDecrypted && (
+//                                       <IconButton size="small" onClick={toggleReveal} sx={{ position: "absolute", bottom: 6, right: 8 }}>
+//                                         {isRevealed ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+//                                       </IconButton>
+//                                     )}
+//                                     <Typography variant="caption" sx={{ display: "block", mt: 1, color: "text.secondary" }}>
+//                                       {new Date(msg.createdon).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+//                                     </Typography>
+//                                   </Box>
+//                                 </Box>
+//                               ) : (
+//                                 <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1, flexDirection: "row-reverse" }}>
+//                                   <Avatar sx={{ width: 40, height: 40, bgcolor: "primary.main", color: "white" }}>
+//                                     {getInitials(currentUserName)}
+//                                   </Avatar>
+//                                   <Box
+//                                     sx={{
+//                                       maxWidth: "80%",
+//                                       p: 2,
+//                                       bgcolor: isClar ? "warning.main" : "primary.main",
+//                                       color: "white",
+//                                       borderRadius: 2,
+//                                       boxShadow: 1,
+//                                       position: "relative",
+//                                     }}
+//                                   >
+//                                     <Typography variant="body1" sx={{ wordBreak: "break-word" }}>
+//                                       {getDisplayedText()}
+//                                     </Typography>
+//                                     {isClar && <Chip label="CLARIFICATION REQUEST" size="small" sx={{ mt: 1, bgcolor: "rgba(255,255,255,0.2)" }} />}
+//                                     {isProtected && canViewDecrypted && (
+//                                       <IconButton size="small" onClick={toggleReveal} sx={{ position: "absolute", bottom: 6, right: 8, color: "white" }}>
+//                                         {isRevealed ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+//                                       </IconButton>
+//                                     )}
+//                                     <Typography variant="caption" sx={{ display: "block", mt: 1, opacity: 0.8 }}>
+//                                       {new Date(msg.createdon).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+//                                     </Typography>
+//                                   </Box>
+//                                 </Box>
+//                               )}
+//                             </Box>
+//                           );
+//                         })}
+//                       </Box>
+//                     ))
+//                   )}
+//                 </Box>
+
+//                 <Box sx={{ p: 2, borderTop: 1, borderColor: "divider", bgcolor: "background.default" }}>
+//                   <Box sx={{ display: "flex", gap: 1 }}>
+//                     <TextField
+//                       fullWidth
+//                       size="small"
+//                       placeholder="Type your message..."
+//                       value={newFollowUpMessage}
+//                       onChange={e => setNewFollowUpMessage(e.target.value)}
+//                       onKeyPress={(e) => {
+//                         if (e.key === 'Enter' && !e.shiftKey) {
+//                           e.preventDefault();
+//                           sendFollowUpMessageHandler(newFollowUpMessage);
+//                         }
+//                       }}
+//                       multiline
+//                       maxRows={4}
+//                       disabled={sendingFollowUpMessage}
+//                     />
+//                     <Tooltip title={isProtectedMode ? "Protected mode ON" : "Send protected message"}>
+//                       <IconButton
+//                         onClick={() => setIsProtectedMode(!isProtectedMode)}
+//                         sx={{
+//                           color: isProtectedMode ? "white" : "success.main",
+//                           bgcolor: isProtectedMode ? "success.main" : "transparent",
+//                           "&:hover": { bgcolor: isProtectedMode ? "success.dark" : "success.light" },
+//                         }}
+//                       >
+//                         <SecurityIcon />
+//                       </IconButton>
+//                     </Tooltip>
+//                     <IconButton
+//                       onClick={() => sendFollowUpMessageHandler(newFollowUpMessage)}
+//                       disabled={!newFollowUpMessage.trim() || sendingFollowUpMessage}
+//                       color="primary"
+//                     >
+//                       {sendingFollowUpMessage ? <CircularProgress size={20} /> : <SendIcon />}
+//                     </IconButton>
+//                   </Box>
+//                   {isProtectedMode && (
+//                     <Typography variant="caption" color="success.main" sx={{ mt: 1, display: "block", textAlign: "center" }}>
+//                       <SecurityIcon fontSize="small" sx={{ verticalAlign: "middle", mr: 0.5 }} />
+//                       This message will be sent as protected
+//                     </Typography>
+//                   )}
+//                 </Box>
+//               </Box>
+//             )}
+
+//             {chatTab === 1 && (
+//               <Box sx={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center", height: "100%", p: 4, gap: 2, textAlign: "center" }}>
+//                 <DoneAllIcon sx={{ fontSize: 64, color: "success.main" }} />
+//                 <Typography variant="h6" fontWeight={600}>Solution Provided</Typography>
+//                 <Typography variant="body1" sx={{ mb: 3, wordBreak: "break-word", color: "text.primary" }}>
+//                   {currentTicketData?.solution_text || "No solution text available"}
+//                 </Typography>
+//                 <Box sx={{ display: "flex", gap: 1, justifyContent: "center" }}>
+//                   <Button
+//                     variant="contained"
+//                     color="success"
+//                     onClick={handleSolutionSubmit}
+//                     disabled={currentTicketData?.status_detail?.field_values === "Solved"}
+//                     size="small"
+//                   >
+//                     {currentTicketData?.status_detail?.field_values === "Solved" ? "Already Solved" : "Mark as Solved"}
+//                   </Button>
+//                 </Box>
+//                 <Button variant="outlined" onClick={() => setChatTab(0)} sx={{ mt: 1 }}>
+//                   Back to Follow-up
+//                 </Button>
+//               </Box>
+//             )}
+
+//             {chatTab === 2 && (
+//               <Box sx={{ display: "flex", flexDirection: "column", height: "100%", p: 3 }}>
+//                 <Box sx={{ textAlign: "center", mb: 3 }}>
+//                   <HelpOutlineIcon sx={{ fontSize: 60, color: "warning.main", mb: 2 }} />
+//                   <Typography variant="h6" fontWeight={600}>Request Clarification</Typography>
+//                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+//                     Ask for more details if something is unclear.
+//                   </Typography>
+//                 </Box>
+//                 <TextField
+//                   multiline
+//                   rows={6}
+//                   placeholder="Please clarify the following..."
+//                   value={clarificationText}
+//                   onChange={(e) => setClarificationText(e.target.value)}
+//                   variant="outlined"
+//                   fullWidth
+//                   sx={{ mb: 3 }}
+//                   disabled={sendingClarification}
+//                 />
+//                 <Box sx={{ display: "flex", justifyContent: "center", gap: 2 }}>
+//                   <Button
+//                     variant="contained"
+//                     color="warning"
+//                     size="large"
+//                     startIcon={<QuestionAnswerIcon />}
+//                     onClick={handleSendClarification}
+//                     disabled={!clarificationText.trim() || sendingClarification}
+//                   >
+//                     {sendingClarification ? <CircularProgress size={20} /> : "Send Request"}
+//                   </Button>
+//                   <Button variant="outlined" onClick={() => { setClarificationText(""); setChatTab(0); }} disabled={sendingClarification}>
+//                     Cancel
+//                   </Button>
+//                 </Box>
+//               </Box>
+//             )}
+//           </Box>
+//         </Box>
+//       </Drawer>
+//     </Box>
+//   );
+// };
+
+// export default AdminTabs;
+
 import { useEffect, useMemo, useState } from "react";
 import { useTheme } from "@mui/material/styles";
 import {
-  Box, Card, CardContent, Typography, Grid, TextField, Button,
-  Table, TableHead, TableRow, TableCell, TableBody, TableContainer,
-  useMediaQuery, Autocomplete, Stack, CircularProgress, IconButton,
-  Drawer, Divider, Chip, Avatar, Icon, Tooltip, Pagination, Tabs, Tab
+  Box, Card, CardContent, Typography, Grid, TextField, Button, Table, TableHead, TableRow, TableCell, TableBody, TableContainer,
+  useMediaQuery, Autocomplete, Stack, CircularProgress, IconButton, Drawer, Divider, Chip, Avatar, Icon, Tooltip, Pagination, Tabs, Tab
 } from "@mui/material";
 import NewReleasesIcon from '@mui/icons-material/NewReleases';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
@@ -1988,6 +3098,7 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
 import CloseIcon from '@mui/icons-material/Close';
 import { useNavigate } from "react-router-dom";
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { toast } from "react-toastify";
 import { fetchAdminMessages, sendMessage, fetchAdminTickets, updateTicket } from "../../Api";
 
@@ -2058,18 +3169,6 @@ const AdminTabs = () => {
     };
     loadAdminData();
   }, []);
-
-    const RequestTabelCol = [
-        { id: 1, title: <>Ticket ID</> },
-        { id: 2, title: <>Title</> },
-        { id: 3, title: <>Description</> },
-        { id: 4, title: <>Status<br />Priority</> },
-        { id: 5, title: <>Category<br />Subcategory</> },
-        { id: 6, title: <>Department<br />Location</> },
-        { id: 7, title: <>Requested By</> },
-        { id: 8, title: <>Open Date<br />Last Update</> },
-        { id: 9, title: <>Action</> },
-    ];
 
     // Status cards - using exact keys from your API
     const statusCards = [
@@ -2157,7 +3256,8 @@ const AdminTabs = () => {
 
     try {
       // ← CORRECT: Use ticket.id (primary key, e.g. 407)
-      const messages = await fetchAdminMessages(ticket.id);
+      // const messages = await fetchAdminMessages(ticket.id);
+      const messages = await fetchAdminMessages(ticket.ticket_no);
 
       const sortedMessages = messages.sort((a, b) => new Date(a.createdon) - new Date(b.createdon));
       setFollowUpChats(sortedMessages);
@@ -2186,7 +3286,8 @@ const AdminTabs = () => {
       });
 
       // Refetch using currentTicketData.id (primary key)
-      const messages = await fetchAdminMessages(currentTicketData.id);
+      // const messages = await fetchAdminMessages(currentTicketData.id);
+      const messages = await fetchAdminMessages(currentTicketData.ticket_no);
       setFollowUpChats(messages.sort((a, b) => new Date(a.createdon) - new Date(b.createdon)));
 
       setNewFollowUpMessage("");
@@ -2272,7 +3373,8 @@ const AdminTabs = () => {
       setClarificationText("");
       setChatTab(0);
 
-      const messages = await fetchAdminMessages(currentTicketData.id);
+      // const messages = await fetchAdminMessages(currentTicketData.id);
+      const messages = await fetchAdminMessages(currentTicketData.ticket_no);
       setFollowUpChats(messages.sort((a, b) => new Date(a.createdon) - new Date(b.createdon)));
     } catch (err) {
       toast.error("Failed to send clarification");
@@ -2289,6 +3391,18 @@ const AdminTabs = () => {
     clarification_applied: "CLARIFICATION APPLIED",
     clarification_required: "CLARIFICATION REQUIRED",
   };
+
+  const RequestTabelCol = [
+        { id: 1, title: <>Ticket ID</> },
+        { id: 2, title: <>Title</> },
+        { id: 3, title: <>Description</> },
+        { id: 4, title: <>Status<br />Priority</> },
+        { id: 5, title: <>Category<br />Subcategory</> },
+        { id: 6, title: <>Department<br />Location</> },
+        { id: 7, title: <>Requested By</> },
+        { id: 8, title: <>Open Date<br />Last Update</> },
+        { id: 9, title: <>Action</> },
+    ];
 
   const handleCardClick = (type) => {
     setSelectedType(type);
@@ -2561,7 +3675,8 @@ const AdminTabs = () => {
                                                         <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2, gap: 1 }}>
                                                             <Tooltip title="Follow-up Chat">
                                                                 <IconButton
-                                                                    onClick={() => handleChatDrawerOpen(t.ticket_no)}
+                                                                    // onClick={() => handleChatDrawerOpen(t.ticket_no)}
+                                                                    onClick={() => handleChatDrawerOpen(t)}
                                                                     size="small"
                                                                     sx={{ color: "#667eea" }}
                                                                 >
@@ -2634,12 +3749,11 @@ const AdminTabs = () => {
                                                                     >
                                                                         <Typography
                                                                             sx={{
-                                                                                maxWidth: 150,
+                                                                                maxWidth: 200,
                                                                                 whiteSpace: "nowrap",
                                                                                 overflow: "hidden",
                                                                                 textOverflow: "ellipsis",
                                                                                 cursor: "pointer",
-                                                                                mt: 0.5
                                                                             }}
                                                                         >
                                                                             {t.title}
@@ -2655,12 +3769,11 @@ const AdminTabs = () => {
                                                                     >
                                                                         <Typography
                                                                             sx={{
-                                                                                maxWidth: 150,
+                                                                                maxWidth: 200,
                                                                                 whiteSpace: "nowrap",
                                                                                 overflow: "hidden",
                                                                                 textOverflow: "ellipsis",
                                                                                 cursor: "pointer",
-                                                                                //color: "#4A5568"
                                                                             }}
                                                                         >
                                                                             {t.description || "-"}
@@ -2668,10 +3781,10 @@ const AdminTabs = () => {
                                                                     </Tooltip>
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Typography fontWeight={500} >
+                                                                    <Typography fontSize="0.85rem">
                                                                         {t.status_detail?.field_values}
                                                                     </Typography>
-                                                                    <Typography fontSize="0.85rem" >
+                                                                    <Typography fontSize="0.85rem">
                                                                         {t.priority_detail?.field_values}
                                                                     </Typography>
                                                                 </TableCell>
@@ -2687,31 +3800,41 @@ const AdminTabs = () => {
                                                                         }
                                                                     >
                                                                         <Box sx={{ cursor: "pointer" }}>
-                                                                            <Typography fontWeight={500} >
+                                                                            <Typography fontSize="0.85rem">
                                                                                 {t.category_detail?.category_name || "-"}
                                                                             </Typography>
-                                                                            <Typography fontSize="0.85rem" >
+                                                                            <Typography fontSize="0.85rem">
                                                                                 {t.subcategory_detail?.subcategory_name || "-"}
                                                                             </Typography>
                                                                         </Box>
                                                                     </Tooltip>
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Typography fontWeight={500}>
+                                                                    <Typography fontSize="0.85rem">
                                                                         {t.department_detail?.field_name}
                                                                     </Typography>
                                                                     <Typography fontSize="0.85rem">
                                                                         {t.location_detail?.field_name}
                                                                     </Typography>
                                                                 </TableCell>
-                                                                <TableCell >
-                                                                    {t.requested_detail?.email}
+                                                                <TableCell sx={{ maxWidth: 150 }}>
+                                                                  <Tooltip title={t.requested_detail?.email}>
+                                                                    <Typography fontSize="0.85rem"
+                                                                      sx={{
+                                                                        overflow: "hidden",
+                                                                        textOverflow: "ellipsis",
+                                                                        whiteSpace: "nowrap",
+                                                                      }}
+                                                                    >
+                                                                      {t.requested_detail?.email}
+                                                                    </Typography>
+                                                                  </Tooltip>
                                                                 </TableCell>
                                                                 <TableCell>
-                                                                    <Typography fontSize="0.9rem">
+                                                                    <Typography fontSize="0.85rem">
                                                                         {new Date(t.created_date).toLocaleDateString()}
                                                                     </Typography>
-                                                                    <Typography fontSize="0.8rem">
+                                                                    <Typography fontSize="0.85rem">
                                                                         {new Date(t.updated_date).toLocaleDateString()}
                                                                     </Typography>
                                                                 </TableCell>
@@ -2719,7 +3842,8 @@ const AdminTabs = () => {
                                                                     <Box sx={{ display: "flex", gap: 1 }}>
                                                                         <Tooltip title="Follow-up Chat">
                                                                             <IconButton
-                                                                                onClick={() => handleChatDrawerOpen(t.ticket_no)}
+                                                                                // onClick={() => handleChatDrawerOpen(t.ticket_no)}
+                                                                                 onClick={() => handleChatDrawerOpen(t)}
                                                                                 size="small"
                                                                                 sx={{ color: "#667eea" }}
                                                                             >
@@ -2829,8 +3953,8 @@ const AdminTabs = () => {
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={chatTab} onChange={(e, newValue) => setChatTab(newValue)} centered>
               <Tab label="Follow-up" icon={<ChatIcon />} />
-              <Tab label="Solution" icon={<DoneAllIcon />} disabled={currentTicketData?.status_detail?.field_values === "Solved"} />
-              <Tab label="Clarification Required" icon={<HelpOutlineIcon />} />
+              <Tab label="Clarification Required" icon={<HelpOutlineIcon />} disabled={true} />
+              <Tab label="Solution" icon={<DoneAllIcon />} disabled={true} />
             </Tabs>
           </Box>
 
@@ -3079,6 +4203,7 @@ const AdminTabs = () => {
 };
 
 export default AdminTabs;
+
 // import { useEffect, useMemo, useState } from "react";
 // import { useTheme } from "@mui/material/styles";
 // import { Box, Card, CardContent, Typography, Grid, TextField, Button, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, useMediaQuery, Autocomplete, Stack, CircularProgress, IconButton, Drawer, Divider, Chip, Avatar, Icon, Tooltip, Pagination, Tabs, Tab } from "@mui/material";
