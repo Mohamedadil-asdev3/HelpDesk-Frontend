@@ -282,7 +282,7 @@ const ApprovalPage = () => {
 
     const token = localStorage.getItem("access_token");
     //const response = await fetch(`http://192.168.60.149:8000/api/tickets/tickets/documents/${documentId}/`, {
-    const response = await fetch(`http://192.168.1.33:8000/api/tickets/tickets/documents/${documentId}/`, {
+    const response = await fetch(`http://172.22.32.1:8000/api/tickets/tickets/documents/${documentId}/`, {
       method: "DELETE",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -875,7 +875,7 @@ assignedGroups.forEach((group, index) => {
     <Grid container spacing={3}>
       {ticket.files.map((f) => {
         //const baseUrl = "http://192.168.60.149:8000";
-        const baseUrl = "http://192.168.1.33:8000";
+        const baseUrl = "http://172.22.32.1:8000";
         const fileUrl = f.file ? `${baseUrl}${f.file}` : null;
         const fileName = f.original_name || (f.file ? f.file.split("/").pop() : "Unknown File");
         const isImg = isImage(fileName);

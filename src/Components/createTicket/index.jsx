@@ -2354,7 +2354,6 @@
 
 // export default TicketForm;
 
-
 import { useState, useEffect, useRef } from "react";
 import { Box, Grid, Card, CardContent, TextField, Typography, MenuItem, Button, Autocomplete, Chip, Avatar, FormControl, Select, InputLabel, } from "@mui/material";
 import { toast } from "react-toastify";
@@ -2463,7 +2462,7 @@ const TicketForm = () => {
           return;
         }
         //const usersRes = await fetch("http://192.168.60.118:8000/api/tickets/watcher-users/", {
-        const usersRes = await fetch("http://192.168.1.33:8000/api/tickets/watcher-users/", {
+        const usersRes = await fetch("http://172.22.32.1:8000/api/tickets/watcher-users/", {
           headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
