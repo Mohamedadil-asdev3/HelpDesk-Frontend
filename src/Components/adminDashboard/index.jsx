@@ -194,326 +194,476 @@
 
 // export default AdminDashboard;
 
-import { Box, Grid, CircularProgress, Alert } from "@mui/material";
-import { useState, useEffect } from "react";
-import TodayIcon from '@mui/icons-material/Today';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import AddIcon from '@mui/icons-material/Add';
-import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
-import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import GroupsIcon from '@mui/icons-material/Groups';
-import { ticketcounts } from '../../Api'; // Adjust path as needed
-import AdminCardData from "./CardData";
-import AdminGraphData from "./GraphData";
-import AdminHeader from "./AdminHeader";
-import stemzLogo from "../../assets/download.png";
+// import { Box, Grid, CircularProgress, Alert } from "@mui/material";
+// import { useState, useEffect } from "react";
+// import TodayIcon from '@mui/icons-material/Today';
+// import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+// import AddIcon from '@mui/icons-material/Add';
+// import AccessTimeFilledIcon from '@mui/icons-material/AccessTimeFilled';
+// import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+// import GroupsIcon from '@mui/icons-material/Groups';
+// import { ticketcounts } from '../../Api'; // Adjust path as needed
+// import AdminCardData from "./CardData";
+// import AdminGraphData from "./GraphData";
+// import AdminHeader from "./AdminHeader";
+// import stemzLogo from "../../assets/download.png";
+
+// const AdminDashboard = () => {
+//     const [data, setData] = useState({
+//         cards: null,
+//         graphs: null,
+//     });
+//     const [loading, setLoading] = useState(true);
+//     const [error, setError] = useState(null);
+
+//     useEffect(() => {
+//         const fetchTicketCounts = async () => {
+//             try {
+//                 setLoading(true);
+//                 setError(null);
+//                 const today = new Date().toISOString().split('T')[0];
+//                 // Start of the year
+//                 const startOfYear = new Date(new Date().getFullYear(), 0, 1)
+//                     .toISOString()
+//                     .split('T')[0];
+
+//                 const response = await ticketcounts({ start_date: startOfYear, end_date: today });
+
+//                 if (!response.success) {
+//                     throw new Error(response.error || 'Failed to fetch ticket counts');
+//                 }
+
+//                 const stats = response.data.overall_stats || {};
+//                 const month_wise = stats.month_wise || [];
+//                 const last_7_days = stats.last_7_days || [];
+//                 const open_tickets_age = stats.open_tickets_age || {};
+//                 const solving_period = stats.solving_period || {};
+
+//                 // Transform for cards
+//                 const cardData = [
+//                     {
+//                         id: 1,
+//                         icon: <TodayIcon />,
+//                         count: stats.today_tickets?.toString() || "0",
+//                         name: "Today",
+//                         color: "warning.main",
+//                     },
+//                     {
+//                         id: 2,
+//                         icon: <CalendarTodayIcon />,
+//                         count: stats.month_tickets?.toString() || "0",
+//                         name: "This Month",
+//                         color: "success.main",
+//                     },
+//                     {
+//                         id: 3,
+//                         icon: <AddIcon />,
+//                         count: stats.total_tickets?.toString() || "0",
+//                         name: "Total Tickets",
+//                         color: "info.main",
+//                     },
+//                     {
+//                         id: 4,
+//                         icon: <AccessTimeFilledIcon />,
+//                         count: stats.sla_breached_count?.toString() || "0",
+//                         name: "SLA Breached",
+//                         color: "error.main",
+//                     },
+//                     // {
+//                     //     id: 5,
+//                     //     icon: <LocalOfferIcon />,
+//                     //     count: stats.on_hold?.toString() || "0",
+//                     //     name: "Backlog",
+//                     //     color: "warning.main",
+//                     // },
+//                     {
+//                         id: 6,
+//                         icon: <GroupsIcon />,
+//                         count: stats.user_count?.toString() || "0",
+//                         name: "Users",
+//                         color: "secondary.main",
+//                     },
+//                 ];
+
+//                 // Transform for graphs
+//                 // 1. Tickets Evolution (Month-wise data)
+//                 const months = month_wise.map(m => m.month?.substring(0, 3) || '');
+//                 const totalTicketsByMonth = month_wise.map(m => m.total_tickets || 0);
+
+//                 const ticketsEvolution = {
+//                     series: [
+//                         {
+//                             name: "Tickets",
+//                             data: totalTicketsByMonth,
+//                         },
+//                     ],
+//                     options: {
+//                         chart: { type: "line", toolbar: { show: false } },
+//                         xaxis: {
+//                             categories: months,
+//                         },
+//                         stroke: { curve: "smooth" },
+//                         colors: ["#4F46E5"],
+//                     },
+//                 };
+
+//                 // 2. Opened Tickets by Status (Pie Chart)
+//                 const openedTicketsStatus = {
+//                     series: [
+//                         stats.pending || 0,
+//                         stats.approved || 0,
+//                         stats.rejected || 0,
+//                         stats.on_hold || 0,
+//                     ],
+//                     options: {
+//                         labels: ["Pending", "Approved", "Rejected", "On Hold"],
+//                         chart: { type: "pie" },
+//                         colors: ["#2196F3", "#4CAF50", "#f44336", "#FFC107"],
+//                         legend: { position: "bottom" },
+//                     },
+//                 };
+
+//                 // 3. Ticket Solving Period (Donut Chart)
+//                 const solvingPeriod = {
+//                     series: [
+//                         solving_period.less_than_1_day || 0,
+//                         solving_period["1_to_2_days"] || 0,
+//                         solving_period["3_to_5_days"] || 0,
+//                         solving_period["6_to_10_days"] || 0,
+//                         solving_period.more_than_10_days || 0,
+//                     ],
+//                     options: {
+//                         labels: ["<1 day", "1-2 days", "3-5 days", "6-10 days", ">10 days"],
+//                         chart: { type: "donut" },
+//                         colors: ["#4CAF50", "#FFEB3B", "#FF9800", "#F44336", "#9C27B0"],
+//                         legend: { position: "bottom" },
+//                     },
+//                 };
+
+//                 // 4. Tickets - Last 7 Days (Bar Chart)
+//                 const last7daysLabels = last_7_days.map(day => day.label || '');
+//                 const last7daysCounts = last_7_days.map(day => day.count || 0);
+
+//                 const last7days = {
+//                     series: [
+//                         {
+//                             name: "Tickets",
+//                             data: stats.last_7_days_counts || [0, 0, 0, 0, 0, 0, 0],
+//                         },
+//                     ],
+//                     options: {
+//                         chart: { type: "bar", toolbar: { show: false } },
+//                         xaxis: {
+//                             categories: stats.last_7_days_labels || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+//                         },
+//                         plotOptions: { bar: { borderRadius: 5 } },
+//                         colors: ["#6366F1"],
+//                         dataLabels: { enabled: false },
+//                     },
+//                 };
+
+//                 // 5. Open Tickets Age (Horizontal Bar Chart)
+//                 // Note: Your API data only has one set of data (probably for requests)
+//                 // For incidents, you might need to get separate data
+//                 const openTicketsAge = {
+//                     series: [
+//                         {
+//                             name: "Request",
+//                             data: [
+//                                 open_tickets_age.today || 0,
+//                                 open_tickets_age["1_day"] || 0,
+//                                 open_tickets_age["2_days"] || 0,
+//                                 open_tickets_age["3_days"] || 0,
+//                                 open_tickets_age["4_days"] || 0,
+//                                 open_tickets_age["5_days"] || 0,
+//                                 open_tickets_age["6_days"] || 0,
+//                                 open_tickets_age["7_plus_days"] || 0,
+//                             ],
+//                         },
+//                         // If you have incident data, add it here
+//                         // {
+//                         //     name: "Incident",
+//                         //     data: [0, 0, 0, 0, 0, 0, 0, 0],
+//                         // },
+//                     ],
+//                     options: {
+//                         chart: { type: "bar", toolbar: { show: false } },
+//                         xaxis: {
+//                             categories: ["Today", "1 day", "2 days", "3 days", "4 days", "5 days", "6 days", "7+ days"],
+//                         },
+//                         plotOptions: { bar: { borderRadius: 5, horizontal: true } },
+//                         colors: ["#2196F3", "#000000"],
+//                     },
+//                 };
+
+//                 setData({
+//                     cards: cardData,
+//                     graphs: {
+//                         ticketsEvolution,
+//                         openedTicketsStatus,
+//                         solvingPeriod,
+//                         last7days,
+//                         openTicketsAge,
+//                     },
+//                 });
+//             } catch (err) {
+//                 setError(err.message);
+//                 console.error("Failed to fetch ticket counts:", err);
+//             } finally {
+//                 setLoading(false);
+//             }
+//         };
+
+//         fetchTicketCounts();
+//     }, []);
+
+//     // if (loading) {
+//     //     return (
+//     //         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 400 }}>
+//     //             <CircularProgress />
+//     //         </Box>
+//     //     );
+//     // }
+//      if (loading) {
+//         return (
+//             <Box
+//                 sx={{
+//                     position: "fixed",
+//                     top: 0,
+//                     left: 0,
+//                     width: "100vw",
+//                     height: "100vh",
+//                     backgroundColor: "rgba(255, 255, 255, 0.95)",
+//                     backdropFilter: "blur(12px)",
+//                     WebkitBackdropFilter: "blur(12px)",
+//                     display: "flex",
+//                     justifyContent: "center",
+//                     alignItems: "center",
+//                     zIndex: 9999,
+//                 }}
+//             >
+//                 <Box sx={{ position: "relative", width: 140, height: 140 }}>
+//                     {/* Circular Progress Ring */}
+//                     <CircularProgress
+//                         size={140}
+//                         thickness={4.5}
+//                         sx={{
+//                             color: "#4F46E5", // Change color if you want (indigo)
+//                         }}
+//                     />
+
+//                     {/* Stemz Logo Centered Inside */}
+//                     <Box
+//                         sx={{
+//                             position: "absolute",
+//                             top: "50%",
+//                             left: "50%",
+//                             transform: "translate(-50%, -50%)",
+//                             width: 90,
+//                             height: 90,
+//                             borderRadius: "50%",
+//                             overflow: "hidden",
+//                             backgroundColor: "#fff",
+//                             boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+//                             display: "flex",
+//                             alignItems: "center",
+//                             justifyContent: "center",
+//                         }}
+//                     >
+//                         <img
+//                             src={stemzLogo}
+//                             alt="Stemz"
+//                             style={{
+//                                 width: "80%",
+//                                 height: "80%",
+//                                 objectFit: "contain",
+//                             }}
+//                         />
+//                     </Box>
+//                 </Box>
+
+//                 {/* Optional subtle text below */}
+//                 <Box sx={{ position: "absolute", bottom: 80, fontSize: "1.1rem", color: "#555", fontWeight: 500 }}>
+//                     Loading Dashboard...
+//                 </Box>
+//             </Box>
+//         );
+//     }
+//     if (error) {
+//         return (
+//             <Alert severity="error" sx={{ my: 2 }}>
+//                 {error}
+//             </Alert>
+//         );
+//     }
+
+//     return (
+//         <>
+//             <Box sx={{ mb: 2 }}>
+//                 <Grid container spacing={2}>
+//                     <Grid size={12}>
+//                         <AdminHeader />
+//                     </Grid>
+//                     <Grid size={12}>
+//                         <AdminCardData cardData={data.cards} />
+//                     </Grid>
+//                     <Grid size={12}>
+//                         <AdminGraphData graphData={data.graphs} />
+//                     </Grid>
+//                 </Grid>
+//             </Box>
+//         </>
+//     );
+// };
+
+// export default AdminDashboard;
+// index.jsx (Main component - TicketForm)
+import React, { useState, useEffect } from 'react';
+import { Box, Typography, Grid } from '@mui/material';
+import AdminHeader from './AdminHeader';
+import CardData from './CardData';
+import GraphData from './GraphData';
+import { fetchAdminDashboardCount } from '../../Api'; 
 
 const AdminDashboard = () => {
-    const [data, setData] = useState({
-        cards: null,
-        graphs: null,
-    });
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [openModal, setOpenModal] = useState(false);
+  const [selectedChart, setSelectedChart] = useState(null);
+  const [openTicketModal, setOpenTicketModal] = useState(false);
+  const [selectedTicketType, setSelectedTicketType] = useState(null);
 
-    useEffect(() => {
-        const fetchTicketCounts = async () => {
-            try {
-                setLoading(true);
-                setError(null);
-                const today = new Date().toISOString().split('T')[0];
-                // Start of the year
-                const startOfYear = new Date(new Date().getFullYear(), 0, 1)
-                    .toISOString()
-                    .split('T')[0];
+  useEffect(() => {
+    const loadData = async () => {
+      console.log('Starting to fetch admin dashboard data...'); // Debug log
+      try {
+        const response = await fetchAdminDashboardCount();
+        console.log('API Response received:', response); // Debug log
+        if (response && response.success !== false) {
+          setData(response);
+        } else {
+          throw new Error('Invalid response from API');
+        }
+      } catch (err) {
+        console.error('API Error details:', err.response || err); // Debug log
+        // Check for 401 specifically to handle auth issues without auto-logout
+        if (err.response?.status === 401) {
+          console.warn('Authentication failed - please log in again');
+          setError('Session expired. Please log in again.');
+          // Optionally redirect: window.location.href = '/login';
+          // But to avoid auto-logout, just show error for now
+        } else {
+          setError(err.message || 'Failed to load dashboard data');
+        }
+      } finally {
+        setLoading(false);
+        console.log('Data loading complete.'); // Debug log
+      }
+    };
+    loadData();
+  }, []);
 
-                const response = await ticketcounts({ start_date: startOfYear, end_date: today });
+  const handleChartClick = (chartData) => {
+    setSelectedChart(chartData);
+    setOpenModal(true);
+  };
 
-                if (!response.success) {
-                    throw new Error(response.error || 'Failed to fetch ticket counts');
-                }
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setSelectedChart(null);
+  };
 
-                const stats = response.data.overall_stats || {};
-                const month_wise = stats.month_wise || [];
-                const last_7_days = stats.last_7_days || [];
-                const open_tickets_age = stats.open_tickets_age || {};
-                const solving_period = stats.solving_period || {};
+  const handleCardClick = (cardData) => {
+    setSelectedTicketType(cardData);
+    setOpenTicketModal(true);
+  };
 
-                // Transform for cards
-                const cardData = [
-                    {
-                        id: 1,
-                        icon: <TodayIcon />,
-                        count: stats.today_tickets?.toString() || "0",
-                        name: "Today",
-                        color: "warning.main",
-                    },
-                    {
-                        id: 2,
-                        icon: <CalendarTodayIcon />,
-                        count: stats.month_tickets?.toString() || "0",
-                        name: "This Month",
-                        color: "success.main",
-                    },
-                    {
-                        id: 3,
-                        icon: <AddIcon />,
-                        count: stats.total_tickets?.toString() || "0",
-                        name: "Total Tickets",
-                        color: "info.main",
-                    },
-                    {
-                        id: 4,
-                        icon: <AccessTimeFilledIcon />,
-                        count: stats.sla_breached_count?.toString() || "0",
-                        name: "SLA Breached",
-                        color: "error.main",
-                    },
-                    // {
-                    //     id: 5,
-                    //     icon: <LocalOfferIcon />,
-                    //     count: stats.on_hold?.toString() || "0",
-                    //     name: "Backlog",
-                    //     color: "warning.main",
-                    // },
-                    {
-                        id: 6,
-                        icon: <GroupsIcon />,
-                        count: stats.user_count?.toString() || "0",
-                        name: "Users",
-                        color: "secondary.main",
-                    },
-                ];
+  const handleCloseTicketModal = () => {
+    setOpenTicketModal(false);
+    setSelectedTicketType(null);
+  };
 
-                // Transform for graphs
-                // 1. Tickets Evolution (Month-wise data)
-                const months = month_wise.map(m => m.month?.substring(0, 3) || '');
-                const totalTicketsByMonth = month_wise.map(m => m.total_tickets || 0);
-
-                const ticketsEvolution = {
-                    series: [
-                        {
-                            name: "Tickets",
-                            data: totalTicketsByMonth,
-                        },
-                    ],
-                    options: {
-                        chart: { type: "line", toolbar: { show: false } },
-                        xaxis: {
-                            categories: months,
-                        },
-                        stroke: { curve: "smooth" },
-                        colors: ["#4F46E5"],
-                    },
-                };
-
-                // 2. Opened Tickets by Status (Pie Chart)
-                const openedTicketsStatus = {
-                    series: [
-                        stats.pending || 0,
-                        stats.approved || 0,
-                        stats.rejected || 0,
-                        stats.on_hold || 0,
-                    ],
-                    options: {
-                        labels: ["Pending", "Approved", "Rejected", "On Hold"],
-                        chart: { type: "pie" },
-                        colors: ["#2196F3", "#4CAF50", "#f44336", "#FFC107"],
-                        legend: { position: "bottom" },
-                    },
-                };
-
-                // 3. Ticket Solving Period (Donut Chart)
-                const solvingPeriod = {
-                    series: [
-                        solving_period.less_than_1_day || 0,
-                        solving_period["1_to_2_days"] || 0,
-                        solving_period["3_to_5_days"] || 0,
-                        solving_period["6_to_10_days"] || 0,
-                        solving_period.more_than_10_days || 0,
-                    ],
-                    options: {
-                        labels: ["<1 day", "1-2 days", "3-5 days", "6-10 days", ">10 days"],
-                        chart: { type: "donut" },
-                        colors: ["#4CAF50", "#FFEB3B", "#FF9800", "#F44336", "#9C27B0"],
-                        legend: { position: "bottom" },
-                    },
-                };
-
-                // 4. Tickets - Last 7 Days (Bar Chart)
-                const last7daysLabels = last_7_days.map(day => day.label || '');
-                const last7daysCounts = last_7_days.map(day => day.count || 0);
-
-                const last7days = {
-                    series: [
-                        {
-                            name: "Tickets",
-                            data: stats.last_7_days_counts || [0, 0, 0, 0, 0, 0, 0],
-                        },
-                    ],
-                    options: {
-                        chart: { type: "bar", toolbar: { show: false } },
-                        xaxis: {
-                            categories: stats.last_7_days_labels || ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-                        },
-                        plotOptions: { bar: { borderRadius: 5 } },
-                        colors: ["#6366F1"],
-                        dataLabels: { enabled: false },
-                    },
-                };
-
-                // 5. Open Tickets Age (Horizontal Bar Chart)
-                // Note: Your API data only has one set of data (probably for requests)
-                // For incidents, you might need to get separate data
-                const openTicketsAge = {
-                    series: [
-                        {
-                            name: "Request",
-                            data: [
-                                open_tickets_age.today || 0,
-                                open_tickets_age["1_day"] || 0,
-                                open_tickets_age["2_days"] || 0,
-                                open_tickets_age["3_days"] || 0,
-                                open_tickets_age["4_days"] || 0,
-                                open_tickets_age["5_days"] || 0,
-                                open_tickets_age["6_days"] || 0,
-                                open_tickets_age["7_plus_days"] || 0,
-                            ],
-                        },
-                        // If you have incident data, add it here
-                        // {
-                        //     name: "Incident",
-                        //     data: [0, 0, 0, 0, 0, 0, 0, 0],
-                        // },
-                    ],
-                    options: {
-                        chart: { type: "bar", toolbar: { show: false } },
-                        xaxis: {
-                            categories: ["Today", "1 day", "2 days", "3 days", "4 days", "5 days", "6 days", "7+ days"],
-                        },
-                        plotOptions: { bar: { borderRadius: 5, horizontal: true } },
-                        colors: ["#2196F3", "#000000"],
-                    },
-                };
-
-                setData({
-                    cards: cardData,
-                    graphs: {
-                        ticketsEvolution,
-                        openedTicketsStatus,
-                        solvingPeriod,
-                        last7days,
-                        openTicketsAge,
-                    },
-                });
-            } catch (err) {
-                setError(err.message);
-                console.error("Failed to fetch ticket counts:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchTicketCounts();
-    }, []);
-
-    // if (loading) {
-    //     return (
-    //         <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: 400 }}>
-    //             <CircularProgress />
-    //         </Box>
-    //     );
-    // }
-     if (loading) {
-        return (
-            <Box
-                sx={{
-                    position: "fixed",
-                    top: 0,
-                    left: 0,
-                    width: "100vw",
-                    height: "100vh",
-                    backgroundColor: "rgba(255, 255, 255, 0.95)",
-                    backdropFilter: "blur(12px)",
-                    WebkitBackdropFilter: "blur(12px)",
-                    display: "flex",
-                    justifyContent: "center",
-                    alignItems: "center",
-                    zIndex: 9999,
-                }}
-            >
-                <Box sx={{ position: "relative", width: 140, height: 140 }}>
-                    {/* Circular Progress Ring */}
-                    <CircularProgress
-                        size={140}
-                        thickness={4.5}
-                        sx={{
-                            color: "#4F46E5", // Change color if you want (indigo)
-                        }}
-                    />
-
-                    {/* Stemz Logo Centered Inside */}
-                    <Box
-                        sx={{
-                            position: "absolute",
-                            top: "50%",
-                            left: "50%",
-                            transform: "translate(-50%, -50%)",
-                            width: 90,
-                            height: 90,
-                            borderRadius: "50%",
-                            overflow: "hidden",
-                            backgroundColor: "#fff",
-                            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                        }}
-                    >
-                        <img
-                            src={stemzLogo}
-                            alt="Stemz"
-                            style={{
-                                width: "80%",
-                                height: "80%",
-                                objectFit: "contain",
-                            }}
-                        />
-                    </Box>
-                </Box>
-
-                {/* Optional subtle text below */}
-                <Box sx={{ position: "absolute", bottom: 80, fontSize: "1.1rem", color: "#555", fontWeight: 500 }}>
-                    Loading Dashboard...
-                </Box>
-            </Box>
-        );
-    }
-    if (error) {
-        return (
-            <Alert severity="error" sx={{ my: 2 }}>
-                {error}
-            </Alert>
-        );
-    }
-
+  if (loading) {
     return (
-        <>
-            <Box sx={{ mb: 2 }}>
-                <Grid container spacing={2}>
-                    <Grid size={12}>
-                        <AdminHeader />
-                    </Grid>
-                    <Grid size={12}>
-                        <AdminCardData cardData={data.cards} />
-                    </Grid>
-                    <Grid size={12}>
-                        <AdminGraphData graphData={data.graphs} />
-                    </Grid>
-                </Grid>
-            </Box>
-        </>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <Typography>Loading dashboard data...</Typography>
+      </Box>
     );
+  }
+  if (error) {
+    return (
+      <Box p={3}>
+        <Typography color="error" gutterBottom>
+          Error: {error}
+        </Typography>
+        <Typography variant="body2" color="textSecondary">
+          Check console for more details. Ensure you are logged in and the server is running at http://172.22.32.1:8000.
+        </Typography>
+      </Box>
+    );
+  }
+  if (!data) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+        <Typography>No data available.</Typography>
+      </Box>
+    );
+  }
+
+  // Safeguard destructuring with defaults
+  const { user_stats = {}, admin_stats = {}, dashboard_analytics = {} } = data;
+  const totalTickets = admin_stats.total_tickets || 0;
+  const newAssigned = admin_stats.new || 0;
+  const solved = admin_stats.solved || 0;
+  const closed = admin_stats.closed || 0;
+  const clarificationRequired = admin_stats.clarification_required || 0;
+  const supplied = admin_stats.supplied || 0;
+
+  // Map ticket types to data with safeguards
+  const ticketTypes = {
+    assigned: { count: newAssigned, tickets: user_stats.new_assigned_tickets || [] },
+    pending: { count: clarificationRequired, tickets: user_stats.clarification_required_tickets || [] },
+    planned: { count: supplied, tickets: user_stats.supplied_tickets || [] },
+    solved: { count: solved, tickets: user_stats.solved_tickets || [] },
+    closed: { count: closed, tickets: user_stats.closed_tickets || [] },
+    total: { count: totalTickets, tickets: data.total_tickets_list || [] } // Use top-level data.total_tickets_list
+  };
+
+  return (
+    <>
+      <Box sx={{padding: '20px', maxWidth: '100%', overflowX: 'auto', height: '100vh'}}>
+        <AdminHeader />
+        
+        {/* Top: Count Cards Section */}
+        <Grid container spacing={2} mb={4}>
+          <Grid size={12}>
+            <CardData 
+              onCardClick={handleCardClick} 
+              newAssigned={newAssigned}
+              clarificationRequired={clarificationRequired}
+              supplied={supplied}
+              solved={solved}
+              closed={closed}
+              totalTickets={totalTickets}
+            />
+          </Grid>
+        </Grid>
+
+        <GraphData 
+          dashboard_analytics={dashboard_analytics}
+          handleChartClick={handleChartClick}
+          openModal={openModal}
+          selectedChart={selectedChart}
+          handleCloseModal={handleCloseModal}
+          openTicketModal={openTicketModal}
+          selectedTicketType={selectedTicketType}
+          handleCloseTicketModal={handleCloseTicketModal}
+          ticketTypes={ticketTypes}
+        />
+      </Box>
+    </>
+  );
 };
 
 export default AdminDashboard;

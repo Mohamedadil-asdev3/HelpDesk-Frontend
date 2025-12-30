@@ -4,7 +4,7 @@ export const Media_URL = "http://localhost:8000";
 
 //  const API_BASE_URL = "http://localhost:8000/api/";
 //const API_BASE_URL = "http://192.168.60.149:8000/api/";
-const API_BASE_URL = "http://192.168.1.33:8000/api/";
+const API_BASE_URL = "http://172.22.32.1:8000/api/";
 // const API_BASE_URL = "http://192.168.0.242:8000/api/";
 
 
@@ -1324,29 +1324,55 @@ export const fetchMessages = async () => {
         throw err;
     }
 };
+// export const fetchAdminMessages = async (ticketId) => { 
+//     try {
+//         const token = localStorage.getItem("access_token");
+//         const userData = JSON.parse(localStorage.getItem("user"));
+//         const userId = userData?.id;
+
+//         if (!userId) {
+//             throw new Error("User not found in localStorage");
+//         }
+
+//         if (!ticketId) {
+//             throw new Error("ticketId is required");
+//         }
+
+//         const res = await api.get(`tickets/users/${userId}/messages/${ticketId}/`, {
+//             headers: { 
+//                 Authorization: `Bearer ${token}` 
+//             },
+//         });
+
+//         return res.data;
+//     } catch (err) {
+//         console.error("Failed to fetch messages:", err.response?.data || err.message);
+//         throw err;
+//     }
+// };
 export const fetchAdminMessages = async (ticketId) => { 
     try {
         const token = localStorage.getItem("access_token");
-        const userData = JSON.parse(localStorage.getItem("user"));
-        const userId = userData?.id;
 
-        if (!userId) {
-            throw new Error("User not found in localStorage");
+        if (!token) {
+            throw new Error("No access token found");
         }
 
         if (!ticketId) {
             throw new Error("ticketId is required");
         }
 
-        const res = await api.get(`tickets/users/${userId}/messages/${ticketId}/`, {
+        // Correct admin endpoint using integer PK
+        const res = await api.get(`tickets/admin/ticket-messages/${ticketId}/`, {
             headers: { 
                 Authorization: `Bearer ${token}` 
             },
         });
 
-        return res.data;
+        // The view returns { messages: [...] }
+        return res.data.messages || res.data;
     } catch (err) {
-        console.error("Failed to fetch messages:", err.response?.data || err.message);
+        console.error("Failed to fetch admin messages:", err.response?.data || err.message);
         throw err;
     }
 };
@@ -1446,7 +1472,29 @@ export const fetchCategorySLA = async (entityId = null) => {
  
   return response.data;
 }
- 
+
+// IN AdminDashboardApi helpdesk count
+
+export const fetchAdminDashboardCount = async (params = {}) => {
+  try {
+    const token = localStorage.getItem('access_token'); // Retrieve token from localStorage
+    if (!token) {
+      throw new Error('Authentication token not found. Please log in again.');
+    }
+
+    const response = await api.get(`tickets/admindashboard/count/`, {
+      params,
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch admin dashboard count:`, error.response?.data || error.message);
+    throw error;
+  }
+};
 
 // export const fetchAdminTickets = async (params = {}) => {
 //   const token = localStorage.getItem("access_token");
