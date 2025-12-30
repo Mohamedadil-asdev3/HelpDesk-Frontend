@@ -3103,7 +3103,7 @@ const TicketForm = () => {
                 size="small"
                 value={ticketType}
                 onChange={(e) => setTicketType(e.target.value)}
-                label="Select Type"
+                placeholder="Select Type"
                 sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
                 disabled={editMode} // Disable in edit mode if needed
               >
@@ -3124,7 +3124,7 @@ const TicketForm = () => {
                 isOptionEqualToValue={(option, value) => option.id === value?.id}
                 onChange={(_, value) => setSelectedDepartment(value)}
                 renderInput={(params) => (
-                  <TextField {...params} label="Department" size="small" sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }} />
+                  <TextField {...params} placeholder="Department" size="small" sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }} />
                 )}
               />
             </Grid>
@@ -3140,7 +3140,7 @@ const TicketForm = () => {
                 isOptionEqualToValue={(option, value) => option.id === value?.id}
                 onChange={(_, value) => setSelectedLocation(value)}
                 renderInput={(params) => (
-                  <TextField {...params} label="Location" size="small" sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }} />
+                  <TextField {...params} placeholder="Location" size="small" sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }} />
                 )}
               />
             </Grid>
@@ -3171,7 +3171,7 @@ const TicketForm = () => {
                 renderInput={(params) => (
                   <TextField
                     {...params}
-                    label="Select Platform"
+                    placeholder="Select Platform"
                     size="small"
                     required
                     sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
@@ -3239,7 +3239,7 @@ const TicketForm = () => {
                 //   }
                 // }}
                 renderInput={(params) => (
-                  <TextField {...params} label="Select Category" size="small" required sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }} />
+                  <TextField {...params} placeholder="Select Category" size="small" required sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }} />
                 )}
               />
             </Grid>
@@ -3338,7 +3338,7 @@ const TicketForm = () => {
                   //   }
                   // }}
                   renderInput={(params) => (
-                    <TextField {...params} label="Select Subcategory" size="small" sx={{ mt: 1 }} />
+                    <TextField {...params} placeholder="Select Subcategory" size="small" sx={{ mt: 1, "& .MuiOutlinedInput-root": { borderRadius: 3 } }} />
                   )}
                 />
               </Grid>
