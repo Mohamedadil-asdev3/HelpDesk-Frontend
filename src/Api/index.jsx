@@ -1325,7 +1325,6 @@ export const fetchMessages = async () => {
         throw err;
     }
 };
-
 // export const fetchAdminMessages = async (ticketId) => { 
 //     try {
 //         const token = localStorage.getItem("access_token");
@@ -1476,7 +1475,29 @@ export const fetchCategorySLA = async (entityId = null) => {
  
   return response.data;
 }
- 
+
+// IN AdminDashboardApi helpdesk count
+
+export const fetchAdminDashboardCount = async (params = {}) => {
+  try {
+    const token = localStorage.getItem('access_token'); // Retrieve token from localStorage
+    if (!token) {
+      throw new Error('Authentication token not found. Please log in again.');
+    }
+
+    const response = await api.get(`tickets/admindashboard/count/`, {
+      params,
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch admin dashboard count:`, error.response?.data || error.message);
+    throw error;
+  }
+};
 
 // export const fetchAdminTickets = async (params = {}) => {
 //   const token = localStorage.getItem("access_token");
