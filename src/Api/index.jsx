@@ -1497,6 +1497,29 @@ export const fetchAdminDashboardCount = async (params = {}) => {
   }
 };
 
+export const fetchFixTypes = async (params = {}) => {
+  try {
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('Authentication token not found. Please log in again.');
+    }
+
+    const response = await api.get(`tickets/fix-types/`, {
+      params,
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error(`Failed to fetch fix types:`, error.response?.data || error.message);
+    throw error;
+  }
+};
+
+
 // export const fetchAdminTickets = async (params = {}) => {
 //   const token = localStorage.getItem("access_token");
 //   const userData = JSON.parse(localStorage.getItem("user"));

@@ -2354,6 +2354,7 @@
 
 // export default TicketForm;
 
+
 import { useState, useEffect, useRef } from "react";
 import { Box, Grid, Card, CardContent, TextField, Typography, MenuItem, Button, Autocomplete, Chip, Avatar, FormControl, Select, InputLabel, IconButton, } from "@mui/material";
 import { toast } from "react-toastify";
@@ -2459,18 +2460,35 @@ const TicketForm = () => {
         } catch (err) {
           console.error("Failed to fetch configurations", err);
         }
-        //const usersRes = await fetch("http://192.168.60.118:8000/api/tickets/watcher-users/", {
-        const usersRes = await fetch("http://172.22.32.1:8000/api/tickets/watcher-users/", {
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        });
-        if (usersRes.ok) {
-          const usersData = await usersRes.json();
-          setAllUsers(Array.isArray(usersData) ? usersData : []);
-        } else {
-          console.error("Failed to fetch users:", usersRes.status);
+        // Categories - Backend handles filtering based on role and entity
+        // try {
+        //   const roles = currentUser?.roles?.map(r => r.name.toLowerCase()) || [];
+        //   const isSuperOrAdmin = roles.includes('superadmin') || roles.includes('admin');
+        //   const currentEntityId = userEntity?.entity_data?.id;
+        //   const entityIdToFetch = isSuperOrAdmin ? null : currentEntityId;
+        //   const slaDataRaw = await fetchCategorySLA(entityIdToFetch);
+        //   const userEntitiesIds = currentUser?.entities_ids || [];
+        //   const accessibleEntities = isSuperOrAdmin ? userEntitiesIds : [currentEntityId];
+        //   const slaData = Array.isArray(slaDataRaw) ? slaDataRaw.filter(cat => accessibleEntities.includes(cat.entity_id)) : [];
+        //   setCategories(slaData.filter(cat => cat.is_active === 'Y'));
+        // } catch (err) {
+        //   console.error("Failed to fetch category SLA", err);
+        //   setCategories([]);
+        // }
+        try {
+          const currentEntityId = userEntity?.entity_data?.id;
+
+          // Fetch SLA categories for entity
+          const slaDataRaw = await fetchCategorySLA(currentEntityId);
+
+          const slaData = Array.isArray(slaDataRaw)
+            ? slaDataRaw.filter(cat => cat.is_active === 'Y')
+            : [];
+
+          setCategories(slaData);
+        } catch (err) {
+          console.error("Failed to fetch category SLA", err);
+          setCategories([]);
         }
 
         // Users
