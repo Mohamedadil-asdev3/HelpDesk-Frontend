@@ -3950,6 +3950,13 @@ const AdminTabs = () => {
             </IconButton>
           </Box>
 
+          {/* <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs value={chatTab} onChange={(e, newValue) => setChatTab(newValue)} centered>
+              <Tab label="Follow-up" icon={<ChatIcon />} />
+              <Tab label="Clarification Required" icon={<HelpOutlineIcon />} disabled={true} />
+              <Tab label="Solution" icon={<DoneAllIcon />} disabled={true} />
+            </Tabs>
+          </Box> */}
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={chatTab} onChange={(e, newValue) => setChatTab(newValue)} centered>
               <Tab label="Follow-up" icon={<ChatIcon />} />
@@ -3957,6 +3964,7 @@ const AdminTabs = () => {
               <Tab label="Solution" icon={<DoneAllIcon />} disabled={true} />
             </Tabs>
           </Box>
+ 
 
                     <Box sx={{ flex: 1 }}>
                         {chatTab === 0 && (
@@ -4086,7 +4094,7 @@ const AdminTabs = () => {
                   )}
                 </Box>
 
-                <Box sx={{ p: 2, borderTop: 1, borderColor: "divider", bgcolor: "background.default" }}>
+                {/* <Box sx={{ p: 2, borderTop: 1, borderColor: "divider", bgcolor: "background.default" }}>
                   <Box sx={{ display: "flex", gap: 1 }}>
                     <TextField
                       fullWidth
@@ -4130,7 +4138,7 @@ const AdminTabs = () => {
                       This message will be sent as protected
                     </Typography>
                   )}
-                </Box>
+                </Box> */}
               </Box>
             )}
 
